@@ -11,7 +11,8 @@ app.resizable(True, True)
 # app.grid_columnconfigure(0, weight=1)
 
 
-UI.Button(app, text="Yooo").grid(column=0, row=0)
+UI.Button(app, text="Yooo", command=lambda: print("yooo")).grid(column=0, row=0)
 UI.Label(app, text="Teststts").grid(column=0, row=1)
+
 
 app.mainloop()
