@@ -1,5 +1,14 @@
 from customtkinter import *
 
+class AppWindow(CTk):
+    def __init__(self, size="800x600", name="ClusteRack"):
+        super().__init__()
+        self.title(name)
+        self.geometry(size)
+        self.iconbitmap(os.path.join("images", "logo.ico"))
+        self.resizable(True, True)
+        
+
 
 class UI:
     class Button(CTkButton):
