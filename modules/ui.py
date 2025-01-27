@@ -2,6 +2,7 @@ from customtkinter import *
 
 class AppWindow(CTk):
     def __init__(self, size="800x600", name="ClusteRack"):
+        set_appearance_mode("light")
         super().__init__()
         self.title(name)
         self.geometry(size)

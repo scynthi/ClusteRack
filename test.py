@@ -1,57 +1,64 @@
 from customtkinter import *
 import os
-from modules.ui import UI
+import matplotlib.axes
+from modules.ui import UI, AppWindow
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 import matplotlib.figure
 import numpy as np
+from computer import Computer
 
-set_appearance_mode("light")
 
-app : CTk = CTk()
-app.title("ClusteRack")
-app.geometry("800x600")
-app.iconbitmap(os.path.join("images", "logo.ico"))
-app.resizable(True, True)
-# app.grid_rowconfigure([0,1], weight=1)
-# app.grid_columnconfigure(0, weight=1)
+app : CTk = AppWindow("400x500")
+app.grid_rowconfigure(0, weight=1)
+app.grid_columnconfigure(0, weight=1)
 
-x_list = []
-y_list = []
+frame : CTkFrame = CTkFrame(app)
+frame.grid(column=0, row=0)
+
+UI.Button(frame, text="Start", command=lambda: add_point()).grid(column=0, row=0)
+
 
 fig : matplotlib.figure.Figure = matplotlib.figure.Figure(figsize=(3, 3))
-ax = fig.add_subplot()
+canvas : FigureCanvasTkAgg = FigureCanvasTkAgg(fig, frame)
+canvas.get_tk_widget().grid(column=0, row=1)
+
+ax : matplotlib.axes._axes.Axes = fig.add_subplot()
 ax.set_ylim(0, 10)
 ax.set_title("CPU Usage")
-canvas = FigureCanvasTkAgg(fig, app)
-canvas.get_tk_widget().grid(column=1, row=2)
 
-UI.Button(app, text="Yooo", command=lambda: add_point()).grid(column=0, row=0)
-UI.Label(app, text="Teststts").grid(column=0, row=1)
+
+pc : Computer = Computer(os.path.normpath(r"C:\GitHub\ClusteRack\Test folder\cluster0\szamitogep2"))
+
+
+time_count : list = [0]
+usage_list : list = [0]
+
 
 def add_point() -> None:
     ax.clear()
     ax.set_ylim(0, 10)
     ax.set_title("CPU Usage")
 
-    if len(x_list) == 0:
-        x_list.append(1)
-    else:
-        x_list.append(x_list[-1]+1)
-    
-    y_list.append(np.random.randint(1, 10))
+    if len(time_count) == 30:
+        last_usage : float = usage_list[-1]
+        last_time : int = time_count[-1]
 
-    if len(y_list) == 100:
-        last_y_item = y_list[-1]
-        last_x_item = x_list[-1]
+        usage_list.clear()
+        time_count.clear()
 
-        y_list.clear()
-        x_list.clear()
+        usage_list.append(last_usage)
+        time_count.append(last_time)
 
-        x_list.append(last_x_item)
-        y_list.append(last_y_item)
+    usage : float = pc.calculate_resource_usage()["cpu_usage_percent"]
+    usage_list.append(usage)
+    time_count.append(time_count[-1]+1)
 
-    ax.plot(x_list, y_list, color="#00a4bd")
+    ax.plot(time_count, usage_list, color="#00a4bd")
     canvas.draw()
+    
+    app.after(400, add_point)
+
+
 
 app.mainloop()
