@@ -115,7 +115,10 @@ class Computer:
             date_started : str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             data : str = f"{date_started}\n{status.upper()}\n{cpu_req}\n{ram_req}"
             file.write(data)
+
+            print(f"Process ({process_name}) started successfully on computer ({self.name}).")
             return True
+        
         except:
             print("Error while creating process: "+process_name)
             return False

@@ -43,18 +43,85 @@ class Cluster:
             files : list = os.listdir(path)
             files.remove(".klaszter")
 
-            computer_list : list = []
+            computer_list : dict = {}
 
             for file in files:
-                computer_list.append(Computer(Path.join(path, file)))
+                computer_list[file] = Computer(Path.join(path, file))
             
-            print(f"Cluster ({cluster_name}) has been initialized with {len(computer_list)} computer(s).")
-                    
-                    
-                    
+            self.path = path
+            self.task_list = task_info_dict
+            self.computers = computer_list
+
+            print(f"Cluster ({cluster_name}) initialized succesfully with {len(computer_list)} computer(s).")
+            
+
+    def create_computer(self, computer_name: str, cores: int, memory: int) -> Computer:
+        path : str = Path.join(self.path, computer_name)
+
+        if Path.exists(path):
+            print(f"Computer ({computer_name}) already exists and will NOT be created.")
+            return self.computers[computer_name]
         
-            
+        try:
+            os.mkdir(path)
+            config_file = open(Path.join(path, ".szamitogep_config"), "w", encoding="utf8")
+            config_file.write(f"{cores}\n{memory}")
+
+            print(f"Computer ({computer_name}) created successfully.")
+            return Computer(path)
+        
+        except:
+            print(f"Error while creating computer '{computer_name}'.")
+            return
+
+
+    def try_delete_computer(self, computer_name: str) -> bool:
+        path : str = Path.join(self.path, computer_name)
+
+        if not Path.exists(path):
+            print(f"Computer ({computer_name}) does not exist! Did you misspell the name?")
+            return False
+        
+        computer : Computer = Computer(path)
+        if computer.get_processes():
+            print(f"Unable to delete computer '{computer_name}'. It has processes, try using force_delete_computer().")
+            return False
+        
+        os.remove(Path.join(path, ".szamitogep_config"))
+        os.rmdir(path)
+
+        print(f"Computer '{computer_name}' deleted successfully.")
+        return True
+
+
+    def force_delete_computer(self, computer_name: str) -> bool:
+        path : str = Path.join(self.path, computer_name)
+
+        if not Path.exists(path):
+            print(f"Computer ({computer_name}) does not exist! Did you misspell the name?")
+            return False
+        
+        try:
+            for file in os.listdir(path):
+                os.remove(Path.join(path, file))
+
+            os.rmdir(path)
+            print(f"Successfully force deleted computer ({computer_name}).")
+            return True
+        
+        except:
+            print(f"FORCED DELETE FAILED FOR COMPUTER ({computer_name}).")
+            return False
+
+                    
+                    
+                    
 
 
 if __name__ == "__main__":
     cluster : Cluster = Cluster(r".\Test folder\cluster0")
+    pc : Computer = cluster.create_computer("szamitogep4", 1000, 8000)
+
+    pc.start_process("test-yxssss", "aktív", 10, 10)
+    cluster.try_delete_computer("szamitogep4")
+    cluster.force_delete_computer("szamitogep4")
