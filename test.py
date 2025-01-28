@@ -3,10 +3,8 @@ import os
 import matplotlib.axes
 from modules.ui import UI, AppWindow
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-import matplotlib.pyplot as plt
-import matplotlib.figure
-import numpy as np
-from computer import Computer
+import matplotlib.figure as figure
+from modules.computer import Computer
 
 
 app : CTk = AppWindow("400x500")
@@ -19,7 +17,7 @@ frame.grid(column=0, row=0)
 UI.Button(frame, text="Start", command=lambda: add_point()).grid(column=0, row=0)
 
 
-fig : matplotlib.figure.Figure = matplotlib.figure.Figure(figsize=(3, 3))
+fig : figure.Figure = figure.Figure(figsize=(3, 3))
 canvas : FigureCanvasTkAgg = FigureCanvasTkAgg(fig, frame)
 canvas.get_tk_widget().grid(column=0, row=1)
 
@@ -28,7 +26,7 @@ ax.set_ylim(0, 10)
 ax.set_title("CPU Usage")
 
 
-pc : Computer = Computer(os.path.normpath(r"C:\GitHub\ClusteRack\Test folder\cluster0\szamitogep2"))
+pc : Computer = Computer(os.path.normpath(r"./Test folder\cluster0\szamitogep3"))
 
 
 time_count : list = [0]
@@ -50,8 +48,9 @@ def add_point() -> None:
         usage_list.append(last_usage)
         time_count.append(last_time)
 
-    usage : float = pc.calculate_resource_usage()["cpu_usage_percent"]
-    usage_list.append(usage)
+    usage : float = pc.calculate_resource_usage()["core_usage_percent"]
+
+    usage_list.append(usage*10/100)
     time_count.append(time_count[-1]+1)
 
     ax.plot(time_count, usage_list, color="#00a4bd")
