@@ -1,10 +1,17 @@
 import pygame as pg
+import numpy as np
+import math
 from modules.renderer.matrixfunctions import *
 
 class Camera:
     def __init__(self, render, position):
         self.render = render
+        self.min_distance = 2.0
+        self.max_distance = 50.0
         self.position = np.array([*position, 1.0])
+        
+        self._clamp_distance()
+        
         self.forward = np.array([0, 0, 1, 1])
         self.up = np.array([0, 1, 0, 1])
         self.right = np.array([1, 0, 0, 1])
@@ -15,11 +22,8 @@ class Camera:
         self.moving_speed = 0.3
         self.rotation_speed = 0.015
 
-        self.anglePitch = 0
-        self.angleYaw = 0
-        self.angleRoll = 0
-
     def control(self):
+        return
         key = pg.key.get_pressed()
         if key[pg.K_a]:
             self.position -= self.right * self.moving_speed
@@ -34,33 +38,39 @@ class Camera:
         if key[pg.K_e]:
             self.position -= self.up * self.moving_speed
 
-        if key[pg.K_LEFT]:
-            self.camera_yaw(-self.rotation_speed)
-        if key[pg.K_RIGHT]:
-            self.camera_yaw(self.rotation_speed)
-        if key[pg.K_UP]:
-            self.camera_pitch(-self.rotation_speed)
-        if key[pg.K_DOWN]:
-            self.camera_pitch(self.rotation_speed)
-
-    def camera_yaw(self, angle):
-        self.angleYaw += angle
-
-    def camera_pitch(self, angle):
-        self.anglePitch += angle
-
-    def axiiIdentity(self):
-        self.forward = np.array([0, 0, 1, 1])
-        self.up = np.array([0, 1, 0, 1])
-        self.right = np.array([1, 0, 0, 1])
+        # Apply distance constraints after movement
+        self._clamp_distance()
+    def _clamp_distance(self):
+        """Keep camera within min/max distance from origin"""
+        # Get 3D position without homogeneous coordinate
+        pos = self.position[:3]
+        distance = np.linalg.norm(pos)
+        
+        if distance < self.min_distance:
+            # Move back to minimum distance
+            direction = pos / distance if distance != 0 else np.array([0, 0, -1])
+            self.position[:3] = direction * self.min_distance
+        elif distance > self.max_distance:
+            # Pull back to maximum distance
+            direction = pos / distance
+            self.position[:3] = direction * self.max_distance
 
     def camera_update_axii(self):
-        # rotate = rotate_y(self.angleYaw) @ rotate_x(self.anglePitch)
-        rotate = rotate_x(self.anglePitch) @ rotate_y(self.angleYaw)  # this concatenation gives right visual
-        self.axiiIdentity()
-        self.forward = self.forward @ rotate
-        self.right = self.right @ rotate
-        self.up = self.up @ rotate
+        position = self.position[:3]
+        target = np.array([0, 0, 0])
+        
+        forward = target - position
+        forward_normalized = forward / np.linalg.norm(forward)
+        
+        world_up = np.array([0, 1, 0])
+        right = np.cross(forward_normalized, world_up)
+        right_normalized = right / np.linalg.norm(right)
+        
+        up_normalized = np.cross(right_normalized, forward_normalized)
+        
+        self.forward = np.append(forward_normalized, 1.0)
+        self.right = np.append(right_normalized, 1.0)
+        self.up = np.append(up_normalized, 1.0)
 
     def camera_matrix(self):
         self.camera_update_axii()
@@ -76,9 +86,9 @@ class Camera:
         ])
 
     def rotate_matrix(self):
-        rx, ry, rz, w = self.right
-        fx, fy, fz, w = self.forward
-        ux, uy, uz, w = self.up
+        rx, ry, rz, _ = self.right
+        ux, uy, uz, _ = self.up
+        fx, fy, fz, _ = self.forward
         return np.array([
             [rx, ux, fx, 0],
             [ry, uy, fy, 0],

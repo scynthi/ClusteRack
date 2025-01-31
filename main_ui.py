@@ -1,7 +1,7 @@
 from customtkinter import *
 from tkinter import filedialog
 from modules.ui import UI, AppWindow
-from audio_manager import AudioManager
+from modules.audio_manager import AudioManager
 
 app = AppWindow("800x400")
 app.grid_columnconfigure(0, weight=1)

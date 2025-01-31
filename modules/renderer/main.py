@@ -15,7 +15,7 @@ class SoftwareRender:
         self.create_objects()
 
     def create_objects(self):
-        self.camera = Camera(self, [-5, 6, -55])
+        self.camera = Camera(self, [0, 1, -10])
         self.projection = Projection(self)
         self.object = self.get_object_from_file('Assets\Models\computer.obj')
         self.object.rotate_y(-math.pi / 4)
@@ -32,7 +32,7 @@ class SoftwareRender:
         return Object3D(self, vertex, faces)
 
     def draw(self):
-        self.screen.fill(pg.Color('black'))
+        self.screen.fill(pg.Color(235, 235, 235)) #Background Color
         self.object.draw()
 
     def run(self):
