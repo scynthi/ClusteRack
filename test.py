@@ -22,11 +22,11 @@ class PygameEmbedApp(AppWindow):
         pygame.init()
 
         hwnd = self.pygame_frame.winfo_id()
-        screen = pygame.display.set_mode((600, 400), pygame.FULLSCREEN)
+        screen = pygame.display.set_mode((600, 400), pygame.SCALED)
 
         if os.name == "nt":
             ctypes.windll.user32.SetParent(pygame.display.get_wm_info()["window"], hwnd)
-
+            
             style = ctypes.windll.user32.GetWindowLongW(pygame.display.get_wm_info()["window"], -16)
             style &= ~0x00C00000
             ctypes.windll.user32.SetWindowLongW(pygame.display.get_wm_info()["window"], -16, style)
@@ -36,11 +36,9 @@ class PygameEmbedApp(AppWindow):
         self.run_pygame_loop(screen)
 
     def position_pygame_top_left(self):
-        print("yoooooooo")
         hwnd = pygame.display.get_wm_info()["window"]
 
         ctypes.windll.user32.MoveWindow(hwnd, 0, 0, 0, 0, True)
-
         self.after(100, lambda: app.position_pygame_top_left())
 
     def run_pygame_loop(self, screen):
@@ -59,7 +57,6 @@ class PygameEmbedApp(AppWindow):
 
 if __name__ == "__main__":
     app = PygameEmbedApp()
-    app.after(100, lambda: app.position_pygame_top_left())
     app.mainloop()
 
 
