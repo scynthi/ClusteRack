@@ -16,7 +16,7 @@ class Object3D:
         self.translate([0.0001, 0.0001, 0.0001])
 
         self.font = pg.font.SysFont('Arial', 30, bold=True)
-        self.color_faces = [(pg.Color('orange'), face) for face in self.faces]
+        self.color_faces = [(pg.Color('green'), face) for face in self.faces]
         self.movement_flag, self.draw_vertices = True, False
         self.label = ''
 

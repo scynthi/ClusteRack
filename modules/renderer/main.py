@@ -17,7 +17,7 @@ class SoftwareRender:
     def create_objects(self):
         self.camera = Camera(self, [-5, 6, -55])
         self.projection = Projection(self)
-        self.object = self.get_object_from_file('./modules/renderer/resources/t_34_obj.obj')
+        self.object = self.get_object_from_file('Assets\Models\computer.obj')
         self.object.rotate_y(-math.pi / 4)
 
     def get_object_from_file(self, filename):
@@ -32,7 +32,7 @@ class SoftwareRender:
         return Object3D(self, vertex, faces)
 
     def draw(self):
-        self.screen.fill(pg.Color('darkslategray'))
+        self.screen.fill(pg.Color('black'))
         self.object.draw()
 
     def run(self):
@@ -40,11 +40,6 @@ class SoftwareRender:
             self.draw()
             self.camera.control()
             [exit() for i in pg.event.get() if i.type == pg.QUIT]
-            pg.display.set_caption(str(self.clock.get_fps()))
+            pg.display.set_caption("")
             pg.display.flip()
             self.clock.tick(self.FPS)
-
-
-if __name__ == '__main__':
-    app = SoftwareRender()
-    app.run()
