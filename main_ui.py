@@ -11,8 +11,9 @@ app.grid_rowconfigure([0], weight=1)
 center_frame : CTkFrame = CTkFrame(app)
 center_frame.grid(column=0, row=0)
 
-path_label : UI. Label = UI.Label(center_frame, text="Nincsen mappa")
+path_label : UI.Label = UI.Label(center_frame, text="Nincsen mappa")
 path_label.grid(column=0, row=0)
+
 
 UI.Button(center_frame, text="Mappa kiválasztása", command=lambda: set_folder_path()).grid(column=0, row=1, pady=10)
 UI.Button(center_frame, text="Tovább", command =lambda: AudioManager.play_rnd_click() ).grid(column=0, row=2)

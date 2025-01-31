@@ -1,63 +1,52 @@
-from customtkinter import *
+import pygame
+import ctypes
 import os
-import matplotlib.axes
-from modules.ui import UI, AppWindow
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-import matplotlib.figure as figure
-from modules.computer import Computer
+import threading
+import time
+import customtkinter as ctk
+from modules.ui import AppWindow
+
+ctk.set_appearance_mode("dark")
 
 
-app : CTk = AppWindow("400x500")
-app.grid_rowconfigure(0, weight=1)
-app.grid_columnconfigure(0, weight=1)
+class PygameEmbedApp(AppWindow):
+    def __init__(self):
+        super().__init__()
 
-frame : CTkFrame = CTkFrame(app)
-frame.grid(column=0, row=0)
+        self.pygame_frame = ctk.CTkFrame(self, width=600, height=400)
+        self.pygame_frame.grid(row=0, column=0)
 
-UI.Button(frame, text="Start", command=lambda: add_point()).grid(column=0, row=0)
+        self.thread = threading.Thread(target=self.embed_pygame, daemon=True)
+        self.thread.start()
 
+    def embed_pygame(self):
+        os.environ["SDL_VIDEO_WINDOW_POS"] = "0,0"
 
-fig : figure.Figure = figure.Figure(figsize=(3, 3))
-canvas : FigureCanvasTkAgg = FigureCanvasTkAgg(fig, frame)
-canvas.get_tk_widget().grid(column=0, row=1)
+        pygame.init()
 
-ax : matplotlib.axes._axes.Axes = fig.add_subplot()
-ax.set_ylim(0, 10)
-ax.set_title("CPU Usage")
+        hwnd = self.pygame_frame.winfo_id()
+        screen = pygame.display.set_mode((600, 400), pygame.NOFRAME)
 
+        if os.name == "nt":
+            ctypes.windll.user32.SetParent(pygame.display.get_wm_info()["window"], hwnd)
 
-pc : Computer = Computer(os.path.normpath(r"./Test folder\cluster0\szamitogep3"))
+        self.run_pygame_loop(screen)
 
+    def run_pygame_loop(self, screen):
+        running = True
+        while running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
 
-time_count : list = [0]
-usage_list : list = [0]
+            screen.fill((30, 30, 30))
+            pygame.draw.circle(screen, (255, 0, 0), (300, 200), 50)
 
+            pygame.display.update()
+            time.sleep(0.01)
 
-def add_point() -> None:
-    ax.clear()
-    ax.set_ylim(0, 10)
-    ax.set_title("CPU Usage")
+        pygame.quit()
 
-    if len(time_count) == 30:
-        last_usage : float = usage_list[-1]
-        last_time : int = time_count[-1]
-
-        usage_list.clear()
-        time_count.clear()
-
-        usage_list.append(last_usage)
-        time_count.append(last_time)
-
-    usage : float = pc.calculate_resource_usage()["core_usage_percent"]
-
-    usage_list.append(usage*10/100)
-    time_count.append(time_count[-1]+1)
-
-    ax.plot(time_count, usage_list, color="#00a4bd")
-    canvas.draw()
-    
-    app.after(400, add_point)
-
-
-
-app.mainloop()
+if __name__ == "__main__":
+    app = PygameEmbedApp()
+    app.mainloop()
