@@ -12,19 +12,19 @@ click_channel: mixer.Channel = mixer.Channel(1)
 misc_channel: mixer.Channel = mixer.Channel(2)
 
 small_click_list: list[str] = [
-    r"Sounds\small_click1.wav",
-    r"Sounds\small_click2.wav",
-    r"Sounds\small_click3.wav",
+    r"Assets\Sounds\small_click1.wav",
+    r"Assets\Sounds\small_click2.wav",
+    r"Assets\Sounds\small_click3.wav",
 ]
 
-startup_sound: mixer.Sound = mixer.Sound(r"Sounds\start_up.wav")
+startup_sound: mixer.Sound = mixer.Sound(r"Assets\Sounds\start_up.wav")
 click_sounds: list[mixer.Sound] = [mixer.Sound(sound) for sound in small_click_list]
-big_click_sound: mixer.Sound = mixer.Sound(r"Sounds\big_click.wav")
+big_click_sound: mixer.Sound = mixer.Sound(r"Assets\Sounds\big_click.wav")
 
-close_computer_sound: mixer.Sound = mixer.Sound(r"Sounds\close_computer.wav")
-close_program_sound: mixer.Sound = mixer.Sound(r"Sounds\close_program.wav")
-error_sound: mixer.Sound = mixer.Sound(r"Sounds\error.wav")
-notification_sound: mixer.Sound = mixer.Sound(r"Sounds\notification.wav")
+close_computer_sound: mixer.Sound = mixer.Sound(r"Assets\Sounds\close_computer.wav")
+close_program_sound: mixer.Sound = mixer.Sound(r"Assets\Sounds\close_program.wav")
+error_sound: mixer.Sound = mixer.Sound(r"Assets\Sounds\error.wav")
+notification_sound: mixer.Sound = mixer.Sound(r"Assets\Sounds\notification.wav")
 
 last_click_sound: mixer.Sound | None = None
 
