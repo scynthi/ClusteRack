@@ -6,7 +6,7 @@ class AppWindow(CTk):
         super().__init__()
         self.title(name)
         self.geometry(size)
-        self.iconbitmap(os.path.join("images", "logo.ico"))
+        self.iconbitmap(os.path.join("Assets","Images", "logo.ico"))
         self.resizable(True, True)
         
 
