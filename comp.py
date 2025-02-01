@@ -14,8 +14,8 @@ app.grid_columnconfigure(1, weight=1)
 frame: CTkFrame = CTkFrame(app)
 frame.grid(column=1, row=0)
 
-pygame_frame: CTkFrame = CTkFrame(app, width=300, height=200)
-pygame_frame.grid(column=0, row=0)
+# pygame_frame: CTkFrame = CTkFrame(app, width=300, height=200)
+# pygame_frame.grid(column=0, row=0)
 
 pc_3d: EmbedRendererWindow = EmbedRendererWindow(app)
 

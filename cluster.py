@@ -110,7 +110,7 @@ class Cluster:
             return True
         
         except:
-            print(f"FORCED DELETE FAILED FOR COMPUTER ({computer_name}).")
+            print(f"CRITICAL ERROR DETECTED: forced deletion failed for computer {computer_name}.")
             return False
 
 

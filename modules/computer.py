@@ -119,3 +119,32 @@ class Computer:
         except:
             print("Error while creating process: "+process_name)
             return False
+
+    def edit_resources(self, cores: int, memory: int) -> bool:
+        min_cores: int = self.cores-self.free_cores
+        min_memory: int = self.memory-self.free_memory
+
+        if cores < min_cores:
+            print(f"Can't set core count to {cores} on computer {self.name}. Required minimum cores: {min_cores} ")
+            return False
+        
+        if memory < min_memory:
+            print(f"Can't set memory size to {memory} on computer {self.name}. Required minimum memory size: {min_memory} ")
+            return False
+
+        prev_cores: int = self.cores
+        prev_memory: int = self.memory
+
+        self.cores = cores
+        self.memory = memory
+        
+        if self.validate_computer():
+            print(f"Succesfully edited resources on computer {self.name}. Memory: {prev_memory} -> {memory}, cores: {prev_cores} -> {cores}")
+            return True
+        else:
+            print(f"CRITICAL ERROR DETECTED: can't validate computer. Setting back previus resources.")
+            self.cores = prev_cores
+            self.memory = memory
+            return False
+
+
