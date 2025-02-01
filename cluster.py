@@ -62,17 +62,17 @@ class Cluster:
             print(f"Computer ({computer_name}) already exists and will NOT be created.")
             return self.computers[computer_name]
         
-        try:
-            os.mkdir(path)
-            config_file = open(Path.join(path, ".szamitogep_config"), "w", encoding="utf8")
-            config_file.write(f"{cores}\n{memory}")
+        # try:
+        os.mkdir(path)
+        config_file = open(Path.join(path, ".szamitogep_config"), "w", encoding="utf8")
+        config_file.write(f"{cores}\n{memory}")
 
-            print(f"Computer ({computer_name}) created successfully.")
-            return Computer(path)
+        print(f"Computer ({computer_name}) created successfully.")
+        return Computer(path)
         
-        except:
-            print(f"Error while creating computer '{computer_name}'.")
-            return
+        # except:
+        #     print(f"Error while creating computer '{computer_name}'.")
+        #     return
 
 
     def try_delete_computer(self, computer_name: str) -> bool:
@@ -114,10 +114,35 @@ class Cluster:
             return False
 
 
+    def edit_cluster_name(self, new_name : str = "Default Cluster") -> None:
+        parent_dir = Path.dirname(self.path)
+        new_path = Path.join(parent_dir, new_name)
+
+        try:
+            os.rename(self.path, new_path)
+            self.path = new_path
+            print(f"Cluster folder renamed to '{new_name}' successfully.")
+
+            self.__init__(self.path)
+
+            for name in self.computers:
+                pc = self.computers[name]
+                pc.__init__(Path.join(self.path, name))
+
+        except Exception as e:
+            print(f"Error renaming cluster: {e}")
+
+
+
 if __name__ == "__main__":
     cluster: Cluster = Cluster(r".\Test folder\cluster0")
+    
+    cluster.edit_cluster_name("cluster0")
+
     pc: Computer = cluster.create_computer("szamitogep4", 1000, 8000)
+    print(pc.path)
 
     pc.start_process("test-yxssss", "aktív", 10, 10)
+
     cluster.try_delete_computer("szamitogep4")
     cluster.force_delete_computer("szamitogep4")
