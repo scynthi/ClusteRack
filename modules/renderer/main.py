@@ -12,7 +12,7 @@ class SoftwareRender:
         self.FPS = 60
         self.screen = pg.display.set_mode(self.RES)
         self.clock = pg.time.Clock()
-        self.create_objects(r'Assets\Models\computer.obj')
+        self.create_objects(r'Assets\Models\rack_1.obj')
 
     def create_objects(self, new_object_path):
         self.camera = Camera(self, [0, 1, -10])
@@ -47,6 +47,6 @@ class SoftwareRender:
 
             # key = pg.key.get_pressed()
             # if key[pg.K_t]:
-            #     self.create_objects(r'Assets\Models\rack.obj')
+            #     self.create_objects(r'Assets\Models\rack_8.obj')
             # if key[pg.K_y]:
             #     self.create_objects(r'Assets\Models\computer.obj')
