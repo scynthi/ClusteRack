@@ -56,13 +56,17 @@ class Computer:
 
 
     def get_process_info(self, process: str) -> dict:
-        process_file_info: list = open(Path.join(self.path, process), "r", encoding="utf8").readlines()
-        process_info: list = process.split("-")
-        
-        for line in process_file_info:
-            process_file_info[process_file_info.index(line)] = line.strip()
+        if Path.exists(Path.join(self.path, process)):
+            process_info: list = process.split("-")
 
-        return {"name":str(process_info[0]), "id":str(process_info[1]), "date_started": str(process_file_info[0]), "status": str(process_file_info[1]), "cores": int(process_file_info[2]), "memory": int(process_file_info[3])}
+            file = open(Path.join(self.path, process), "r", encoding="utf8")
+            process_file_info: list = file.readlines()
+            file.close()
+            
+            for line in process_file_info:
+                process_file_info[process_file_info.index(line)] = line.strip()
+
+            return {"name":str(process_info[0]), "id":str(process_info[1]), "date_started": str(process_file_info[0]), "status": str(process_file_info[1]), "cores": int(process_file_info[2]), "memory": int(process_file_info[3])}
 
 
     def calculate_resource_usage(self) -> dict:
@@ -88,6 +92,7 @@ class Computer:
         try:
             if Path.exists(Path.join(self.path, process)):
                 os.remove(Path.join(self.path, process))
+                self.calculate_resource_usage()
                 return True
             
             print("Error while killing process: "+process+" does not exists! Perhaps you misspelled the name?")
@@ -100,11 +105,11 @@ class Computer:
     def start_process(self, process_name: str, status: str, cpu_req: int, ram_req: int) -> bool:
         try:
             if self.free_cores - cpu_req < 0:
-                print("Error while creating process: "+process_name+" -> Core limit exceeded.")
+                print(f"Error while creating process on computer ({self.name}): "+process_name+" -> Core limit exceeded.")
                 return False
             
             if self.free_memory - ram_req < 0:
-                print("Error while creating process: "+process_name+" -> Memory limit exceeded.")
+                print(f"Error while creating process on computer ({self.name}): "+process_name+" -> Memory limit exceeded.")
                 return False
 
             file = open(Path.join(self.path, process_name), "w", encoding="utf8")
@@ -112,10 +117,11 @@ class Computer:
             date_started: str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             data: str = f"{date_started}\n{status.upper()}\n{cpu_req}\n{ram_req}"
             file.write(data)
+            file.close()
 
+            self.calculate_resource_usage()
             print(f"Process ({process_name}) started successfully on computer ({self.name}).")
             return True
-        
         except:
             print("Error while creating process: "+process_name)
             return False
@@ -125,11 +131,11 @@ class Computer:
         min_memory: int = self.memory-self.free_memory
 
         if cores < min_cores:
-            print(f"Can't set core count to {cores} on computer {self.name}. Required minimum cores: {min_cores} ")
+            print(f"Can't set core count to {cores} on computer ({self.name}). Required minimum cores: {min_cores} ")
             return False
         
         if memory < min_memory:
-            print(f"Can't set memory size to {memory} on computer {self.name}. Required minimum memory size: {min_memory} ")
+            print(f"Can't set memory size to {memory} on computer ({self.name}). Required minimum memory size: {min_memory} ")
             return False
 
         prev_cores: int = self.cores
@@ -139,12 +145,14 @@ class Computer:
         self.memory = memory
         
         if self.validate_computer():
-            print(f"Succesfully edited resources on computer {self.name}. Memory: {prev_memory} -> {memory}, cores: {prev_cores} -> {cores}")
+            self.calculate_resource_usage()
+            print(f"Succesfully edited resources on computer ({self.name}). Memory: {prev_memory} -> {memory}, cores: {prev_cores} -> {cores}")
             return True
         else:
-            print(f"CRITICAL ERROR DETECTED: can't validate computer. Setting back previus resources.")
+            print(f"CRITICAL ERROR DETECTED: can't validate computer ({self.name}). Setting back previus resources.")
             self.cores = prev_cores
             self.memory = memory
+            self.calculate_resource_usage()
             return False
 
 

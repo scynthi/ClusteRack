@@ -1,5 +1,8 @@
 from modules.computer import Computer
+from cluster import Cluster
 
-pc: Computer = Computer(r".\Test folder\cluster0\szamitogep3")
+cluster = Cluster(r"C:\Github\ClusteRack\Test folder\cluster0")
 
-pc.edit_resources(400, 1000)
+
+for name in cluster.computers:
+    print(cluster.computers[name])

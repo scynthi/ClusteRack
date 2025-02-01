@@ -43,16 +43,16 @@ class Cluster:
             files: list = os.listdir(path)
             files.remove(".klaszter")
 
-            computer_list: dict = {}
+            computer_dict: dict = {}
 
             for file in files:
-                computer_list[file] = Computer(Path.join(path, file))
+                computer_dict[file] = Computer(Path.join(path, file))
             
             self.path: str = path
             self.task_list: dict = task_info_dict
-            self.computers : list = computer_list
+            self.computers : dict = computer_dict
 
-            print(f"Cluster ({cluster_name}) initialized succesfully with {len(computer_list)} computer(s).")
+            print(f"Cluster ({cluster_name}) initialized succesfully with {len(computer_dict)} computer(s).")
             
 
     def create_computer(self, computer_name: str, cores: int, memory: int) -> Computer:
