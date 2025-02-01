@@ -12,7 +12,7 @@ class EmbedRendererWindow(AppWindow):
         super().__init__()
 
         self.app : CTk = app
-        self.pygame_frame = CTkFrame(self.app, width=300, height=200)
+        self.pygame_frame = CTkFrame(self.app, width=300, height=250)
         self.pygame_frame.grid(column=0, row=0)
 
         self.running : bool = True  
