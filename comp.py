@@ -19,7 +19,6 @@ frame.grid(column=1, row=0)
 
 pc_3d: EmbedRendererWindow = EmbedRendererWindow(app)
 
-
 fig: figure.Figure = figure.Figure(figsize=(3, 3))
 canvas: FigureCanvasTkAgg = FigureCanvasTkAgg(fig, frame)
 ax: matplotlib.axes._axes.Axes = fig.add_subplot()

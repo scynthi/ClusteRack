@@ -12,12 +12,13 @@ class SoftwareRender:
         self.FPS = 60
         self.screen = pg.display.set_mode(self.RES)
         self.clock = pg.time.Clock()
-        self.create_objects()
+        self.create_objects(r'Assets\Models\computer.obj')
 
-    def create_objects(self):
+    def create_objects(self, new_object_path):
         self.camera = Camera(self, [0, 1, -10])
         self.projection = Projection(self)
-        self.object = self.get_object_from_file('Assets\Models\computer.obj')
+
+        self.object = self.get_object_from_file(new_object_path)
         self.object.rotate_y(-math.pi / 4)
 
     def get_object_from_file(self, filename):
@@ -38,8 +39,14 @@ class SoftwareRender:
     def run(self):
         while True:
             self.draw()
-            #self.camera.control()
+            # self.camera.control() ----------- Camera distance controls
             [exit() for i in pg.event.get() if i.type == pg.QUIT]
             pg.display.set_caption("")
             pg.display.flip()
             self.clock.tick(self.FPS)
+
+            # key = pg.key.get_pressed()
+            # if key[pg.K_t]:
+            #     self.create_objects(r'Assets\Models\rack.obj')
+            # if key[pg.K_y]:
+            #     self.create_objects(r'Assets\Models\computer.obj')

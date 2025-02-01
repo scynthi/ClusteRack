@@ -49,4 +49,3 @@ class EmbedRendererWindow(AppWindow):
 
             pygame.display.update()
             time.sleep(0.01)
-

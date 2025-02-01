@@ -39,18 +39,15 @@ class Camera:
 
         # Apply distance constraints after movement
         self._clamp_distance()
+
     def _clamp_distance(self):
-        """Keep camera within min/max distance from origin"""
-        # Get 3D position without homogeneous coordinate
         pos = self.position[:3]
         distance = np.linalg.norm(pos)
         
         if distance < self.min_distance:
-            # Move back to minimum distance
             direction = pos / distance if distance != 0 else np.array([0, 0, -1])
             self.position[:3] = direction * self.min_distance
         elif distance > self.max_distance:
-            # Pull back to maximum distance
             direction = pos / distance
             self.position[:3] = direction * self.max_distance
 
