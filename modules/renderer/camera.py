@@ -23,7 +23,6 @@ class Camera:
         self.rotation_speed = 0.015
 
     def control(self):
-        return
         key = pg.key.get_pressed()
         if key[pg.K_a]:
             self.position -= self.right * self.moving_speed

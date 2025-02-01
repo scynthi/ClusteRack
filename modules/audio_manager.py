@@ -3,7 +3,7 @@
 from pygame import mixer
 import random
 
-
+mixer.init()
 startup_channel: mixer.Channel = mixer.Channel(0)
 click_channel: mixer.Channel = mixer.Channel(1)
 misc_channel: mixer.Channel = mixer.Channel(2)
@@ -55,20 +55,23 @@ class AudioManager:
     def stop() -> None: mixer.stop()
 
 
-# Test ui -------
-# app: AppWindow = AppWindow("800x400")
-# app.grid_columnconfigure(0, weight=1)
-# app.grid_rowconfigure([0], weight=1)
+if __name__ == '__main__':
+    from ui import AppWindow, UI
+    from customtkinter import *
 
-# center_frame: CTkFrame = CTkFrame(app)
-# center_frame.grid(column=0, row=0)
+    app: AppWindow = AppWindow("800x400")
+    app.grid_columnconfigure(0, weight=1)
+    app.grid_rowconfigure([0], weight=1)
 
-# UI.Button(center_frame, text="Start", command=AudioManager.play_startup).grid(column=0, row=2)
-# UI.Button(center_frame, text="Click", command=AudioManager.play_rnd_click).grid(column=1, row=2)
-# UI.Button(center_frame, text="Stop", command=AudioManager.stop).grid(column=0, row=3)
-# UI.Button(center_frame, text="Close Computer", command=AudioManager.play_close_computer).grid(column=2, row=2)
-# UI.Button(center_frame, text="Close Program", command=AudioManager.play_close_program).grid(column=3, row=2)
-# UI.Button(center_frame, text="Error", command=AudioManager.play_error).grid(column=4, row=2)
-# UI.Button(center_frame, text="Notification", command=AudioManager.play_notification).grid(column=5, row=2)
+    center_frame: CTkFrame = CTkFrame(app)
+    center_frame.grid(column=0, row=0)
 
-# app.mainloop()
+    UI.Button(center_frame, text="Start", command=AudioManager.play_startup).grid(column=0, row=2)
+    UI.Button(center_frame, text="Click", command=AudioManager.play_rnd_click).grid(column=1, row=2)
+    UI.Button(center_frame, text="Stop", command=AudioManager.stop).grid(column=0, row=3)
+    UI.Button(center_frame, text="Close Computer", command=AudioManager.play_close_computer).grid(column=2, row=2)
+    UI.Button(center_frame, text="Close Program", command=AudioManager.play_close_program).grid(column=3, row=2)
+    UI.Button(center_frame, text="Error", command=AudioManager.play_error).grid(column=4, row=2)
+    UI.Button(center_frame, text="Notification", command=AudioManager.play_notification).grid(column=5, row=2)
+
+    app.mainloop()

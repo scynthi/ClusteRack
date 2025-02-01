@@ -7,7 +7,7 @@ import pygame as pg
 class SoftwareRender:
     def __init__(self):
         pg.init()
-        self.RES = self.WIDTH, self.HEIGHT = 700, 500 
+        self.RES = self.WIDTH, self.HEIGHT = 300, 200 
         self.H_WIDTH, self.H_HEIGHT = self.WIDTH // 2, self.HEIGHT // 2
         self.FPS = 60
         self.screen = pg.display.set_mode(self.RES)
@@ -38,7 +38,7 @@ class SoftwareRender:
     def run(self):
         while True:
             self.draw()
-            self.camera.control()
+            #self.camera.control()
             [exit() for i in pg.event.get() if i.type == pg.QUIT]
             pg.display.set_caption("")
             pg.display.flip()
