@@ -54,8 +54,9 @@ class Cluster:
 
             print(f"Cluster ({cluster_name}) initialized succesfully with {len(computer_dict)} computer(s).")
             self.initialized : bool = True
-            return
-        self.initialized : bool = False  
+        else:
+            print(f"Cluster can't be initialized with path given: {path}.")
+            self.initialized : bool = False  
 
     def create_computer(self, computer_name: str, cores: int, memory: int) -> Computer:
         path: str = Path.join(self.path, computer_name)
@@ -64,18 +65,17 @@ class Cluster:
             print(f"Computer ({computer_name}) already exists and will NOT be created.")
             return self.computers[computer_name]
         
-        # try:
-        os.mkdir(path)
-        config_file = open(Path.join(path, ".szamitogep_config"), "w", encoding="utf8")
-        config_file.write(f"{cores}\n{memory}")
-        config_file.close()
+        try:
+            os.mkdir(path)
+            config_file = open(Path.join(path, ".szamitogep_config"), "w", encoding="utf8")
+            config_file.write(f"{cores}\n{memory}")
+            config_file.close()
 
-        print(f"Computer ({computer_name}) created successfully.")
-        return Computer(path)
-        
-        # except:
-        #     print(f"Error while creating computer '{computer_name}'.")
-        #     return
+            print(f"Computer ({computer_name}) created successfully.")
+            return Computer(path)   
+        except:
+            print(f"Error while creating computer '{computer_name}'.")
+            return
 
 
     def try_delete_computer(self, computer_name: str) -> bool:
@@ -85,16 +85,20 @@ class Cluster:
             print(f"Computer ({computer_name}) does not exist! Did you misspell the name?")
             return False
         
-        computer: Computer = Computer(path)
-        if computer.get_processes():
-            print(f"Unable to delete computer '{computer_name}'. It has processes, try using force_delete_computer().")
-            return False
-        
-        os.remove(Path.join(path, ".szamitogep_config"))
-        os.rmdir(path)
+        try:
+            computer: Computer = Computer(path)
+            if computer.get_processes():
+                print(f"Unable to delete computer '{computer_name}'. It has processes, try using force_delete_computer().")
+                return False
+            
+            os.remove(Path.join(path, ".szamitogep_config"))
+            os.rmdir(path)
 
-        print(f"Computer '{computer_name}' deleted successfully.")
-        return True
+            print(f"Computer '{computer_name}' deleted successfully.")
+            return True
+        except:
+            print(f"Unable to delete computer ({computer_name}).")
+            return False
 
 
     def force_delete_computer(self, computer_name: str) -> bool:
@@ -111,7 +115,6 @@ class Cluster:
             os.rmdir(path)
             print(f"Successfully force deleted computer ({computer_name}).")
             return True
-        
         except:
             print(f"CRITICAL ERROR DETECTED: forced deletion failed for computer {computer_name}.")
             return False
@@ -135,12 +138,13 @@ class Cluster:
             self.__init__(self.path)
 
             self.reload_computers()
-
+            return True
         except Exception as e:
             print(f"Error renaming cluster: {e}")
+            return False
         
 
-    def reload_computers(self):
+    def reload_computers(self) -> None:
         for name in self.computers:
             pc = self.computers[name]
             pc.__init__(Path.join(self.path, name))
