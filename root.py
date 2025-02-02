@@ -28,6 +28,7 @@ class Root:
             self.name :str = root_name
             self.clusters : dict = cluster_dict
 
+
     def create_cluster(self, cluster_name: str) -> Cluster:
         path: str = Path.join(self.path, cluster_name)
 
@@ -106,7 +107,18 @@ class Root:
 if __name__ == "__main__":
     root : Root = Root(r".\Test folder")
 
-    root.force_delete_cluster("cluster2")
+    cluster1 : Cluster = root.create_cluster("cluster1")
+
+    pc1 : Computer = cluster1.create_computer("computer1", 1000, 7000)
+    pc2 : Computer = cluster1.create_computer("computer2", 1000, 7000)
+    pc3 : Computer = cluster1.create_computer("computer3", 1000, 7000)
+
+    cluster1.rename_cluster("klaszter1")
+
+    # pc1.start_process("ultrakill-abcdef", True, 500, 2000)
+    
+
+
 
     # cluster : Cluster = root.create_cluster("cluster2")
 
