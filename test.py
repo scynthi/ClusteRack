@@ -1,8 +1,6 @@
 from modules.computer import Computer
 from cluster import Cluster
 
-cluster = Cluster(r"C:\Github\ClusteRack\Test folder\cluster0")
+pc: Computer = Computer(r".\Test folder\anyad\szamitogep1")
 
-
-for name in cluster.computers:
-    print(cluster.computers[name])
+print(pc.calculate_resource_usage())

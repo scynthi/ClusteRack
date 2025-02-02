@@ -50,7 +50,8 @@ class Computer:
             files.remove(".szamitogep_config")
 
         for process in files:
-            process_list[process] = self.get_process_info(process)
+            if self.get_process_info(process)["status"] == "AKTÍV":
+                process_list[process] = self.get_process_info(process)
             
         return process_list
 
@@ -66,7 +67,11 @@ class Computer:
             for line in process_file_info:
                 process_file_info[process_file_info.index(line)] = line.strip()
 
-            return {"name":str(process_info[0]), "id":str(process_info[1]), "date_started": str(process_file_info[0]), "status": str(process_file_info[1]), "cores": int(process_file_info[2]), "memory": int(process_file_info[3])}
+            status: bool = False
+            if str(process_file_info[1]).upper() == "AKTÍV":
+                status = True
+
+            return {"name":str(process_info[0]), "id":str(process_info[1]), "date_started": str(process_file_info[0]), "status": status, "cores": int(process_file_info[2]), "memory": int(process_file_info[3])}
 
 
     def calculate_resource_usage(self) -> dict:
@@ -102,7 +107,7 @@ class Computer:
             return False
 
     
-    def start_process(self, process_name: str, status: str, cpu_req: int, ram_req: int) -> bool:
+    def start_process(self, process_name: str, running: bool, cpu_req: int, ram_req: int) -> bool:
         try:
             if self.free_cores - cpu_req < 0:
                 print(f"Error while creating process on computer ({self.name}): "+process_name+" -> Core limit exceeded.")
@@ -115,7 +120,12 @@ class Computer:
             file = open(Path.join(self.path, process_name), "w", encoding="utf8")
 
             date_started: str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            data: str = f"{date_started}\n{status.upper()}\n{cpu_req}\n{ram_req}"
+            status : str = "inaktív".upper()
+
+            if running:
+                status = "aktív".upper()
+
+            data: str = f"{date_started}\n{status}\n{cpu_req}\n{ram_req}"
             file.write(data)
             file.close()
 
