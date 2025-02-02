@@ -53,7 +53,9 @@ class Cluster:
             self.computers : dict = computer_dict
 
             print(f"Cluster ({cluster_name}) initialized succesfully with {len(computer_dict)} computer(s).")
-            
+            self.initialized : bool = True
+            return
+        self.initialized : bool = False  
 
     def create_computer(self, computer_name: str, cores: int, memory: int) -> Computer:
         path: str = Path.join(self.path, computer_name)
@@ -115,10 +117,16 @@ class Cluster:
             return False
 
 
-    def edit_cluster_name(self, new_name : str = "Default Cluster") -> None:
+    def edit_cluster_name(self, new_name : str = "Default Cluster") -> bool:
+
+        if not self.initialized:
+            print(f"Cluster failed to initialize so renaming can'T be done. New cluster name would be: {new_name}.")
+            return False
+        
         try:
-            parent_dir = Path.dirname(self.path)
-            new_path = Path.join(parent_dir, new_name)
+            parent_dir: str = Path.dirname(self.path)
+            new_path: str = Path.join(parent_dir, new_name)
+
             os.rename(self.path, new_path)
             self.path = new_path
             print(f"Cluster folder renamed to '{new_name}' successfully.")
