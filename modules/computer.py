@@ -12,6 +12,10 @@ class Computer:
             config: list = config_file.readlines()
             config_file.close()
 
+            if len(config) != 2:
+                print(f"Invalid configuration file at path: {path}")
+                return False
+            
             computer_name: str = path.split(os.sep)[-1]
             cores: int = int(config[0])
             memory: int = int(config[1])
@@ -28,6 +32,7 @@ class Computer:
 
 
     def validate_computer(self) -> bool:
+            self.cleanup()
             usage: dict = self.calculate_resource_usage()
 
             if usage["memory_usage_percent"] > 100:
@@ -41,6 +46,25 @@ class Computer:
             return True
 
 
+    def calculate_resource_usage(self) -> dict:
+        processes: dict = self.get_processes()
+
+        memory_usage: int = 0
+        cpu_usage: int = 0
+
+        for _, info in processes.items():
+            if info["status"]:
+                memory_usage += int(info["memory"])
+                cpu_usage += int(info["cores"])
+
+        self.free_memory: int = self.memory - memory_usage
+        self.free_cores: int = self.cores - cpu_usage
+
+        memory_usage_percentage: float = round(memory_usage / self.memory * 100, 1)
+        cpu_usage_percentage: float = round(cpu_usage / self.cores * 100, 1)
+
+        return {"memory_usage_percent": memory_usage_percentage, "core_usage_percent": cpu_usage_percentage}
+    
 
     def get_processes(self) -> dict:
         files: list = os.listdir(self.path)
@@ -50,9 +74,12 @@ class Computer:
             files.remove(".szamitogep_config")
 
         for process in files:
-            if self.get_process_info(process)["status"] == "AKTÍV":
+            try:
                 process_list[process] = self.get_process_info(process)
-            
+            except:
+                print(f"CRITICAL ERROR DETECTED: process ({process}) is incorrect.")
+    
+
         return process_list
 
 
@@ -67,30 +94,58 @@ class Computer:
             for line in process_file_info:
                 process_file_info[process_file_info.index(line)] = line.strip()
 
+            
             status: bool = False
             if str(process_file_info[1]).upper() == "AKTÍV":
                 status = True
+            elif str(process_file_info[1]).upper() == "":
+                self.edit_process_status(process, False)
 
-            return {"name":str(process_info[0]), "id":str(process_info[1]), "date_started": str(process_file_info[0]), "status": status, "cores": int(process_file_info[2]), "memory": int(process_file_info[3])}
+            return {"name":str(process_info[0]), "id":str(process_info[1]), "status": status, "cores": int(process_file_info[2]), "memory": int(process_file_info[3]), "date_started": str(process_file_info[0])}
 
 
-    def calculate_resource_usage(self) -> dict:
-        processes: dict = self.get_processes()
+    def start_process_with_dict(self, process_info: dict) -> bool:
+        name: str = process_info["name"]
+        id: str = process_info["id"]
+        status: bool = process_info["status"]
+        cpu_req: int = process_info["cores"]
+        ram_req: int = process_info["memory"]
+        date_started : str = process_info["date_started"]
 
-        memory_usage: int = 0
-        cpu_usage: int = 0
+        return self.start_process(name+"-"+id, status, cpu_req, ram_req, date_started)
 
-        for _, info in processes.items():
-            memory_usage += int(info["memory"])
-            cpu_usage += int(info["cores"])
 
-        self.free_memory: int = self.memory - memory_usage
-        self.free_cores: int = self.cores - cpu_usage
+    def start_process(self, process_name: str, running: bool, cpu_req: int, ram_req: int, date_started : str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')) -> bool:
+        if Path.exists(Path.join(self.path, process_name)):
+            print(f"{process_name} is already running on computer ({self.name})")
+            return False
+        
+        try:
+            if self.free_cores - cpu_req < 0:
+                print(f"Error while creating process on computer ({self.name}): "+process_name+" -> Core limit exceeded.")
+                return False
+            
+            if self.free_memory - ram_req < 0:
+                print(f"Error while creating process on computer ({self.name}): "+process_name+" -> Memory limit exceeded.")
+                return False
 
-        memory_usage_percentage: float = round(memory_usage / self.memory * 100, 1)
-        cpu_usage_percentage: float = round(cpu_usage / self.cores * 100, 1)
 
-        return {"memory_usage_percent": memory_usage_percentage, "core_usage_percent": cpu_usage_percentage}
+            status : str = "INAKTÍV"
+            if running:
+                status = "AKTÍV"
+            
+            data: str = f"{date_started}\n{status}\n{cpu_req}\n{ram_req}"
+
+            file = open(Path.join(self.path, process_name), "w", encoding="utf8")
+            file.write(data)
+            file.close()
+
+            self.calculate_resource_usage()
+            print(f"Process ({process_name}) started successfully on computer ({self.name}).")
+            return True
+        except:
+            print("Error while creating process: "+process_name)
+            return False
 
 
     def kill_process(self, process: str) -> bool:
@@ -106,35 +161,31 @@ class Computer:
             print("Error while killing process: "+process)
             return False
 
-    
-    def start_process(self, process_name: str, running: bool, cpu_req: int, ram_req: int) -> bool:
+
+    def edit_process_status(self, process_name: str, running : bool) -> bool:
+        if not Path.exists(Path.join(self.path, process_name)):
+            print(f"Process ({process_name}) was not found on computer ({self.name})")
+            return False
+        
         try:
-            if self.free_cores - cpu_req < 0:
-                print(f"Error while creating process on computer ({self.name}): "+process_name+" -> Core limit exceeded.")
-                return False
+            process_info : dict = self.get_process_info(process_name)
             
-            if self.free_memory - ram_req < 0:
-                print(f"Error while creating process on computer ({self.name}): "+process_name+" -> Memory limit exceeded.")
-                return False
+            process_info["status"] = running
+            status : str = "INAKTÍV"
+            if running:
+                status = "AKTÍV"
 
             file = open(Path.join(self.path, process_name), "w", encoding="utf8")
-
-            date_started: str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            status : str = "inaktív".upper()
-
-            if running:
-                status = "aktív".upper()
-
-            data: str = f"{date_started}\n{status}\n{cpu_req}\n{ram_req}"
+            data: str = f"{process_info["date_started"]}\n{status}\n{process_info["cores"]}\n{process_info["memory"]}"
             file.write(data)
             file.close()
 
-            self.calculate_resource_usage()
-            print(f"Process ({process_name}) started successfully on computer ({self.name}).")
+            print(f"Process ({process_name})'s status has been set to: {running}")
             return True
         except:
-            print("Error while creating process: "+process_name)
+            print(f"Error while editing process ({process_name})'s status.")
             return False
+
 
     def edit_resources(self, cores: int, memory: int) -> bool:
         min_cores: int = self.cores-self.free_cores
@@ -164,3 +215,29 @@ class Computer:
             self.memory = memory
             self.calculate_resource_usage()
             return False
+
+
+    def cleanup(self) -> bool:
+        files: list = os.listdir(self.path)
+        
+        print("Starting cleanup...")
+
+        if Path.exists(Path.join(self.path, ".szamitogep_config")):
+            files.remove(".szamitogep_config")
+
+        removed_files : int = 0
+
+        for file in files:
+            try:
+                self.get_process_info(file)
+            except:
+                try:
+                    print(f"Removing file ({file}).")
+                    os.remove(Path.join(self.path, file))
+                    removed_files += 1
+                except:
+                    print(f"CRITICAL ERROR DETECTED: can't delete file ({file}). Computer might be unstable.")
+                    return False
+        
+        print(f"Cleanup completed. Removed a total of {removed_files} files.")
+        return True
