@@ -116,27 +116,33 @@ class Cluster:
 
 
     def edit_cluster_name(self, new_name : str = "Default Cluster") -> None:
-        parent_dir = Path.dirname(self.path)
-        new_path = Path.join(parent_dir, new_name)
-
         try:
+            parent_dir = Path.dirname(self.path)
+            new_path = Path.join(parent_dir, new_name)
             os.rename(self.path, new_path)
             self.path = new_path
             print(f"Cluster folder renamed to '{new_name}' successfully.")
 
+            #Reload self and children -- so the path updates everywhere
             self.__init__(self.path)
 
-            for name in self.computers:
-                pc = self.computers[name]
-                pc.__init__(Path.join(self.path, name))
+            self.reload_computers()
 
         except Exception as e:
             print(f"Error renaming cluster: {e}")
+        
+
+    def reload_computers(self):
+        for name in self.computers:
+            pc = self.computers[name]
+            pc.__init__(Path.join(self.path, name))
 
 
 
 if __name__ == "__main__":
     cluster: Cluster = Cluster(r".\Test folder\cluster0")
+
+    cluster.edit_cluster_name("anyad")
 
     pc: Computer = cluster.create_computer("szamitogep4", 1000, 8000)
     print(pc.path)
