@@ -6,17 +6,16 @@ from modules.computer import Computer
 class Cluster:
     def __init__(self, path: str):
         path : str = Path.normpath(fr"{path}")
+        cluster_name: str = path.split(os.sep)[-1]
 
         if Path.exists(Path.join(path, ".klaszter")):
             config_file = open(Path.join(path, ".klaszter"), "r", encoding="utf8")
             config: list = config_file.readlines()
             config_file.close()
 
-            cluster_name: str = path.split(os.sep)[-1]
-
             for line in config:
                 config[config.index(line)] = line.strip()
-            
+
             app_list: list = []
             instance_count_list: list = []
             cores_list: list = []
@@ -39,24 +38,29 @@ class Cluster:
             for i, app in enumerate(app_list):
                 task_info_dict[app] = {"instance_count": instance_count_list[i], "cores": cores_list[i], "memory": memory_list[i]}
 
+            self.task_list: dict = task_info_dict
 
-            files: list = os.listdir(path)
+        else:
+            print(f"Cluster {cluster_name} doesn`t have a config file") 
+        
+        
+
+        files: list = os.listdir(path)
+
+        if ".klaszter" in files:
             files.remove(".klaszter")
 
-            computer_dict: dict = {}
+        computer_dict: dict = {}
 
-            for file in files:
-                computer_dict[file] = Computer(Path.join(path, file))
-            
-            self.path: str = path
-            self.task_list: dict = task_info_dict
-            self.computers : dict = computer_dict
+        for file in files:
+            computer_dict[file] = Computer(Path.join(path, file))
+        
+        self.path: str = path
+        
+        self.computers : dict = computer_dict
 
-            print(f"Cluster ({cluster_name}) initialized succesfully with {len(computer_dict)} computer(s).")
-            self.initialized : bool = True
-        else:
-            print(f"Cluster can't be initialized with path given: {path}.")
-            self.initialized : bool = False  
+        print(f"Cluster ({cluster_name}) initialized succesfully with {len(computer_dict)} computer(s).")
+        self.initialized : bool = True
 
     def create_computer(self, computer_name: str, cores: int, memory: int) -> Computer:
         path: str = Path.join(self.path, computer_name)
@@ -116,19 +120,22 @@ class Cluster:
             print(f"Successfully force deleted computer ({computer_name}).")
             return True
         except:
-            print(f"CRITICAL ERROR DETECTED: forced deletion failed for computer {computer_name}.")
+            print(f"CRITICAL ERROR DETECTED: force deletion failed for computer {computer_name}.")
             return False
 
 
-    def edit_cluster_name(self, new_name : str = "Default Cluster") -> bool:
-
+    def rename_cluster(self, new_name : str = "Default Cluster") -> bool:
         if not self.initialized:
-            print(f"Cluster failed to initialize so renaming can'T be done. New cluster name would be: {new_name}.")
+            print(f"Cluster failed to initialize so renaming can't be done. New cluster name would be: {new_name}.")
             return False
         
         try:
             parent_dir: str = Path.dirname(self.path)
             new_path: str = Path.join(parent_dir, new_name)
+
+            if Path.exists(new_path):
+                print(f"Renaming failed. There is already a cluster called {new_name}.")
+                return False
 
             os.rename(self.path, new_path)
             self.path = new_path
@@ -138,6 +145,7 @@ class Cluster:
             self.__init__(self.path)
             self.reload_computers()
             return True
+
         except Exception as e:
             print(f"Error renaming cluster: {e}")
             return False
@@ -153,9 +161,9 @@ class Cluster:
 if __name__ == "__main__":
     cluster: Cluster = Cluster(r".\Test folder\cluster0")
 
-    cluster.edit_cluster_name("anyad")
+    # cluster.edit_cluster_name("cluster0")
 
     pc: Computer = cluster.create_computer("szamitogep4", 1000, 8000)
     print(pc.path)
 
-    cluster.force_delete_computer("szamitogep4")
+    # cluster.force_delete_computer("szamitogep4")

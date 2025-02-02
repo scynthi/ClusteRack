@@ -1,5 +1,5 @@
 from modules.computer import Computer
-from cluster import Cluster
+from modules.cluster import Cluster
 
 cluster = Cluster(r"Test folder\anyad")
 
