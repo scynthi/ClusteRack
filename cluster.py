@@ -66,6 +66,7 @@ class Cluster:
         os.mkdir(path)
         config_file = open(Path.join(path, ".szamitogep_config"), "w", encoding="utf8")
         config_file.write(f"{cores}\n{memory}")
+        config_file.close()
 
         print(f"Computer ({computer_name}) created successfully.")
         return Computer(path)
@@ -136,13 +137,8 @@ class Cluster:
 
 if __name__ == "__main__":
     cluster: Cluster = Cluster(r".\Test folder\cluster0")
-    
-    cluster.edit_cluster_name("cluster0")
 
     pc: Computer = cluster.create_computer("szamitogep4", 1000, 8000)
     print(pc.path)
 
-    pc.start_process("test-yxssss", "aktív", 10, 10)
-
-    cluster.try_delete_computer("szamitogep4")
     cluster.force_delete_computer("szamitogep4")
