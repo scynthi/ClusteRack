@@ -96,7 +96,11 @@ class Root:
             return False
 
 
-    def move_computer(self, origin, destination, computer):
+    def relocate_process(self, process, origin, destination):
+        pass
+
+
+    def move_computer(self, computer, origin, destination):
         pass
 
 if __name__ == "__main__":
