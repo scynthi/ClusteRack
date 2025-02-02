@@ -154,5 +154,3 @@ class Computer:
             self.memory = memory
             self.calculate_resource_usage()
             return False
-
-

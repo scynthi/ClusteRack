@@ -1,8 +1,8 @@
 from modules.computer import Computer
 from cluster import Cluster
 
-cluster = Cluster(r"C:\Github\ClusteRack\Test folder\cluster0")
+cluster = Cluster(r"Test folder\anyad")
 
 
 for name in cluster.computers:
-    print(cluster.computers[name])
+    pc: Computer = cluster.computers[name]
