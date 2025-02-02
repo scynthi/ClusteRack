@@ -136,7 +136,6 @@ class Cluster:
 
             #Reload self and children -- so the path updates everywhere
             self.__init__(self.path)
-
             self.reload_computers()
             return True
         except Exception as e:
@@ -147,7 +146,7 @@ class Cluster:
     def reload_computers(self) -> None:
         for name in self.computers:
             pc = self.computers[name]
-            pc.__init__(Path.join(self.path, name))
+            self.computers[name] = pc.__init__(Path.join(self.path, name))
 
 
 

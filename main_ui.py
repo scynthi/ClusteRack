@@ -27,5 +27,5 @@ def set_folder_path() -> None:
         return
 
     path_label._text = "Nincsen mappa"
-    
+
 app.mainloop()
