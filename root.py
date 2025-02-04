@@ -38,6 +38,8 @@ class Root:
         
         try:
             os.mkdir(path)
+            file = open(Path.join(path, ".klaszter"), "w", encoding="utf8")
+            file.close()
             print(f"Cluster ({cluster_name}) created successfully.")
 
             return Cluster(path)
@@ -107,13 +109,13 @@ class Root:
 if __name__ == "__main__":
     root : Root = Root(r".\Test folder")
 
-    cluster1 : Cluster = root.create_cluster("cluster1")
+    cluster1 : Cluster = root.create_cluster("cluster3")
 
     pc1 : Computer = cluster1.create_computer("computer1", 1000, 7000)
     pc2 : Computer = cluster1.create_computer("computer2", 1000, 7000)
     pc3 : Computer = cluster1.create_computer("computer3", 1000, 7000)
 
-    cluster1.rename_cluster("klaszter1")
+    # cluster1.rename_cluster("klaszter1")
 
     # pc1.start_process("ultrakill-abcdef", True, 500, 2000)
     

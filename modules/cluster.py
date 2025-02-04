@@ -151,6 +151,9 @@ class Cluster:
             print(f"Error renaming cluster: {e}")
             return False
         
+    def start_process():
+        pass
+        
 
     def reload_computers(self) -> None:
         for name in self.computers:
