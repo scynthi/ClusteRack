@@ -40,6 +40,8 @@ class Root:
             os.mkdir(path)
             print(f"Cluster ({cluster_name}) created successfully.")
 
+            self.__init__(self.path)
+
             return Cluster(path)
         except:
             print(f"Error while creating cluster '{cluster_name}'.")
@@ -63,6 +65,8 @@ class Root:
                 os.remove(Path.join(path, ".klaszter"))
             
             os.rmdir(path)
+            self.__init__(self.path)
+
             print(f"Cluster '{cluster_name}' deleted successfully.")
             return True
 
@@ -86,8 +90,9 @@ class Root:
 
             for computer in cluster.computers:
                 cluster.force_delete_computer(computer)
-            
+                        
             os.rmdir(path)
+            self.__init__(self.path)
 
             print(f"Successfully force deleted cluster ({cluster_name}).")
             return True
@@ -101,8 +106,38 @@ class Root:
         pass
 
 
-    def move_computer(self, computer, origin, destination):
+    def move_computer(self, computer_name: str, origin_cluster_name: str, destination_cluster_name: str) -> bool:
+        if not self.clusters[origin_cluster_name]:
+            print(f"The origin cluster {origin_cluster_name} could not be found. Perhapse you misstyped the name")
+            return False
+
+        if not self. clusters[destination_cluster_name]:
+            print(f"The destination cluster {destination_cluster_name} could not be found. Perhapse you misstyped the name")
+            return False
+
+        origin_cluster : Cluster = self.clusters[origin_cluster_name]
+        destination_cluster : Cluster = self.clusters[destination_cluster_name]
+
+
+        if not origin_cluster.computers[computer_name]:
+            print(f"The computer ({computer_name}) could not be found under the cluster({origin_cluster_name}). Perhapse you misstyped the name")
+            return False
+        
+        computer : Computer = origin_cluster.computers[computer_name]
+
+        computer_stats_dict : dict = {
+            "computer_name" : computer.name,
+            "computer_memory" : computer.memory,
+            "computer_cores" : computer.cores,
+            "computer_process_dict" : computer.get_processes()
+        }
+
+        origin_cluster.force_delete_computer(computer_name)
+
+        destination_cluster.create_computer(computer_stats_dict["computer_name"],computer_stats_dict["computer_cores"],computer_stats_dict["computer_memory"])
+
         pass
+    
 
 if __name__ == "__main__":
     root : Root = Root(r".\Test folder")
