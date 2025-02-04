@@ -104,8 +104,27 @@ class Root:
             return False
 
 
-    def relocate_process(self, process, origin, destination):
-        pass
+    def relocate_process(self, process: str, origin_cluster: str, origin_computer: str, destination_cluster: str, destination_computer: str) -> bool:
+        if not self.clusters.get(origin_cluster) or not self.clusters.get(destination_cluster):
+            print("Either the origin or the destination cluster does not exist.")
+            return
+        
+        origin_computer_found : bool = False
+        destination_computer_found : bool = False
+        
+        for cluster in self.clusters.values():
+            current_cluster : Cluster = cluster
+
+            for computer in current_cluster.computers.values():
+                current_computer : Computer = computer
+
+                if current_computer.name == origin_computer:
+                    origin_computer_found = True
+                elif current_computer.name == destination_computer:
+                    destination_computer_found = True
+    
+
+        
 
 
     def move_computer(self, computer_name: str, origin_cluster_name: str, destination_cluster_name: str) -> bool:
