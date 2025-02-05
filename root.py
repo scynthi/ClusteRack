@@ -104,13 +104,17 @@ class Root:
             return False
 
 
-    def relocate_process(self, process: str, origin_cluster: str, origin_computer: str, destination_cluster: str, destination_computer: str) -> bool:
-        if not self.clusters.get(origin_cluster) or not self.clusters.get(destination_cluster):
+    def relocate_process(self, process_name: str, origin_cluster_name: str, origin_computer_name: str, destination_cluster_name: str, destination_computer_name: str) -> bool:
+        origin_cluster : Cluster = self.clusters.get(origin_cluster_name)
+        destination_cluster : Cluster = self.clusters.get(destination_cluster_name)
+
+        if origin_cluster == None or destination_cluster == None:
             print("Either the origin or the destination cluster does not exist.")
-            return
-        
-        origin_computer_found : bool = False
-        destination_computer_found : bool = False
+            return False
+    
+
+        origin_computer : Computer = None
+        destination_computer : Computer = None
         
         for cluster in self.clusters.values():
             current_cluster : Cluster = cluster
@@ -118,11 +122,29 @@ class Root:
             for computer in current_cluster.computers.values():
                 current_computer : Computer = computer
 
-                if current_computer.name == origin_computer:
-                    origin_computer_found = True
-                elif current_computer.name == destination_computer:
-                    destination_computer_found = True
-    
+                if current_computer.name == origin_computer_name:
+                    origin_computer = current_computer
+                elif current_computer.name == destination_computer_name:
+                    destination_computer  = current_computer
+        
+        if origin_computer == None or destination_computer == None:
+            print("Either the origin or the destination computer does not exist.")
+            return False
+        
+        if process_name in origin_computer.get_processes().keys():
+            print(f"A program with the same name and id is already running on comouter {destination_computer_name}.")
+            return False
+
+        process_info : dict = origin_computer.get_process_info(process_name)
+        origin_computer.kill_process(process_name)
+        destination_computer.start_process_with_dict(process_info)
+        
+
+        print(f"Succesfully moved process {process_name} from {origin_cluster_name}/{origin_computer_name} to cluster {destination_cluster_name}/{destination_computer_name}.")
+        return False
+
+
+
 
         
 
