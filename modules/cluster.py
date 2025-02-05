@@ -1,6 +1,7 @@
 import os
 from os import path as Path
 from modules.computer import Computer
+from colorama import Fore, Style, Back
 
 
 class Cluster:

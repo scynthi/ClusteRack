@@ -1,7 +1,7 @@
 import os
 from os import path as Path
 from datetime import datetime
-
+from colorama import Fore, Style, Back
 
 class Computer:
     def __init__(self, path: str) -> None:
@@ -116,6 +116,15 @@ class Computer:
 
 
     def start_process(self, process_name: str, running: bool, cpu_req: int, ram_req: int, date_started : str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')) -> bool:
+        if not "-" in process_name:
+            print(f"{process_name} does not have a ID. Put a ID in the program name and try again.")
+            return False
+            
+        if process_name.split("-")[1]:
+            print(f"{process_name} does not have a ID. Put a ID in the program name and try again.")
+            return False
+
+
         if Path.exists(Path.join(self.path, process_name)):
             print(f"{process_name} is already running on computer ({self.name})")
             return False

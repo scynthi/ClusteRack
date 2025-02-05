@@ -2,6 +2,8 @@
 # from modules.ui import UI, AppWindow
 from pygame import mixer
 import random
+from colorama import Fore, Style, Back
+
 
 small_click_list: list[str] = [
     r"Assets\Sounds\small_click1.wav",
@@ -10,7 +12,6 @@ small_click_list: list[str] = [
 ]
 
 
-    
 class AudioManager:
     def __init__(self) -> None:
 
