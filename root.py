@@ -112,33 +112,44 @@ class Root:
         if origin_cluster == None or destination_cluster == None:
             print("Either the origin or the destination cluster does not exist.")
             return False
-    
+        
 
         origin_computer : Computer = None
         destination_computer : Computer = None
         
-        for cluster in self.clusters.values():
-            current_cluster : Cluster = cluster
+        for computer in origin_cluster.computers.values():
+            pc : Computer = computer
 
-            for computer in current_cluster.computers.values():
-                current_computer : Computer = computer
+            if pc.name == origin_computer_name:
+                origin_computer = pc
 
-                if current_computer.name == origin_computer_name:
-                    origin_computer = current_computer
-                elif current_computer.name == destination_computer_name:
-                    destination_computer  = current_computer
+        for computer in destination_cluster.computers.values():
+            pc : Computer = computer
+            
+            if pc.name == destination_computer_name:
+                destination_computer = pc
         
         if origin_computer == None or destination_computer == None:
             print("Either the origin or the destination computer does not exist.")
             return False
         
-        if process_name in origin_computer.get_processes().keys():
-            print(f"A program with the same name and id is already running on comouter {destination_computer_name}.")
+        if process_name in destination_computer.get_processes().keys():
+            print(f"A process with the same name and id is already running on computer {destination_computer_name}.")
             return False
 
+        if not process_name in origin_computer.get_processes().keys():
+            print(f"Process {process_name} does not exists on computer {origin_cluster_name}/{origin_computer_name}.")
+            return False
+        
+
         process_info : dict = origin_computer.get_process_info(process_name)
-        origin_computer.kill_process(process_name)
-        destination_computer.start_process_with_dict(process_info)
+
+        if not origin_computer.kill_process(process_name):
+            print(f"Can't kill process ({process_name}) on computer {origin_cluster_name}/{origin_computer_name}.")
+
+        if not destination_computer.start_process_with_dict(process_info):
+            print(f"Can't start process ({process_name}) on computer {destination_cluster_name}/{destination_computer_name}.")
+
         
 
         print(f"Succesfully moved process {process_name} from {origin_cluster_name}/{origin_computer_name} to cluster {destination_cluster_name}/{destination_computer_name}.")

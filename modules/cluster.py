@@ -7,7 +7,9 @@ from colorama import Fore, Style, Back
 class Cluster:
     def __init__(self, path: str):
         path : str = Path.normpath(fr"{path}")
+        self.path: str = path
         cluster_name: str = path.split(os.sep)[-1]
+        self.name : str = cluster_name
 
         if Path.exists(Path.join(path, ".klaszter")):
             config_file = open(Path.join(path, ".klaszter"), "r", encoding="utf8")
@@ -42,25 +44,24 @@ class Cluster:
             self.task_list: dict = task_info_dict
 
         else:
-            print(f"Cluster {cluster_name} doesn`t have a config file") 
+            self.print(f"Cluster {cluster_name} doesn`t have a config file") 
         
-        
-
         files: list = os.listdir(path)
 
         if ".klaszter" in files:
             files.remove(".klaszter")
+
+        self.cleanup()
 
         computer_dict: dict = {}
 
         for file in files:
             computer_dict[file] = Computer(Path.join(path, file))
         
-        self.path: str = path
-        
         self.computers : dict = computer_dict
 
-        print(f"Cluster ({cluster_name}) initialized succesfully with {len(computer_dict)} computer(s).")
+        
+        self.print(f"{Fore.BLACK}{Back.GREEN}Cluster ({cluster_name}) initialized succesfully with {len(computer_dict)} computer(s).")
         self.initialized : bool = True
 
 
@@ -68,7 +69,7 @@ class Cluster:
         path: str = Path.join(self.path, computer_name)
 
         if Path.exists(path):
-            print(f"Computer ({computer_name}) already exists and will NOT be created.")
+            self.print(f"{Fore.RED}Computer ({computer_name}) already exists and will NOT be created.")
             return self.computers[computer_name]
         
         try:
@@ -77,10 +78,10 @@ class Cluster:
             config_file.write(f"{cores}\n{memory}")
             config_file.close()
 
-            print(f"Computer ({computer_name}) created successfully.")
+            self.print(f"{Fore.GREEN}Computer ({computer_name}) created successfully.")
             return Computer(path)   
         except:
-            print(f"Error while creating computer '{computer_name}'.")
+            self.print(f"{Fore.RED}Error while creating computer '{computer_name}'.")
             return
 
 
@@ -88,22 +89,22 @@ class Cluster:
         path: str = Path.join(self.path, computer_name)
 
         if not Path.exists(path):
-            print(f"Computer ({computer_name}) does not exist! Did you misspell the name?")
+            self.print(f"{Fore.RED}Computer ({computer_name}) does not exist! Did you misspell the name?")
             return False
         
         try:
             computer: Computer = Computer(path)
             if computer.get_processes():
-                print(f"Unable to delete computer '{computer_name}'. It has processes, try using force_delete_computer().")
+                self.print(f"{Fore.RED}Unable to delete computer '{computer_name}'. It has processes, try using force_delete_computer().")
                 return False
             
             os.remove(Path.join(path, ".szamitogep_config"))
             os.rmdir(path)
 
-            print(f"Computer '{computer_name}' deleted successfully.")
+            self.print(f"{Fore.GREEN}Computer '{computer_name}' deleted successfully.")
             return True
         except:
-            print(f"Unable to delete computer ({computer_name}).")
+            self.print(f"{Fore.RED}Unable to delete computer ({computer_name}).")
             return False
 
 
@@ -111,7 +112,7 @@ class Cluster:
         path: str = Path.join(self.path, computer_name)
 
         if not Path.exists(path):
-            print(f"Computer ({computer_name}) does not exist! Did you misspell the name?")
+            self.print(f"{Fore.RED}Computer ({computer_name}) does not exist! Did you misspell the name?")
             return False
         
         try:
@@ -119,16 +120,16 @@ class Cluster:
                 os.remove(Path.join(path, file))
 
             os.rmdir(path)
-            print(f"Successfully force deleted computer ({computer_name}).")
+            self.print(f"{Fore.GREEN}Successfully force deleted computer ({computer_name}).")
             return True
         except:
-            print(f"CRITICAL ERROR DETECTED: force deletion failed for computer {computer_name}.")
+            self.print(f"{Back.RED}{Fore.BLACK}CRITICAL ERROR DETECTED: force deletion failed for computer {computer_name}.")
             return False
 
 
     def rename_cluster(self, new_name : str) -> bool:
         if not self.initialized:
-            print(f"Cluster failed to initialize so renaming can't be done. New cluster name would be: {new_name}.")
+            self.print(f"{Fore.RED}Cluster failed to initialize so renaming can't be done. New cluster name would be: {new_name}.")
             return False
         
         try:
@@ -136,20 +137,20 @@ class Cluster:
             new_path: str = Path.join(parent_dir, new_name)
 
             if Path.exists(new_path):
-                print(f"Renaming failed. There is already a cluster called {new_name}.")
+                self.print(f"{Fore.RED}Renaming failed. There is already a cluster called {new_name}.")
                 return False
 
             os.rename(self.path, new_path)
             self.path = new_path
-            print(f"Cluster folder renamed to '{new_name}' successfully.")
+            self.print(f"{Fore.GREEN}Cluster folder renamed to '{new_name}' successfully.")
 
             #Reload self and children -- so the path updates everywhere
             self.__init__(self.path)
             self.reload_computers()
             return True
-
+            
         except Exception as e:
-            print(f"Error renaming cluster: {e}")
+            self.print(f"{Fore.BLACK}{Back.RED}CRITICAL ERROR DETECTED: Error renaming cluster: {e}")
             return False
         
     def start_process():
@@ -161,6 +162,35 @@ class Cluster:
             pc = self.computers[name]
             self.computers[name] = pc.__init__(Path.join(self.path, name))
 
+
+    def cleanup(self) -> bool:
+        files: list = os.listdir(self.path)
+        
+        self.print(f"{Fore.GREEN}Starting cleanup...")
+
+        if Path.exists(Path.join(self.path, ".klaszter")):
+            files.remove(".klaszter")
+
+        removed_files : int = 0
+
+        for file in files:
+            if Path.exists(Path.join(self.path, file, ".szamitogep_config")):
+                continue
+            
+            try:
+                if Path.isdir(Path.join(self.path, file)):
+                    os.rmdir(Path.join(self.path, file))
+                else:
+                    os.remove(Path.join(self.path, file))
+                self.print(f"{Fore.YELLOW}Removed {file} from filesystem since it was marked as incorrect. ")
+            except:
+                pass
+        
+        self.print(f"{Fore.GREEN}Cleanup completed. Removed a total of {removed_files} incorrect files plus folders.")
+        return True
+    
+    def print(self, text: str):
+        print(f"{Fore.BLACK}{Back.CYAN}[{Back.WHITE}{self.name}{Back.CYAN}]{Back.RESET}{Fore.CYAN}: {Fore.RESET+Back.RESET+Style.RESET_ALL}" + text + Fore.RESET+Back.RESET+Style.RESET_ALL)
 
 
 if __name__ == "__main__":

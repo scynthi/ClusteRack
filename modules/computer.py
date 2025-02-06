@@ -6,6 +6,8 @@ from colorama import Fore, Style, Back
 class Computer:
     def __init__(self, path: str) -> None:
         path: str = Path.normpath(fr"{path}")
+        computer_name: str = path.split(os.sep)[-1]
+        self.name: str = computer_name
 
         if Path.exists(Path.join(path, ".szamitogep_config")):
             config_file = open(Path.join(path, ".szamitogep_config"), "r", encoding="utf8")
@@ -13,22 +15,21 @@ class Computer:
             config_file.close()
 
             if len(config) != 2:
-                print(f"Invalid configuration file at path: {path}")
+                self.print(f"{Fore.RED}Invalid configuration file at path: {path}")
                 return False
             
-            computer_name: str = path.split(os.sep)[-1]
             cores: int = int(config[0])
             memory: int = int(config[1])
 
             self.cores: int = cores
             self.memory: int = memory
-            self.name: str = computer_name
+            
             self.path: str = path
 
             if not self.validate_computer(): return
-            print(f"Computer ({computer_name}) initialized with {cores} cores and {memory} of memory.\n{self.free_cores} cores and {self.free_memory} memory left free.", end="\n\n")
+            self.print(f"{Back.GREEN}{Fore.BLACK}Computer ({computer_name}) initialized with {cores} cores and {memory} of memory. {self.free_cores} cores and {self.free_memory} memory left free.{Back.RESET}\n\n")
         else:
-            print(f"There's no config file in {path}")
+            self.print(f"{Fore.RED}There's no config file in {path}")
 
 
     def validate_computer(self) -> bool:
@@ -36,11 +37,11 @@ class Computer:
             usage: dict = self.calculate_resource_usage()
 
             if usage["memory_usage_percent"] > 100:
-                print(f"Computer ({self.name}) is overloaded! Memory limit exceeded ({usage["memory_usage_percent"]}%).")
+                self.print(f"{Fore.RED}Computer ({self.name}) is overloaded! Memory limit exceeded ({usage["memory_usage_percent"]}%).")
                 return False
             
             if usage["core_usage_percent"] > 100:
-                print(f"Computer ({self.name}) is overloaded! Core limit exceeded ({usage["cpu_usage_percent"]}%).")
+                self.print(f"{Fore.RED}Computer ({self.name}) is overloaded! Core limit exceeded ({usage["cpu_usage_percent"]}%).")
                 return False
             
             return True
@@ -77,7 +78,7 @@ class Computer:
             try:
                 process_list[process] = self.get_process_info(process)
             except:
-                print(f"CRITICAL ERROR DETECTED: process ({process}) is incorrect.")
+                self.print(f"{Fore.BLACK}{Back.RED}CRITICAL ERROR DETECTED: process ({process}) is incorrect.")
     
 
         return process_list
@@ -117,25 +118,25 @@ class Computer:
 
     def start_process(self, process_name: str, running: bool, cpu_req: int, ram_req: int, date_started : str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')) -> bool:
         if not "-" in process_name:
-            print(f"{process_name} does not have a ID. Put a ID in the program name and try again.")
+            self.print(f"{Fore.RED}{process_name} does not have a ID. Put a ID in the program name and try again.")
             return False
             
-        if process_name.split("-")[1]:
-            print(f"{process_name} does not have a ID. Put a ID in the program name and try again.")
+        if not process_name.split("-")[1]:
+            self.print(f"{Fore.RED}{process_name} does not have a ID. Put a ID in the program name and try again.")
             return False
 
 
         if Path.exists(Path.join(self.path, process_name)):
-            print(f"{process_name} is already running on computer ({self.name})")
+            self.print(f"{Fore.RED}{process_name} is already running on computer ({self.name})")
             return False
         
         try:
             if self.free_cores - cpu_req < 0:
-                print(f"Error while creating process on computer ({self.name}): "+process_name+" -> Core limit exceeded.")
+                self.print(f"{Fore.RED}Error while creating process on computer ({self.name}): "+process_name+" -> Core limit exceeded.")
                 return False
             
             if self.free_memory - ram_req < 0:
-                print(f"Error while creating process on computer ({self.name}): "+process_name+" -> Memory limit exceeded.")
+                self.print(f"{Fore.RED}Error while creating process on computer ({self.name}): "+process_name+" -> Memory limit exceeded.")
                 return False
 
 
@@ -150,10 +151,10 @@ class Computer:
             file.close()
 
             self.calculate_resource_usage()
-            print(f"Process ({process_name}) started successfully on computer ({self.name}).")
+            self.print(f"{Fore.GREEN}Process ({process_name}) started successfully on computer ({self.name}).")
             return True
         except:
-            print("Error while creating process: "+process_name)
+            self.print(f"{Fore.RED}Error while creating process: {process_name}")
             return False
 
 
@@ -164,16 +165,16 @@ class Computer:
                 self.calculate_resource_usage()
                 return True
             
-            print("Error while killing process: "+process+" does not exists! Perhaps you misspelled the name?")
+            self.print(f"{Fore.RED}Error while killing process: {process} does not exists! Perhaps you misspelled the name?")
             return False
         except:
-            print("Error while killing process: "+process)
+            self.print(f"{Fore.RED}Error while killing process: {process}")
             return False
 
 
     def edit_process_status(self, process_name: str, running : bool) -> bool:
         if not Path.exists(Path.join(self.path, process_name)):
-            print(f"Process ({process_name}) was not found on computer ({self.name})")
+            self.print(f"P{Fore.RED}rocess ({process_name}) was not found on computer ({self.name})")
             return False
         
         try:
@@ -189,10 +190,10 @@ class Computer:
             file.write(data)
             file.close()
 
-            print(f"Process ({process_name})'s status has been set to: {running}")
+            self.print(f"{Fore.GREEN}Process ({process_name})'s status has been set to: {running}")
             return True
         except:
-            print(f"Error while editing process ({process_name})'s status.")
+            self.print(f"{Fore.RED}Error while editing process ({process_name})'s status.")
             return False
 
 
@@ -201,11 +202,11 @@ class Computer:
         min_memory: int = self.memory-self.free_memory
 
         if cores < min_cores:
-            print(f"Can't set core count to {cores} on computer ({self.name}). Required minimum cores: {min_cores} ")
+            self.print(f"{Fore.RED}Can't set core count to {cores} on computer ({self.name}). Required minimum cores: {min_cores} ")
             return False
         
         if memory < min_memory:
-            print(f"Can't set memory size to {memory} on computer ({self.name}). Required minimum memory size: {min_memory} ")
+            self.print(f"{Fore.RED}Can't set memory size to {memory} on computer ({self.name}). Required minimum memory size: {min_memory} ")
             return False
 
         prev_cores: int = self.cores
@@ -216,10 +217,10 @@ class Computer:
         
         if self.validate_computer():
             self.calculate_resource_usage()
-            print(f"Succesfully edited resources on computer ({self.name}). Memory: {prev_memory} -> {memory}, cores: {prev_cores} -> {cores}")
+            self.print(f"{Fore.GREEN}Succesfully edited resources on computer ({self.name}). Memory: {prev_memory} -> {memory}, cores: {prev_cores} -> {cores}")
             return True
         else:
-            print(f"CRITICAL ERROR DETECTED: can't validate computer ({self.name}). Setting back previus resources.")
+            self.print(f"{Fore.BLACK}{Back.RED}CRITICAL ERROR DETECTED: can't validate computer ({self.name}). Setting back previus resources.")
             self.cores = prev_cores
             self.memory = memory
             self.calculate_resource_usage()
@@ -229,7 +230,7 @@ class Computer:
     def cleanup(self) -> bool:
         files: list = os.listdir(self.path)
         
-        print("Starting cleanup...")
+        self.print(f"{Fore.GREEN}Starting cleanup...")
 
         if Path.exists(Path.join(self.path, ".szamitogep_config")):
             files.remove(".szamitogep_config")
@@ -241,12 +242,19 @@ class Computer:
                 self.get_process_info(file)
             except:
                 try:
-                    print(f"Removing file ({file}).")
-                    os.remove(Path.join(self.path, file))
-                    removed_files += 1
+                    if Path.isfile(Path.join(self.path, file)):
+                        self.print(f"Removing file ({file}).")
+                        os.remove(Path.join(self.path, file))
+                    else:
+                        self.print(f"Removing folder ({file}).")
+                        os.rmdir(Path.join(self.path, file))
+                        removed_files += 1
                 except:
-                    print(f"CRITICAL ERROR DETECTED: can't delete file ({file}). Computer might be unstable.")
+                    self.print(f"{Fore.BLACK}{Back.RED}CRITICAL ERROR DETECTED: can't delete file or folder ({file}). Computer might be unstable.")
                     return False
         
-        print(f"Cleanup completed. Removed a total of {removed_files} files.")
+        self.print(f"{Fore.GREEN}Cleanup completed. Removed a total of {removed_files} incorrect files plus folders.")
         return True
+    
+    def print(self, text: str):
+        print(f"{Style.BRIGHT}{Fore.CYAN}[{Fore.WHITE}{self.name}{Fore.CYAN}]: {Fore.RESET+Back.RESET+Style.RESET_ALL}" + text + Fore.RESET+Back.RESET+Style.RESET_ALL)
