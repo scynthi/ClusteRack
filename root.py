@@ -28,26 +28,27 @@ class Root:
             self.path :str = path
             self.name :str = root_name
             self.clusters : dict = cluster_dict
+            self.print("Root initialized")
 
 
     def create_cluster(self, cluster_name: str) -> Cluster:
         path: str = Path.join(self.path, cluster_name)
 
         if Path.exists(path):
-            print(f"Cluster ({cluster_name}) already exists and will NOT be created.")
+            self.print(f"Cluster ({cluster_name}) already exists and will NOT be created.")
             return self.clusters[cluster_name]
         
         try:
             os.mkdir(path)
             file = open(Path.join(path, ".klaszter"), "w", encoding="utf8")
             file.close()
-            print(f"Cluster ({cluster_name}) created successfully.")
+            self.print(f"Cluster ({cluster_name}) created successfully.")
 
             self.__init__(self.path)
 
             return Cluster(path)
         except:
-            print(f"Error while creating cluster '{cluster_name}'.")
+            self.print(f"Error while creating cluster '{cluster_name}'.")
             return
 
 
@@ -55,13 +56,13 @@ class Root:
         path: str = Path.join(self.path, cluster_name)
 
         if not Path.exists(path):
-            print(f'Cluster ({cluster_name}) does not exist! Did you misspell the name?')
+            self.print(f'Cluster ({cluster_name}) does not exist! Did you misspell the name?')
             return False
         
         try:
             cluster: Cluster = Cluster(path)
             if cluster.computers:
-                print(f"Unable to delete cluster '{cluster_name}'. It has computers, try using force_delete_cluster()")
+                self.print(f"Unable to delete cluster '{cluster_name}'. It has computers, try using force_delete_cluster()")
                 return False
             
             if Path.exists(Path.join(path, ".klaszter")):
@@ -70,11 +71,11 @@ class Root:
             os.rmdir(path)
             self.__init__(self.path)
 
-            print(f"Cluster '{cluster_name}' deleted successfully.")
+            self.print(f"Cluster '{cluster_name}' deleted successfully.")
             return True
 
         except:
-            print(f"Unable to delete cluster ({cluster_name}).")
+            self.print(f"Unable to delete cluster ({cluster_name}).")
             return False
 
 
@@ -82,7 +83,7 @@ class Root:
         path: str = Path.join(self.path, cluster_name)
         
         if not Path.exists(path):
-            print(f'Cluster ({cluster_name}) does not exist! Did you misspell the name?')
+            self.print(f'Cluster ({cluster_name}) does not exist! Did you misspell the name?')
             return False
         
         try:
@@ -97,11 +98,11 @@ class Root:
             os.rmdir(path)
             self.__init__(self.path)
 
-            print(f"Successfully force deleted cluster ({cluster_name}).")
+            self.print(f"Successfully force deleted cluster ({cluster_name}).")
             return True
         
         except:
-            print(f"CRITICAL ERROR DETECTED: force deletion failed for computer {cluster_name}.")
+            self.print(f"CRITICAL ERROR DETECTED: force deletion failed for computer {cluster_name}.")
             return False
 
 
@@ -110,7 +111,7 @@ class Root:
         destination_cluster : Cluster = self.clusters.get(destination_cluster_name)
 
         if origin_cluster == None or destination_cluster == None:
-            print("Either the origin or the destination cluster does not exist.")
+            self.print("Either the origin or the destination cluster does not exist.")
             return False
         
 
@@ -130,44 +131,39 @@ class Root:
                 destination_computer = pc
         
         if origin_computer == None or destination_computer == None:
-            print("Either the origin or the destination computer does not exist.")
+            self.print("Either the origin or the destination computer does not exist.")
             return False
         
         if process_name in destination_computer.get_processes().keys():
-            print(f"A process with the same name and id is already running on computer {destination_computer_name}.")
+            self.print(f"A process with the same name and id is already running on computer {destination_computer_name}.")
             return False
 
         if not process_name in origin_computer.get_processes().keys():
-            print(f"Process {process_name} does not exists on computer {origin_cluster_name}/{origin_computer_name}.")
+            self.print(f"Process {process_name} does not exists on computer {origin_cluster_name}/{origin_computer_name}.")
             return False
         
 
         process_info : dict = origin_computer.get_process_info(process_name)
 
         if not origin_computer.kill_process(process_name):
-            print(f"Can't kill process ({process_name}) on computer {origin_cluster_name}/{origin_computer_name}.")
+            self.print(f"Can't kill process ({process_name}) on computer {origin_cluster_name}/{origin_computer_name}.")
 
         if not destination_computer.start_process_with_dict(process_info):
-            print(f"Can't start process ({process_name}) on computer {destination_cluster_name}/{destination_computer_name}.")
+            self.print(f"Can't start process ({process_name}) on computer {destination_cluster_name}/{destination_computer_name}.")
 
         
 
-        print(f"Succesfully moved process {process_name} from {origin_cluster_name}/{origin_computer_name} to cluster {destination_cluster_name}/{destination_computer_name}.")
+        self.print(f"Succesfully moved process {process_name} from {origin_cluster_name}/{origin_computer_name} to cluster {destination_cluster_name}/{destination_computer_name}.")
         return False
-
-
-
-
-        
 
 
     def move_computer(self, computer_name: str, origin_cluster_name: str, destination_cluster_name: str) -> bool:
         if not self.clusters[origin_cluster_name]:
-            print(f"The origin cluster {origin_cluster_name} could not be found. Perhapse you misstyped the name")
+            self.print(f"The origin cluster {origin_cluster_name} could not be found. Perhapse you misstyped the name")
             return False
 
         if not self. clusters[destination_cluster_name]:
-            print(f"The destination cluster {destination_cluster_name} could not be found. Perhapse you misstyped the name")
+            self.print(f"The destination cluster {destination_cluster_name} could not be found. Perhapse you misstyped the name")
             return False
 
         origin_cluster : Cluster = self.clusters[origin_cluster_name]
@@ -175,7 +171,7 @@ class Root:
 
 
         if not origin_cluster.computers[computer_name]:
-            print(f"The computer ({computer_name}) could not be found under the cluster({origin_cluster_name}). Perhapse you misstyped the name")
+            self.print(f"The computer ({computer_name}) could not be found under the cluster({origin_cluster_name}). Perhapse you misstyped the name")
             return False
         
         computer : Computer = origin_cluster.computers[computer_name]
@@ -191,7 +187,8 @@ class Root:
 
         destination_cluster.create_computer(computer_stats_dict["computer_name"],computer_stats_dict["computer_cores"],computer_stats_dict["computer_memory"])
 
-        pass
+    def print(self, text: str):
+        print(f"{Fore.BLACK}{Back.CYAN}[{Back.LIGHTBLUE_EX}ROOT{Back.CYAN}]{Back.RESET}{Fore.CYAN}: {Fore.RESET+Back.RESET+Style.RESET_ALL}" + text + Fore.RESET+Back.RESET+Style.RESET_ALL)
     
 
 if __name__ == "__main__":

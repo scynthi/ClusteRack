@@ -245,6 +245,7 @@ class Computer:
                     if Path.isfile(Path.join(self.path, file)):
                         self.print(f"Removing file ({file}).")
                         os.remove(Path.join(self.path, file))
+                        removed_files += 1
                     else:
                         self.print(f"Removing folder ({file}).")
                         os.rmdir(Path.join(self.path, file))

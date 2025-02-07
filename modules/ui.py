@@ -1,6 +1,8 @@
 from tkinter import font as Font
 from customtkinter import *
 from os import path as Path
+from tkinter import *
+
 
 font : tuple = ("VCR OSD MONO", 15)
 
@@ -22,16 +24,14 @@ class AppWindow(CTk):
         
 
 class UI:
-    class Button(CTkButton):
+    class Button(Button):
         def __init__(self, master : AppWindow, text : str, fg_color : str = button_foreground_color, bg_color : str = button_hover_color, **kwargs):
             super().__init__(master, 
-                             text=text, 
-                             fg_color=fg_color, 
-                             hover_color=bg_color, 
-                             text_color="black", 
-                             font=font, 
-                             border_color="black",
-                             border_width=1,
+                             text=text,
+                             background="white",
+                             foreground="black",
+                             font=font,
+                             borderwidth=6,
                              **kwargs)
 
     class Label(CTkLabel):
