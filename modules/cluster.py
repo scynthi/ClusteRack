@@ -47,7 +47,7 @@ class Cluster:
         else:
             self.print(f"Cluster {cluster_name} doesn`t have a config file")
 
-            new_cluster_file = open(Path.join(self.path, cluster_name), "w", encoding="utf-8", )
+            new_cluster_file = open(Path.join(self.path, ".klaszter"), "w", encoding="utf-8", )
             new_cluster_file.write("")
             new_cluster_file.close()
 

@@ -17,7 +17,7 @@ frame.grid(column=1, row=0)
 # pygame_frame: CTkFrame = CTkFrame(app, width=300, height=200)
 # pygame_frame.grid(column=0, row=0)
 
-pc_3d: EmbedRendererWindow = EmbedRendererWindow(app)
+pc_3d: EmbedRendererWindow = EmbedRendererWindow(app, "rack_1")
 
 fig: figure.Figure = figure.Figure(figsize=(3, 3))
 canvas: FigureCanvasTkAgg = FigureCanvasTkAgg(fig, frame)

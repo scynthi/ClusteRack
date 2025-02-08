@@ -35,7 +35,7 @@ class AppWindow(CTk):
         title_bar.grid(row=0, column=0, sticky="new")
 
 
-        close_button : UI.Button = UI.Button(title_bar, text=' X ', fg_color="white", command=self.destroy, padx=2, pady=2)
+        close_button : UI.Button = UI.Button(title_bar, text=' X ', fg_color="white", command=lambda: os._exit(0), padx=2, pady=2)
         expand_button : UI.Button= UI.Button(title_bar, text=' 🗖 ', fg_color="white", command=self.maximize_me, padx=2, pady=2)
         minimize_button : UI.Button = UI.Button(title_bar, text=' 🗕 ', fg_color="white", command=self.minimize_me, padx=2, pady=2)
 

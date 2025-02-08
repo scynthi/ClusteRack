@@ -15,7 +15,7 @@ class Object3D:
         self.faces = faces
         self.translate([0.0001, 0.0001, 0.0001])
 
-        self.font = pg.font.SysFont('Arial', 30, bold=True)
+#        self.font = pg.font.SysFont('Arial', 30, bold=True)
         self.color_faces = [(pg.Color('black'), face) for face in self.faces]
         self.movement_flag, self.draw_vertices = True, False
         self.label = ''
@@ -42,8 +42,9 @@ class Object3D:
             if not any_func(polygon, self.render.H_WIDTH, self.render.H_HEIGHT):
                 pg.draw.polygon(self.render.screen, color, polygon, 1)
                 if self.label:
-                    text = self.font.render(self.label[index], True, pg.Color('white'))
-                    self.render.screen.blit(text, polygon[-1])
+                    pass
+                    #text = self.font.render(self.label[index], True, pg.Color('white'))
+                    #self.render.screen.blit(text, polygon[-1])
 
         if self.draw_vertices:
             for vertex in vertices:
