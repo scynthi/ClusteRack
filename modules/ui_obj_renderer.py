@@ -7,8 +7,8 @@ from modules.renderer.main import SoftwareRender
 
 class EmbedRendererWindow:
     def __init__(self, app: CTkFrame, model_name : str) -> None:
-        pygame.init()
-        super().__init__()
+        pygame.display.init()
+        #super().__init__()
         
         self.app : CTkFrame = app
         self.pygame_frame : CTkFrame = CTkFrame(app)
