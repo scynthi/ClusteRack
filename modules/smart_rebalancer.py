@@ -5,7 +5,7 @@ import string
 from datetime import datetime
 from os import path as Path
 from modules.computer import Computer
-from colorama import Fore, Style
+from colorama import Fore, Style, Back
 
 class SmartRebalancer:
     def __init__(self, path: str, parent):
@@ -90,21 +90,27 @@ class SmartRebalancer:
 
     # Only for debugging purposes
     def print_computer_scores(self):
-        print(Fore.CYAN + "\nCurrent Computer Scores:" + Style.RESET_ALL)
+        print(Fore.CYAN + Style.BRIGHT + "\nCurrent Computer Scores:" + Style.RESET_ALL)
         for name, computer in self.sorted_computer_list:
             score = self.calculate_computer_score(computer)
-            print(f"{name} -> Score: {score:.2f} (Cores: {computer.free_cores}/{computer.cores}, Memory: {computer.free_memory}/{computer.memory})")
+            print(f"{Style.BRIGHT + Fore.CYAN}[{Fore.WHITE}{name}{Fore.CYAN}] -> {Fore.WHITE}Score: {Style.BRIGHT+Fore.GREEN}{score:.2f} {Style.NORMAL+Fore.WHITE}(Cores: {computer.free_cores}/{computer.cores}, Memory: {computer.free_memory}/{computer.memory})")
 
     # Only for debugging purposes
     def print_assignments(self, assignments):
-        print(Fore.GREEN + "\nProcess Assignments:" + Style.RESET_ALL)
+        if assignments == {}: 
+            print(Fore.RED + Style.BRIGHT  + "\nNo assignments happened ---------" + Style.RESET_ALL + Back.RESET)
+            return
+
+        print(Fore.CYAN + Style.BRIGHT + "\nProcess Assignments:" + Style.RESET_ALL)
         for process_name, computers in assignments.items():
             assigned_to = [comp.name for comp in computers]
-            print(f"{process_name} -> {', '.join(assigned_to)}")
+            # print(f"{Style.BRIGHT + Fore.CYAN}[{Fore.WHITE}{Fore.CYAN}] -> {Fore.WHITE}")
+            print(f"{Style.BRIGHT + Fore.CYAN}[{Fore.YELLOW}{process_name}{Fore.CYAN}] -> {Fore.WHITE}{', '.join(assigned_to)}")
 
 
 
     def distribute_processes_balanced(self) -> None:
+        print(Fore.BLUE + Style.BRIGHT + "\nBALANCED ALGO." + Style.RESET_ALL)
         #Step 1
         self.sort_computers()
         self.sort_programs()
@@ -116,7 +122,7 @@ class SmartRebalancer:
 
         # Step 2: Clear current processes from all computers before checking availability
         for name, computer in self.sorted_computer_list:
-            self.clear_computer_processes(computer)  # Always clears processes
+            self.clear_computer_processes(computer)
 
         # Step 3: Recalculate free resources for each computer after clearing old processes
         for name, computer in self.sorted_computer_list:
@@ -139,6 +145,65 @@ class SmartRebalancer:
                         best_score = score
 
             if best_computer:
+                if process_name not in assignments:
+                    assignments[process_name] = []
+                assignments[process_name].append(best_computer)
+
+                # Reduce available resources
+                best_computer.free_cores -= required_cores
+                best_computer.free_memory -= required_memory
+
+                # Write the process to the computer's directory
+                self.write_process_file(best_computer, process_name, process)
+
+            else:
+                print(Fore.RED + f"Skipping {process_name}: Not enough resources on any computer!" + Style.RESET_ALL)
+
+        print(Fore.GREEN + "\nAfter Distribution:" + Style.RESET_ALL)
+        self.print_computer_scores()
+
+        self.print_assignments(assignments)
+
+
+    def distribute_processes_efficient_packing(self) -> None:
+        print(Fore.BLUE + Style.BRIGHT + "\nEFFICIENT PACKING ALGO." + Style.RESET_ALL)
+
+        # Step 1: Sort computers and programs
+        self.sort_computers()
+        self.sort_programs()
+
+        assignments = {}
+
+        print(Fore.YELLOW + "\nBefore Distribution:" + Style.RESET_ALL)
+        self.print_computer_scores()
+
+        # Step 2: Clear current processes from all computers before checking availability
+        for name, computer in self.sorted_computer_list:
+            self.clear_computer_processes(computer)
+
+        # Step 3: Recalculate free resources for each computer after clearing old processes
+        for name, computer in self.sorted_computer_list:
+            computer.calculate_resource_usage()
+
+        # Step 4: Assign processes using **Greedy Best-Fit Decreasing**
+        for process_name, process in self.sorted_process_list:
+            required_cores = int(process["cores"])
+            required_memory = int(process["memory"])
+            best_computer = None
+            min_remaining_resources = float("inf")  # Start with the worst possible fit
+
+            # Find the best-fitting computer
+            for name, computer in self.sorted_computer_list:
+                if computer.free_cores >= required_cores and computer.free_memory >= required_memory:
+                    remaining_cores = computer.free_cores - required_cores
+                    remaining_memory = computer.free_memory - required_memory
+                    total_remaining = remaining_cores + remaining_memory  # Compute remaining resources
+
+                    if total_remaining < min_remaining_resources:
+                        min_remaining_resources = total_remaining
+                        best_computer = computer
+
+            if best_computer:
                 # Assign process
                 if process_name not in assignments:
                     assignments[process_name] = []
@@ -159,6 +224,57 @@ class SmartRebalancer:
 
         self.print_assignments(assignments)
 
+
+
+    def distribute_processes_speedy(self) -> None:
+        print(Fore.BLUE + Style.BRIGHT + "\nSPEEDY ALGO." + Style.RESET_ALL)
+
+        # Step 1: Sort computers and programs
+        self.sort_computers()
+        self.sort_programs()
+
+        assignments = {}
+
+        print(Fore.YELLOW + "\nBefore Distribution:" + Style.RESET_ALL)
+        self.print_computer_scores()
+
+        # Step 2: Clear current processes from all computers before checking availability
+        for name, computer in self.sorted_computer_list:
+            self.clear_computer_processes(computer)
+
+        # Step 3: Recalculate free resources for each computer after clearing old processes
+        for name, computer in self.sorted_computer_list:
+            computer.calculate_resource_usage()
+
+        # Step 4: Assign processes using **First Fit**
+        for process_name, process in self.sorted_process_list:
+            required_cores = int(process["cores"])
+            required_memory = int(process["memory"])
+            assigned = False  # Track if process is assigned
+
+            for name, computer in self.sorted_computer_list:
+                if computer.free_cores >= required_cores and computer.free_memory >= required_memory:
+                    if process_name not in assignments:
+                        assignments[process_name] = []
+                    assignments[process_name].append(computer)
+
+                    # Reduce available resources
+                    computer.free_cores -= required_cores
+                    computer.free_memory -= required_memory
+
+                    # Write the process to the computer's directory
+                    self.write_process_file(computer, process_name, process)
+
+                    assigned = True
+                    break
+
+            if not assigned:
+                print(Fore.RED + f"Skipping {process_name}: Not enough resources on any computer!" + Style.RESET_ALL)
+
+        print(Fore.GREEN + "\nAfter Distribution:" + Style.RESET_ALL)
+        self.print_computer_scores()
+
+        self.print_assignments(assignments)
 
 
 
