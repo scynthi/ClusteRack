@@ -1,8 +1,10 @@
 import os
+import random
+import string
 from os import path as Path
 from modules.computer import Computer
 from colorama import Fore, Style, Back
-
+from smart_rebalancer import *
 
 class Cluster:
     def __init__(self, path: str):
@@ -23,12 +25,20 @@ class Cluster:
             instance_count_list: list = []
             cores_list: list = []
             memory_list: list = []
+            id_list: list = []
 
-            task_info_dict: dict = {}
+            process_info_dict: dict = {}
 
             for app in config[0::4]:
                 app_list.append(app)
-            
+
+            # for i in range(len(app_list)):
+            #     new_id : str = ''.join(random.choices(string.ascii_lowercase, k=6))
+            #     while new_id in id_list:
+            #         new_id : str = ''.join(random.choices(string.ascii_lowercase, k=6))
+
+            #     id_list.append(new_id)
+
             for instance_count in config[1::4]:
                 instance_count_list.append(instance_count)
 
@@ -39,13 +49,20 @@ class Cluster:
                 memory_list.append(memory)
 
             for i, app in enumerate(app_list):
-                task_info_dict[app] = {"instance_count": instance_count_list[i], "cores": cores_list[i], "memory": memory_list[i]}
+                process_info_dict[app] = {"instance_count": instance_count_list[i], "cores": cores_list[i], "memory": memory_list[i]}
 
-            self.task_list: dict = task_info_dict
+            self.processes: dict = process_info_dict
 
         else:
-            self.print(f"Cluster {cluster_name} doesn`t have a config file") 
+            self.print(f"Cluster {cluster_name} doesn`t have a config file")
+
+            new_cluster_file = open(Path.join(self.path + cluster_name), "w", encoding="utf-8", )
+            new_cluster_file.write("")
+            new_cluster_file.close()
+
         
+
+
         files: list = os.listdir(path)
 
         if ".klaszter" in files:
@@ -59,11 +76,10 @@ class Cluster:
             computer_dict[file] = Computer(Path.join(path, file))
         
         self.computers : dict = computer_dict
-
+        self.smart_rebalancer : SmartRebalancer = SmartRebalancer(self.path, self)
         
         self.print(f"{Fore.BLACK}{Back.GREEN}Cluster ({cluster_name}) initialized succesfully with {len(computer_dict)} computer(s).")
         self.initialized : bool = True
-
 
     def create_computer(self, computer_name: str, cores: int, memory: int) -> Computer:
         path: str = Path.join(self.path, computer_name)
@@ -194,11 +210,11 @@ class Cluster:
 
 
 if __name__ == "__main__":
-    cluster: Cluster = Cluster(r".\Test folder\cluster0")
+    cluster: Cluster = Cluster(r".\Test folder\cluster3")
 
     # cluster.edit_cluster_name("cluster0")
 
-    pc: Computer = cluster.create_computer("szamitogep4", 1000, 8000)
-    print(pc.path)
+    # pc: Computer = cluster.create_computer("szamitogep4", 1000, 8000)
+    # print(pc.path)
 
     # cluster.force_delete_computer("szamitogep4")

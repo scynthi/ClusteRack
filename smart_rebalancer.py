@@ -1,18 +1,34 @@
 import os
 from os import path as Path
-from modules.cluster import Cluster
+from cluster import Cluster
 from modules.computer import Computer
 from colorama import Fore, Style, Back
 
 class SmartRebalancer:
-    def __init__(self, path):
-        pass
+    def __init__(self, path : str, parent : Cluster):
+        self.parent = parent
+
+        self.sorted_computer_list = []
+        self.sorted_program_list = []
+
+        self.sort_computers()
+        self.sort_programs()
+
+    def sort_computers(self) -> None:
+        sorted_computers = sorted(self.parent.computers.items(), key=lambda x: (-x[1].cores, x[1].memory))
+        self.sorted_computer_list = sorted_computers
+
+    def sort_programs(self) -> None:
+        sorted_processes = sorted(self.parent.processes.items(), key=lambda x: (-int(x[1]['cores']), -int(x[1]['memory'])))
+        
+        self.sorted_processes_list = sorted_processes
+
         
 """
 (rb = rebalancer)
 
 FEATURES WE NEED:
-- every cluster should store a reference to their own rebalancer module
+- every cluster should store a reference to their own rebalancer module ------------------------------ DONE
 - the rb should be able to reference its own cluster to use its resources such as the computer_list and create delete functions
 - the rabalancing program should be rerun every time the clusters file structure updates. 
 - the rb should be able to be called from the cluster that owns it.
