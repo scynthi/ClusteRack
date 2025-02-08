@@ -7,7 +7,7 @@ from os import path as Path
 from modules.computer import Computer
 from colorama import Fore, Style, Back
 
-class SmartRebalancer:
+class Rebalancer:
     def __init__(self, path: str, parent):
         self.parent = parent
         self.sorted_computer_list = []
@@ -90,7 +90,7 @@ class SmartRebalancer:
 
     # Only for debugging purposes
     def print_computer_scores(self):
-        print(Fore.CYAN + Style.BRIGHT + "\nCurrent Computer Scores:" + Style.RESET_ALL)
+        print(Fore.CYAN + "Current Computer Scores:" + Style.RESET_ALL)
         for name, computer in self.sorted_computer_list:
             score = self.calculate_computer_score(computer)
             print(f"{Style.BRIGHT + Fore.CYAN}[{Fore.WHITE}{name}{Fore.CYAN}] -> {Fore.WHITE}Score: {Style.BRIGHT+Fore.GREEN}{score:.2f} {Style.NORMAL+Fore.WHITE}(Cores: {computer.free_cores}/{computer.cores}, Memory: {computer.free_memory}/{computer.memory})")
@@ -105,7 +105,7 @@ class SmartRebalancer:
         for process_name, computers in assignments.items():
             assigned_to = [comp.name for comp in computers]
             # print(f"{Style.BRIGHT + Fore.CYAN}[{Fore.WHITE}{Fore.CYAN}] -> {Fore.WHITE}")
-            print(f"{Style.BRIGHT + Fore.CYAN}[{Fore.YELLOW}{process_name}{Fore.CYAN}] -> {Fore.WHITE}{', '.join(assigned_to)}")
+            print(f"{Style.BRIGHT + Fore.CYAN}[{Fore.YELLOW}{process_name}{Fore.CYAN}] -> {Fore.WHITE}{', '.join(assigned_to)}{Style.RESET_ALL}")
 
 
 
@@ -159,7 +159,7 @@ class SmartRebalancer:
             else:
                 print(Fore.RED + f"Skipping {process_name}: Not enough resources on any computer!" + Style.RESET_ALL)
 
-        print(Fore.GREEN + "\nAfter Distribution:" + Style.RESET_ALL)
+        print(Fore.GREEN + Style.BRIGHT + "\nAfter Distribution:" + Style.RESET_ALL)
         self.print_computer_scores()
 
         self.print_assignments(assignments)
@@ -219,7 +219,7 @@ class SmartRebalancer:
             else:
                 print(Fore.RED + f"Skipping {process_name}: Not enough resources on any computer!" + Style.RESET_ALL)
 
-        print(Fore.GREEN + "\nAfter Distribution:" + Style.RESET_ALL)
+        print(Fore.GREEN + Style.BRIGHT +"\nAfter Distribution:" + Style.RESET_ALL)
         self.print_computer_scores()
 
         self.print_assignments(assignments)
@@ -271,7 +271,7 @@ class SmartRebalancer:
             if not assigned:
                 print(Fore.RED + f"Skipping {process_name}: Not enough resources on any computer!" + Style.RESET_ALL)
 
-        print(Fore.GREEN + "\nAfter Distribution:" + Style.RESET_ALL)
+        print(Fore.GREEN + Style.BRIGHT +"\nAfter Distribution:" + Style.RESET_ALL)
         self.print_computer_scores()
 
         self.print_assignments(assignments)
@@ -281,45 +281,14 @@ class SmartRebalancer:
 
 
 """
-Inside The Rebalancing algorithm:
-1. Sort the computerlist and save a copy of it based on the resources TOTAL cores.               DONE
-    if there are computers with the same amount cores we sort by memory.
+NEXT TODO:
+- start process from cluster and make it write into the .klaszter file
+- kill process from cluster and make it write into the .klaszter file
 
-2. Sort the programlist and save a copy of it based on their cores taken for them to run.
-    if there are programs with the same amount of cores taken to run them we sort by the memory taken to run them.               DONE
+- Make computers renamable
 
-a)-----------------------------------A Last Resort----------------------------------------- Load Balancing Algo.               DONE
-
-Heuristic Load Balancing
-3. Assign a score to all computers based that shows us how well they utalize their resources. (A higher score means the computer is heavily loaded)
-4. Assign programs to the lowest scoring computer that can still fit the program. (lowest scoring) (has enough core and memory)
-    if no computer can fit the program, move to the next program.
-5. Reduce the available resources of the computer accordingly.
-6. Update the scores to reflect the changes.
-7. Repeat steps 3-7 until all programs are sorted
-
---- Slowest, Evenly distributes the load leaving no computer overloaded.
-
-
-b)-----------------------------------No Space Left Behind----------------------------------------- Efficient Packing Algo.
-
-Greedy Best Fit Decreasing
-3. Find the best-fitting computer, which is the one with the least remaining resources after placing the program (but still enough to fit the program).
-    if no computer can fit it, move to the next program.
-4. Assign the program to the computer.
-5. Reduce the available resources of the computer accordingly.
-6. Repeat steps 3-6 until all programs are sorted.
-
---- Balanced speed, Doesn`t leave gaps on the computer in resources 
-
-
-c)-----------------------------------The Fast Lane----------------------------------------- Speed Prioritizing Algo.
-
-First Fit 
-3. Iterate through the programs and put the on the first computer they fit on
-    if no computer can fit it, move to the next program.
-4. Repeat steps 3-4 until all programs are sorted.
-
---- Fastest, Leads to inefficient packing (best used if the computers are similar in resources)
-
+- Make Status changes work :
+    give the name of a program
+    if it exist change the given status
+    run the algos according the status of the processes
 """

@@ -2,7 +2,7 @@ import os
 from os import path as Path
 from modules.computer import Computer
 from colorama import Fore, Style, Back
-from modules.smart_rebalancer import *
+from modules.rebalancer import *
 
 class Cluster:
     def __init__(self, path: str):
@@ -65,7 +65,7 @@ class Cluster:
             computer_dict[file] = Computer(Path.join(path, file))
         
         self.computers : dict = computer_dict
-        self.smart_rebalancer : SmartRebalancer = SmartRebalancer(self.path, self)
+        self.rebalancer : Rebalancer = Rebalancer(self.path, self)
         
         self.print(f"{Fore.BLACK}{Back.GREEN}Cluster ({cluster_name}) initialized succesfully with {len(computer_dict)} computer(s).")
         self.initialized : bool = True
