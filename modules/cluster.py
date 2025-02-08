@@ -1,6 +1,4 @@
 import os
-import random
-import string
 from os import path as Path
 from modules.computer import Computer
 from colorama import Fore, Style, Back
@@ -32,13 +30,6 @@ class Cluster:
             for app in config[0::4]:
                 app_list.append(app)
 
-            # for i in range(len(app_list)):
-            #     new_id : str = ''.join(random.choices(string.ascii_lowercase, k=6))
-            #     while new_id in id_list:
-            #         new_id : str = ''.join(random.choices(string.ascii_lowercase, k=6))
-
-            #     id_list.append(new_id)
-
             for instance_count in config[1::4]:
                 instance_count_list.append(instance_count)
 
@@ -56,13 +47,11 @@ class Cluster:
         else:
             self.print(f"Cluster {cluster_name} doesn`t have a config file")
 
-            new_cluster_file = open(Path.join(self.path + cluster_name), "w", encoding="utf-8", )
+            new_cluster_file = open(Path.join(self.path, cluster_name), "w", encoding="utf-8", )
             new_cluster_file.write("")
             new_cluster_file.close()
 
         
-
-
         files: list = os.listdir(path)
 
         if ".klaszter" in files:
@@ -95,10 +84,15 @@ class Cluster:
             config_file.close()
 
             self.print(f"{Fore.GREEN}Computer ({computer_name}) created successfully.")
+            
+            self.__init__(self.path)
             return Computer(path)   
         except:
             self.print(f"{Fore.RED}Error while creating computer '{computer_name}'.")
+            self.__init__(self.path)
             return
+        
+        
 
 
     def try_delete_computer(self, computer_name: str) -> bool:
@@ -112,15 +106,18 @@ class Cluster:
             computer: Computer = Computer(path)
             if computer.get_processes():
                 self.print(f"{Fore.RED}Unable to delete computer '{computer_name}'. It has processes, try using force_delete_computer().")
+                self.__init__(self.path)
                 return False
             
             os.remove(Path.join(path, ".szamitogep_config"))
             os.rmdir(path)
 
             self.print(f"{Fore.GREEN}Computer '{computer_name}' deleted successfully.")
+            self.__init__(self.path)
             return True
         except:
             self.print(f"{Fore.RED}Unable to delete computer ({computer_name}).")
+            self.__init__(self.path)
             return False
 
 
@@ -137,9 +134,11 @@ class Cluster:
 
             os.rmdir(path)
             self.print(f"{Fore.GREEN}Successfully force deleted computer ({computer_name}).")
+            self.__init__(self.path)
             return True
         except:
             self.print(f"{Back.RED}{Fore.BLACK}CRITICAL ERROR DETECTED: force deletion failed for computer {computer_name}.")
+            self.__init__(self.path)
             return False
 
 
@@ -160,23 +159,12 @@ class Cluster:
             self.path = new_path
             self.print(f"{Fore.GREEN}Cluster folder renamed to '{new_name}' successfully.")
 
-            #Reload self and children -- so the path updates everywhere
             self.__init__(self.path)
-            self.reload_computers()
             return True
             
         except Exception as e:
             self.print(f"{Fore.BLACK}{Back.RED}CRITICAL ERROR DETECTED: Error renaming cluster: {e}")
             return False
-        
-    def start_process():
-        pass
-        
-
-    def reload_computers(self) -> None:
-        for name in self.computers:
-            pc = self.computers[name]
-            self.computers[name] = pc.__init__(Path.join(self.path, name))
 
 
     def cleanup(self) -> bool:
