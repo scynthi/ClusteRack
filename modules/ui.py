@@ -1,7 +1,7 @@
-from tkinter import font as Font
 from customtkinter import *
 from os import path as Path
 from tkinter import *
+from PIL import Image
 from ctypes import windll
 from modules.audio_manager import AudioManager 
 
@@ -22,16 +22,15 @@ class AppWindow(CTk):
         FontManager.load_font(Path.join("Assets","Font", "VCR_OSD_MONO_1.001.ttf"))
         self.iconbitmap(Path.join("Assets", "Images", "logo.ico"))
         self.overrideredirect(True)
-        self.configure(bg="#adadad")
         self.geometry(size)
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=1)
         self.minimized : bool = False
         self.maximized : bool = False
-
+        
 
         title_bar : CTkFrame = Frame(self, bg=DBLUE, relief='raised', border=4)
-        title_bar.grid_columnconfigure([0, 1], weight=1)
+        title_bar.grid_columnconfigure([1,2], weight=1)
         title_bar.bind('<Button-1>', self.get_pos)
         title_bar.grid(row=0, column=0, sticky="new")
 
@@ -39,14 +38,21 @@ class AppWindow(CTk):
         close_button : UI.Button = UI.Button(title_bar, text=' X ', fg_color="white", command=self.destroy, padx=2, pady=2)
         expand_button : UI.Button= UI.Button(title_bar, text=' 🗖 ', fg_color="white", command=self.maximize_me, padx=2, pady=2)
         minimize_button : UI.Button = UI.Button(title_bar, text=' 🗕 ', fg_color="white", command=self.minimize_me, padx=2, pady=2)
+
+        program_logo : CTkImage = CTkImage(light_image=Image.open(Path.join("Assets", "Images", "logo.png")), size=(40,40))
+        
+        logo_label : CTkLabel = CTkLabel(title_bar, image=program_logo, text="")
+        logo_label.grid(row=0, column=0, sticky="nw", padx=10)
+
+
         title_bar_title : UI.Label = UI.Label(title_bar, text=name, text_color='white', font=("VCR OSD MONO", 20))
         title_bar_title.bind('<Button-1>', self.get_pos)
-        title_bar_title.grid(row=0, column=0, sticky="nw", padx=10)
+        title_bar_title.grid(row=0, column=1, sticky="nw", padx=10, pady=5)
 
 
-        minimize_button.grid(row=0, column=1, sticky="ne", padx=7, pady=1)
-        expand_button.grid(row=0, column=2, sticky="ne", padx=7, pady=1)
-        close_button.grid(row=0, column=3, sticky="ne", padx=7, pady=1)
+        minimize_button.grid(row=0, column=2, sticky="ne", padx=7, pady=1)
+        expand_button.grid(row=0, column=3, sticky="ne", padx=7, pady=1)
+        close_button.grid(row=0, column=4, sticky="ne", padx=7, pady=1)
 
 
         content : Frame = Frame(self, bg=DGRAY)
@@ -189,6 +195,6 @@ class UI:
                              font=font,
                              **kwargs)
             
-    class Frame(CTkFrame):
-        def __init__(self,):
-            super().__init__()
+    class Frame(Frame):
+        def __init__(self, master, bg_color=LGRAY, **kwargs):
+            super().__init__(master,  bg=bg_color, borderwidth=4, relief="raised", **kwargs)

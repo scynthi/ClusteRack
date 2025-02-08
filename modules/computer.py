@@ -124,6 +124,10 @@ class Computer:
         if not process_name.split("-")[1]:
             self.print(f"{Fore.RED}{process_name} does not have a ID. Put a ID in the program name and try again.")
             return False
+        
+        if not len(process_name.split("-")[1]) == 6:
+            self.print(f"{Fore.RED}{process_name}'s ID is not 6 characters long. Put a ID in the program name and try again.")
+            return False
 
 
         if Path.exists(Path.join(self.path, process_name)):
