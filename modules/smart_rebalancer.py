@@ -1,11 +1,10 @@
 import os
 from os import path as Path
-from cluster import Cluster
 from modules.computer import Computer
 from colorama import Fore, Style, Back
 
 class SmartRebalancer:
-    def __init__(self, path : str, parent : Cluster):
+    def __init__(self, path : str, parent):
         self.parent = parent
 
         self.sorted_computer_list = []

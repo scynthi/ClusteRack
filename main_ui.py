@@ -1,7 +1,7 @@
 from customtkinter import *
 from tkinter import *
 from modules.ui import UI, AppWindow
-from root import Root
+from modules.root import Root
 
 app : AppWindow = AppWindow("800x400")
 content : Frame = app.content

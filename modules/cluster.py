@@ -4,7 +4,7 @@ import string
 from os import path as Path
 from modules.computer import Computer
 from colorama import Fore, Style, Back
-from smart_rebalancer import *
+from modules.smart_rebalancer import *
 
 class Cluster:
     def __init__(self, path: str):
