@@ -2,42 +2,193 @@ from tkinter import font as Font
 from customtkinter import *
 from os import path as Path
 from tkinter import *
+from ctypes import windll
+from modules.audio_manager import AudioManager 
 
+large_font : tuple = ("VCR OSD MONO", 15)
+small_font : tuple = ("VCR OSD MONO", 12)
+audio : AudioManager = AudioManager()
 
-font : tuple = ("VCR OSD MONO", 15)
+LBLUE : str = "#0066ff"
+DBLUE : str = "#0052cc"
+LGRAY : int = "#cdcdcd"
+DGRAY : str = "#adadad"
 
-main_color : str = "#0066ff"
-button_foreground_color : str = "#adadad"
-button_hover_color : str = "#0052cc"
 
 class AppWindow(CTk):
-    def __init__(self, size="800x600", name="ClusteRack"):
+    def __init__(self, size="800x600", name="ClusteRack") -> None:
         set_appearance_mode("light")
         super().__init__()
-        self.title(name)
-        self.geometry(size)
-        self.iconbitmap(os.path.join("Assets","Images", "logo.ico"))
-        self.resizable(True, True)
-        self.configure(fg_color = "#cdcdcd")
-
         FontManager.load_font(Path.join("Assets","Font", "VCR_OSD_MONO_1.001.ttf"))
+        self.iconbitmap(Path.join("Assets", "Images", "logo.ico"))
+        self.overrideredirect(True)
+        self.configure(bg="#adadad")
+        self.geometry(size)
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(1, weight=1)
+        self.minimized : bool = False
+        self.maximized : bool = False
+
+
+        title_bar : CTkFrame = Frame(self, bg=DBLUE, relief='raised', border=4)
+        title_bar.grid_columnconfigure([0, 1], weight=1)
+        title_bar.bind('<Button-1>', self.get_pos)
+        title_bar.grid(row=0, column=0, sticky="new")
+
+
+        close_button : UI.Button = UI.Button(title_bar, text=' X ', fg_color="white", command=self.destroy, padx=2, pady=2)
+        expand_button : UI.Button= UI.Button(title_bar, text=' 🗖 ', fg_color="white", command=self.maximize_me, padx=2, pady=2)
+        minimize_button : UI.Button = UI.Button(title_bar, text=' 🗕 ', fg_color="white", command=self.minimize_me, padx=2, pady=2)
+        title_bar_title : UI.Label = UI.Label(title_bar, text=name, text_color='white', font=("VCR OSD MONO", 20))
+        title_bar_title.bind('<Button-1>', self.get_pos)
+        title_bar_title.grid(row=0, column=0, sticky="nw", padx=10)
+
+
+        minimize_button.grid(row=0, column=1, sticky="ne", padx=7, pady=1)
+        expand_button.grid(row=0, column=2, sticky="ne", padx=7, pady=1)
+        close_button.grid(row=0, column=3, sticky="ne", padx=7, pady=1)
+
+
+        content : Frame = Frame(self, bg=DGRAY)
+        content.grid(row=1, column=0, sticky="nsew")
+
+        resizey_widget : Frame = Frame(self, cursor='sb_v_double_arrow')
+        resizey_widget.grid(row=1, column=0, sticky="SEW")
+        resizey_widget.bind("<B1-Motion>", self.resizey)
+
+        resizex_widget : Frame = Frame(self, cursor='sb_h_double_arrow')
+        resizex_widget.grid(row=1, column=1, sticky="NSE")
+        resizex_widget.bind("<B1-Motion>", self.resizex)
+
+
+        self.title_bar : Frame = title_bar
+        self.close_button : Frame = close_button
+        self.expand_button : Frame = expand_button
+        self.minimize_button : Frame = minimize_button
+        self.title_bar_title : Frame = title_bar_title
+        self.content : Frame = content
+
+        self.bind("<FocusIn>", self.deminimize)
+        self.after(10, self.set_appwindow)
+
+    def set_appwindow(self) -> None:
+        GWL_EXSTYLE : int = -20
+        WS_EX_APPWINDOW = 0x00040000
+        WS_EX_TOOLWINDOW = 0x00000080
         
+        hwnd = windll.user32.GetParent(self.winfo_id())
+        stylew = windll.user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
+        stylew = stylew & ~WS_EX_TOOLWINDOW
+        stylew = stylew | WS_EX_APPWINDOW
+
+        self.wm_withdraw()
+        self.after(10, lambda: self.wm_deiconify())
+
+
+    def minimize_me(self) -> None:
+        self.attributes("-alpha", 0)
+        self.minimized = True 
+
+
+    def deminimize(self, event) -> None:
+        self.focus()
+        self.attributes("-alpha", 1)
+        if self.minimized == True:
+            self.minimized = False
+
+
+    def maximize_me(self) -> None:
+        if self.maximized == False:
+            self.normal_size = self.geometry()
+            self.expand_button.config(text=" 🗗 ")
+            self.geometry(f"{self.winfo_screenwidth()}x{self.winfo_screenheight()}+0+0")
+            self.maximized = not self.maximized
+        else:
+            self.expand_button.config(text=" 🗖 ")
+            self.geometry(self.normal_size)
+            self.maximized = not self.maximized
+
+
+    def get_pos(self, event) -> None:
+        if self.maximized == False:
+            xwin : int = self.winfo_x()
+            ywin : int = self.winfo_y()
+            startx : int = event.x_root
+            starty : int = event.y_root
+
+            ywin : int = ywin - starty
+            xwin : int = xwin - startx
+
+            def move_window(event) -> None:
+                self.config(cursor="fleur")
+                self.geometry(f'+{event.x_root + xwin}+{event.y_root + ywin}')
+
+            def release_window(event) -> None:
+                self.config(cursor="arrow")
+
+            self.title_bar.bind('<B1-Motion>', move_window)
+            self.title_bar.bind('<ButtonRelease-1>', release_window)
+            self.title_bar_title.bind('<B1-Motion>', move_window)
+            self.title_bar_title.bind('<ButtonRelease-1>', release_window)
+        else:
+            self.expand_button.config(text=" 🗖 ")
+            self.maximized = not self.maximized
+
+
+    def resizex(self, event) -> None:
+            xwin : int = self.winfo_x()
+            difference : int = (event.x_root - xwin) - self.winfo_width()
+
+            if self.winfo_width() > 150: 
+                try:
+                    self.geometry(f"{self.winfo_width() + difference}x{self.winfo_height()}")
+                except:
+                    pass
+            else:
+                if difference > 0:
+                    try:
+                        self.geometry(f"{self.winfo_width() + difference}x{self.winfo_height()}")
+                    except:
+                        pass
+        
+    
+    def resizey(self, event) -> None:
+        ywin : int = self.winfo_y()
+        difference : int = (event.y_root - ywin) - self.winfo_height()
+
+        if self.winfo_height() > 150:
+            try:
+                self.geometry(f"{self.winfo_width()}x{self.winfo_height() + difference}")
+            except:
+                pass
+        else:
+            if difference > 0:
+                try:
+                    self.geometry(f"{self.winfo_width()}x{self.winfo_height() + difference}")
+                except:
+                    pass
+
 
 class UI:
     class Button(Button):
-        def __init__(self, master : AppWindow, text : str, fg_color : str = button_foreground_color, bg_color : str = button_hover_color, **kwargs):
+        def __init__(self, master : AppWindow, text : str, fg_color : str = DGRAY, bg_color : str = LBLUE, **kwargs) -> None:
             super().__init__(master, 
                              text=text,
                              background="white",
                              foreground="black",
-                             font=font,
+                             font=small_font,
                              borderwidth=6,
                              **kwargs)
+            self.bind("<ButtonPress-1>", lambda event: audio.play_rnd_click())
 
     class Label(CTkLabel):
-        def __init__(self, master, text, text_color=main_color, **kwargs):
+        def __init__(self, master, text, text_color="black", font : tuple = large_font, **kwargs) -> None:
             super().__init__(master, 
                              text=text, 
                              text_color=text_color, 
-                             font=font, 
+                             font=font,
                              **kwargs)
+            
+    class Frame(CTkFrame):
+        def __init__(self,):
+            super().__init__()

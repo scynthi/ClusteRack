@@ -12,6 +12,7 @@ class Root:
         if Path.exists(path):
             root_name: str = path.split(os.sep)[-1]
 
+            self.print(f"Starting to initialize root with name {root_name}. This may take a few minutes...")
 
             files : list = os.listdir(path)
             cluster_dict: dict = {}
@@ -158,20 +159,20 @@ class Root:
 
 
     def move_computer(self, computer_name: str, origin_cluster_name: str, destination_cluster_name: str) -> bool:
-        if not self.clusters[origin_cluster_name]:
-            self.print(f"The origin cluster {origin_cluster_name} could not be found. Perhapse you misstyped the name")
+        if not self.clusters.get(origin_cluster_name):
+            self.print(f"The origin cluster {origin_cluster_name} could not be found. Perhaps you misstyped the name.")
             return False
 
-        if not self. clusters[destination_cluster_name]:
-            self.print(f"The destination cluster {destination_cluster_name} could not be found. Perhapse you misstyped the name")
+        if not self.clusters.get(destination_cluster_name):
+            self.print(f"The destination cluster {destination_cluster_name} could not be found. Perhaps you misstyped the name.")
             return False
 
         origin_cluster : Cluster = self.clusters[origin_cluster_name]
         destination_cluster : Cluster = self.clusters[destination_cluster_name]
 
 
-        if not origin_cluster.computers[computer_name]:
-            self.print(f"The computer ({computer_name}) could not be found under the cluster({origin_cluster_name}). Perhapse you misstyped the name")
+        if not origin_cluster.computers.get(computer_name):
+            self.print(f"The computer ({computer_name}) could not be found under the cluster ({origin_cluster_name}). Perhaps you misstyped the name.")
             return False
         
         computer : Computer = origin_cluster.computers[computer_name]
