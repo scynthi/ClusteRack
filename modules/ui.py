@@ -4,6 +4,8 @@ from tkinter import *
 from PIL import Image
 from ctypes import windll
 from modules.audio_manager import AudioManager 
+from modules.renderer.main import SoftwareRender
+
 
 large_font : tuple = ("VCR OSD MONO", 15)
 small_font : tuple = ("VCR OSD MONO", 12)
@@ -76,6 +78,7 @@ class AppWindow(CTk):
 
         self.bind("<FocusIn>", self.deminimize)
         self.after(10, self.set_appwindow)
+        self.protocol("WM_DELETE_WINDOW", lambda: os._exit(0))
 
     def set_appwindow(self) -> None:
         GWL_EXSTYLE : int = -20
@@ -198,3 +201,13 @@ class UI:
     class Frame(Frame):
         def __init__(self, master, bg_color=LGRAY, **kwargs):
             super().__init__(master,  bg=bg_color, borderwidth=4, relief="raised", **kwargs)
+
+
+    class EmbedRenderer:
+        def __init__(self, frame, model_name, root):
+            self.frame = frame
+            self.model_name = model_name
+            self.root = root
+
+        def get_renderer(self):
+            return SoftwareRender(self.model_name, self.frame, self.root)

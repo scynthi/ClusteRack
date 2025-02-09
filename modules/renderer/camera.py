@@ -61,8 +61,8 @@ class Camera:
         world_up = np.array([0, 1, 0])
         right = np.cross(forward_normalized, world_up)
         right_normalized = right / np.linalg.norm(right)
-        
         up_normalized = np.cross(right_normalized, forward_normalized)
+
         
         self.forward = np.append(forward_normalized, 1.0)
         self.right = np.append(right_normalized, 1.0)

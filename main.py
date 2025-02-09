@@ -2,7 +2,9 @@ from customtkinter import *
 from tkinter import *
 from modules.ui import UI, AppWindow
 from modules.root import Root
-from modules.ui_obj_renderer import EmbedRendererWindow
+from PIL import Image
+from os import path as Path
+
 
 app : AppWindow = AppWindow("1000x600")
 content : Frame = app.content
@@ -45,20 +47,14 @@ class ImportUI:
         
 class DashboardUI:
     def __init__(self) -> None:
-        clusters_frame : CTkScrollableFrame = CTkScrollableFrame(content, orientation="horizontal")
+        clusters_frame : CTkScrollableFrame = CTkScrollableFrame(content, orientation="horizontal", height=280)
         clusters_frame.grid(row=0, column=0, sticky="nwe")
 
-        a = EmbedRendererWindow(clusters_frame, "rack_1")
-        a.pygame_frame.grid(row=0, column=0)
-
-        app.after(5000, lambda: EmbedRendererWindow(content, "rack_2").pygame_frame.grid(row=0, column=1))
-
-        
-        
-        
+        for i in range(0, 5):
+            image : CTkImage = CTkImage(Image.open(Path.join("Assets", "Images", "rack.png")), size=(80,200))
+            label : CTkLabel = CTkLabel(clusters_frame, image=image, text="")
+            label.grid(row=0, column=i, padx=5)
 
 
 ImportUI()
-
-app.protocol("WM_DELETE_WINDOW", lambda: os._exit(0))
 app.mainloop()
