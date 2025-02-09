@@ -67,6 +67,7 @@ class ClusterView:
         frame = app.top_frame
         clusters_frame : CTkScrollableFrame = CTkScrollableFrame(frame, orientation="horizontal", height=300, border_width=4, border_color="gray", corner_radius=0)
         clusters_frame.grid(row=0, column=0, sticky="nwe")
+        self.cluster_tab = None
 
         for i, cluster in enumerate(root.clusters.values()):
             cluster_frame : UI.Frame = UI.Frame(clusters_frame)
@@ -78,7 +79,7 @@ class ClusterView:
             image_frame : UI.Frame= UI.Frame(cluster_frame)
             image_frame.grid(row=1, column=0, sticky="NSEW")
 
-            UI.Button(cluster_frame, text=f"Open {cluster.name}", command=lambda selected_cluster = cluster: self.open_cluster_tab(cluster)).grid(row=2, column=0, sticky="EW")
+            UI.Button(cluster_frame, text=f"Open {cluster.name}", command=lambda selected_cluster = cluster: self.open_cluster_tab(selected_cluster)).grid(row=2, column=0, sticky="EW")
             
 
             pc_amount : int = len(cluster.computers.keys())
@@ -94,6 +95,7 @@ class ClusterView:
     def open_cluster_tab(self, cluster : Cluster):
         if self.cluster_tab:
             self.cluster_tab.kill()
+            self.cluster_tab = None
         else:
             self.cluster_tab = ClusterBoard(cluster)
 
@@ -103,7 +105,7 @@ class ClusterView:
 class ClusterBoard:
     def __init__(self, cluster : Cluster) -> None:
         _frame = app.bottom_frame
-        self._frame = frame
+        self._frame = _frame
 
         frame : UI.Frame = UI.Frame(_frame)
         frame.grid(row=0, column=0, sticky="nsew")
@@ -113,11 +115,11 @@ class ClusterBoard:
 
         print(cluster.name)
 
-        UI.EmbedRenderer(cluster_frame, "rack_8", 12, app).get_renderer()
+        self.rack_model = UI.EmbedRenderer(cluster_frame, "rack_8", 12, app).get_renderer()
     
     def kill(self) -> None:
+        self.rack_model.running = False
         self._frame.destroy()
-        self._frame = None
 
 
 
