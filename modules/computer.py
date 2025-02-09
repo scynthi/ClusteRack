@@ -116,67 +116,67 @@ class Computer:
         return self.start_process(name+"-"+id, status, cpu_req, ram_req, date_started)
 
 
-    def start_process(self, process_name: str, running: bool, cpu_req: int, ram_req: int, date_started : str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')) -> bool:
-        if not "-" in process_name:
-            self.print(f"{Fore.RED}{process_name} does not have a ID. Put a ID in the program name and try again.")
-            return False
+    # def start_process(self, process_name: str, running: bool, cpu_req: int, ram_req: int, date_started : str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')) -> bool:
+    #     if not "-" in process_name:
+    #         self.print(f"{Fore.RED}{process_name} does not have a ID. Put a ID in the program name and try again.")
+    #         return False
             
-        if not process_name.split("-")[1]:
-            self.print(f"{Fore.RED}{process_name} does not have a ID. Put a ID in the program name and try again.")
-            return False
+    #     if not process_name.split("-")[1]:
+    #         self.print(f"{Fore.RED}{process_name} does not have a ID. Put a ID in the program name and try again.")
+    #         return False
         
-        if not len(process_name.split("-")[1]) == 6:
-            self.print(f"{Fore.RED}{process_name}'s ID is not 6 characters long. Put a ID in the program name and try again.")
-            return False
+    #     if not len(process_name.split("-")[1]) == 6:
+    #         self.print(f"{Fore.RED}{process_name}'s ID is not 6 characters long. Put a ID in the program name and try again.")
+    #         return False
 
 
-        if Path.exists(Path.join(self.path, process_name)):
-            self.print(f"{Fore.RED}{process_name} is already running on computer ({self.name})")
-            return False
+    #     if Path.exists(Path.join(self.path, process_name)):
+    #         self.print(f"{Fore.RED}{process_name} is already running on computer ({self.name})")
+    #         return False
         
-        try:
-            if self.free_cores - cpu_req < 0:
-                self.print(f"{Fore.RED}Error while creating process on computer ({self.name}): "+process_name+" -> Core limit exceeded.")
-                return False
+    #     try:
+    #         if self.free_cores - cpu_req < 0:
+    #             self.print(f"{Fore.RED}Error while creating process on computer ({self.name}): "+process_name+" -> Core limit exceeded.")
+    #             return False
             
-            if self.free_memory - ram_req < 0:
-                self.print(f"{Fore.RED}Error while creating process on computer ({self.name}): "+process_name+" -> Memory limit exceeded.")
-                return False
+    #         if self.free_memory - ram_req < 0:
+    #             self.print(f"{Fore.RED}Error while creating process on computer ({self.name}): "+process_name+" -> Memory limit exceeded.")
+    #             return False
 
 
-            status : str = "INAKTÍV"
-            if running:
-                status = "AKTÍV"
+    #         status : str = "INAKTÍV"
+    #         if running:
+    #             status = "AKTÍV"
             
-            data: str = f"{date_started}\n{status}\n{cpu_req}\n{ram_req}"
+    #         data: str = f"{date_started}\n{status}\n{cpu_req}\n{ram_req}"
 
-            file = open(Path.join(self.path, process_name), "w", encoding="utf8")
-            file.write(data)
-            file.close()
+    #         file = open(Path.join(self.path, process_name), "w", encoding="utf8")
+    #         file.write(data)
+    #         file.close()
 
-            self.calculate_resource_usage()
-            self.print(f"{Fore.GREEN}Process ({process_name}) started successfully on computer ({self.name}).")
-            return True
-        except:
-            self.print(f"{Fore.RED}Error while creating process: {process_name}")
-            return False
+    #         self.calculate_resource_usage()
+    #         self.print(f"{Fore.GREEN}Process ({process_name}) started successfully on computer ({self.name}).")
+    #         return True
+    #     except:
+    #         self.print(f"{Fore.RED}Error while creating process: {process_name}")
+    #         return False
 
 
-    def kill_process(self, process: str) -> bool:
-        try:
-            if Path.exists(Path.join(self.path, process)):
-                os.remove(Path.join(self.path, process))
-                self.calculate_resource_usage()
-                return True
+    # def kill_process(self, process: str) -> bool:
+    #     try:
+    #         if Path.exists(Path.join(self.path, process)):
+    #             os.remove(Path.join(self.path, process))
+    #             self.calculate_resource_usage()
+    #             return True
             
-            self.print(f"{Fore.RED}Error while killing process: {process} does not exists! Perhaps you misspelled the name?")
-            return False
-        except:
-            self.print(f"{Fore.RED}Error while killing process: {process}")
-            return False
+    #         self.print(f"{Fore.RED}Error while killing process: {process} does not exists! Perhaps you misspelled the name?")
+    #         return False
+    #     except:
+    #         self.print(f"{Fore.RED}Error while killing process: {process}")
+    #         return False
 
 
-    def edit_process_status(self, process_name: str, running : bool) -> bool:
+    # def edit_process_status(self, process_name: str, running : bool) -> bool:
         if not Path.exists(Path.join(self.path, process_name)):
             self.print(f"P{Fore.RED}rocess ({process_name}) was not found on computer ({self.name})")
             return False

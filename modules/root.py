@@ -190,28 +190,3 @@ class Root:
 
     def print(self, text: str):
         print(f"{Fore.BLACK}{Back.CYAN}[{Back.LIGHTBLUE_EX}ROOT{Back.CYAN}]{Back.RESET}{Fore.CYAN}: {Fore.RESET+Back.RESET+Style.RESET_ALL}" + text + Fore.RESET+Back.RESET+Style.RESET_ALL)
-    
-
-if __name__ == "__main__":
-    root : Root = Root(r".\Test folder")
-
-    cluster1 : Cluster = root.create_cluster("cluster3")
-
-    pc1 : Computer = cluster1.create_computer("computer1", 1000, 7000)
-    pc2 : Computer = cluster1.create_computer("computer2", 1000, 7000)
-    pc3 : Computer = cluster1.create_computer("computer3", 1000, 7000)
-
-    # cluster1.rename_cluster("klaszter1")
-
-    # pc1.start_process("ultrakill-abcdef", True, 500, 2000)
-    
-
-
-
-    # cluster : Cluster = root.create_cluster("cluster2")
-
-    # pc1 : Computer = cluster.create_computer("szamitogep1", 1000, 7000)
-    # pc2 : Computer = cluster.create_computer("szamitogep2", 2000, 4000)
-    # pc3 : Computer = cluster.create_computer("szamitogep3", 3000, 3000)
-
-    
