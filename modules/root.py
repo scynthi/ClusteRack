@@ -12,7 +12,7 @@ class Root:
         if Path.exists(path):
             root_name: str = path.split(os.sep)[-1]
 
-            self.print(f"Starting to initialize root with name {root_name}. This may take a few minutes...")
+            self.print(f"Starting to initialize root with name {root_name}. This may take a few seconds...")
 
             files : list = os.listdir(path)
             cluster_dict: dict = {}
@@ -29,7 +29,7 @@ class Root:
             self.path :str = path
             self.name :str = root_name
             self.clusters : dict = cluster_dict
-            self.print("Root initialized")
+            self.print(f"{Fore.BLACK}{Back.GREEN}Root ({root_name}) initialized succesfully with {len(self.clusters)} computer(s).{Back.RESET+Fore.RESET}\n")
 
 
     def create_cluster(self, cluster_name: str) -> Cluster:
@@ -52,7 +52,7 @@ class Root:
             self.print(f"Error while creating cluster '{cluster_name}'.")
             return
 
-
+    # Only works if there are no computers in the cluster
     def try_delete_cluster(self, cluster_name: str) -> bool:
         path: str = Path.join(self.path, cluster_name)
 
@@ -106,7 +106,7 @@ class Root:
             self.print(f"CRITICAL ERROR DETECTED: force deletion failed for computer {cluster_name}.")
             return False
 
-
+    # TODO : REMAKE THIS FUNCTION SO IT WORKS WITH THE NEW CLUSTER-PROCESS SYSTEM
     def relocate_process(self, process_name: str, origin_cluster_name: str, origin_computer_name: str, destination_cluster_name: str, destination_computer_name: str) -> bool:
         origin_cluster : Cluster = self.clusters.get(origin_cluster_name)
         destination_cluster : Cluster = self.clusters.get(destination_cluster_name)
@@ -157,7 +157,7 @@ class Root:
         self.print(f"Succesfully moved process {process_name} from {origin_cluster_name}/{origin_computer_name} to cluster {destination_cluster_name}/{destination_computer_name}.")
         return False
 
-
+    # TODO : REMAKE THIS FUNCTION SO IT WORKS WITH THE NEW CLUSTER-PROCESS SYSTEM
     def move_computer(self, computer_name: str, origin_cluster_name: str, destination_cluster_name: str) -> bool:
         if not self.clusters.get(origin_cluster_name):
             self.print(f"The origin cluster {origin_cluster_name} could not be found. Perhaps you misstyped the name.")
@@ -188,5 +188,6 @@ class Root:
 
         destination_cluster.create_computer(computer_stats_dict["computer_name"],computer_stats_dict["computer_cores"],computer_stats_dict["computer_memory"])
 
+    # Only for debugging purposes
     def print(self, text: str):
         print(f"{Fore.BLACK}{Back.CYAN}[{Back.LIGHTBLUE_EX}ROOT{Back.CYAN}]{Back.RESET}{Fore.CYAN}: {Fore.RESET+Back.RESET+Style.RESET_ALL}" + text + Fore.RESET+Back.RESET+Style.RESET_ALL)

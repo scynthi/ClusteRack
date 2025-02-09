@@ -40,3 +40,26 @@ First Fit
 --- Fastest, Leads to inefficient packing (best used if the computers are similar in resources)
 
 """
+
+# On init we save the processes from the .klaszter file to the self.processes dict. and then to global processes 
+# Then we create a local holder for both active and inactive processes and sort them
+# Sorting the global processes does 2 things:
+# - It groups the processes into active and inactive variants
+# - And it merges the dictionary with the global active and inactive process dicts. -> We need to do this so that the information about processes survives through re-initializations 
+    # If a process already exist in the global dicts we do not put it in the global dicts
+# - It makes the local process dicts(ONLY THE ACTIVE AND INACTIVE PROCESS DICTS NOT THE NORMAL PROCESS DICT) the same as the global ones
+# 
+# Then we format the cluster config file so that we dont get duplicate programs
+# And atlast we update the config file to reflect the standing of the local process dicts.
+
+
+# start_process: ------------ NOT UP TO DATE ASK ME(PETAH) ABOUT IT
+#  check if the global processes already have the process
+#       if not we put it in the global config and reinicialize. REFERENCE Upper comment for reinicialization process
+# 
+# kill_process:
+#  check if it exists in either global process dicts
+#       if not just return
+#  if it does we remove it from both the process dict so that it doesnt get written into the global process list AND remove it from the global process list
+#  we resort the process (we only do this so that it copies the processes from the global dicts to the local ones)
+#  from here REFERENCE Upper comment for reinicialization process

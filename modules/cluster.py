@@ -27,7 +27,6 @@ class Cluster:
             instance_count_list: list = []
             cores_list: list = []
             memory_list: list = []
-            id_list: list = []
 
             process_info_dict: dict = {}
 
@@ -54,17 +53,6 @@ class Cluster:
             self.__sort_processes()
             self.format_cluster_config()
             self.update_cluster_config()
-
-            # On init we save the processes from the .klaszter file to the self.processes dict. and then to global processes 
-            # Then we create a local holder for both active and inactive processes and sort them
-            # Sorting the global processes does 2 things:
-            # - It groups the processes into active and inactive variants
-            # - And it merges the dictionary with the global active and inactive process dicts. -> We need to do this so that the information about processes survives through re-initializations 
-                # If a process already exist in the global dicts we do not put it in the global dicts
-            # - It makes the local process dicts(ONLY THE ACTIVE AND INACTIVE PROCESS DICTS NOT THE NORMAL PROCESS DICT) the same as the global ones
-            # 
-            # Then we format the cluster config file so that we dont get duplicate programs
-            # And atlast we update the config file to reflect the standing of the local process dicts.
 
         else:
             self.print(f"{Style.BRIGHT + Fore.RED}Cluster {cluster_name} doesn`t have a config file")
@@ -96,7 +84,7 @@ class Cluster:
         self.print(f"{Fore.BLACK}{Back.GREEN}Cluster ({cluster_name}) initialized succesfully with {len(computer_dict)} computer(s).{Back.RESET+Fore.RESET}\n")
         self.initialized : bool = True
 
-    #Sort save them into global process and group to active and inactive
+    #Save processes them into global process and group to active and inactive
     def __sort_processes(self) -> None:
         self.active_processes.clear()
         self.inactive_processes.clear()
@@ -115,7 +103,7 @@ class Cluster:
                     global_inactive_processes[name] = global_processes[name]
                 self.inactive_processes = global_inactive_processes.copy()
 
-
+    #Clear the .klaszter file so we can rewrite it
     def format_cluster_config(self) -> None:
         with open(Path.join(self.path, ".klaszter"), "w", encoding="utf8") as config_file:
             config_file.write("")
@@ -130,8 +118,8 @@ class Cluster:
                 file.write(data)
             file.close()
 
+    # Group tasks update processes, clean the config, and reinitialize the cluster
     def __update_cluster_state(self):
-        """Helper function to update processes, clean config, and reinitialize cluster."""
         self.__sort_processes()
         self.format_cluster_config()
         self.update_cluster_config()
@@ -160,7 +148,7 @@ class Cluster:
             self.__init__(self.path)
             return
         
-
+    # Only works if there are no processes running under the computer
     def try_delete_computer(self, computer_name: str) -> bool:
         path: str = Path.join(self.path, computer_name)
 
@@ -207,7 +195,7 @@ class Cluster:
             self.__init__(self.path)
             return False
 
-
+    # TODO : Move this function into the ROOT class
     def rename_cluster(self, new_name : str) -> bool:
         if not self.initialized:
             self.print(f"{Fore.RED}Cluster failed to initialize so renaming can't be done. New cluster name would be: {new_name}.")
@@ -257,7 +245,7 @@ class Cluster:
             self.print(f"{Fore.BLACK}{Back.RED}CRITICAL ERROR DETECTED: Error renaming computer: {e}")
             return False
 
-
+    # Explanation docs.txt
     def start_process(self, process_name: str, running: bool, cpu_req: int, ram_req: int, instance_count: int = 1, date_started: str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')) -> bool:
         if process_name in global_processes:
             self.print(f"{Fore.RED}{process_name} is already a process on the cluster. Maybe try another name.")
@@ -288,18 +276,7 @@ class Cluster:
             self.print(f"{Fore.RED}Error while creating process: {process_name} -> {e}")
             return False
 
-        
-    # start_process: ------------ NOT UP TO DATE ASK ME(PETAH) ABOUT IT
-    #  check if the global processes already have the process
-    #       if not we put it in the global config and reinicialize. REFERENCE Upper comment for reinicialization process
-    # 
-    # kill_process:
-    #  check if it exists in either global process dicts
-    #       if not just return
-    #  if it does we remove it from both the process dict so that it doesnt get written into the global process list AND remove it from the global process list
-    #  we resort the process (we only do this so that it copies the processes from the global dicts to the local ones)
-    #  from here REFERENCE Upper comment for reinicialization process
-
+    # Explanation docs.txt
     def kill_process(self, process_name: str) -> bool:
         try:
             self.print(f"{Style.BRIGHT}Attempting to kill process: {process_name}")
@@ -357,7 +334,7 @@ class Cluster:
             self.print(f"{Fore.RED}Error while editing process {process_name}: {e}")
             return False
 
-    # R
+
     def rename_process(self, process_name: str, new_process_name: str) -> bool:
         try:
             # Ensure the process exists
