@@ -5,8 +5,8 @@ from colorama import Fore, Style, Back
 from modules.rebalancer import *
 
 global_processes : dict = {}
-global_activ_processes : dict = {}
-global_inactiv_processes : dict = {}
+global_active_processes : dict = {}
+global_inactive_processes : dict = {}
 
 class Cluster:
     def __init__(self, path: str):
@@ -48,8 +48,8 @@ class Cluster:
 
             self.processes: dict = process_info_dict
             
-            self.activ_processes : dict = {}
-            self.inactiv_processes : dict = {}
+            self.active_processes : dict = {}
+            self.inactive_processes : dict = {}
             
             self.__sort_processes()
             self.format_cluster_config()
@@ -59,7 +59,7 @@ class Cluster:
             # Then we create a local holder for both active and inactive processes and sort them
             # Sorting the global processes does 2 things:
             # - It groups the processes into active and inactive variants
-            # - And it merges the dictionary with the global activ and inactiv process dicts. -> We need to do this so that the information about processes survives through re-initializations 
+            # - And it merges the dictionary with the global active and inactive process dicts. -> We need to do this so that the information about processes survives through re-initializations 
                 # If a process already exist in the global dicts we do not put it in the global dicts
             # - It makes the local process dicts(ONLY THE ACTIVE AND INACTIVE PROCESS DICTS NOT THE NORMAL PROCESS DICT) the same as the global ones
             # 
@@ -96,10 +96,10 @@ class Cluster:
         self.print(f"{Fore.BLACK}{Back.GREEN}Cluster ({cluster_name}) initialized succesfully with {len(computer_dict)} computer(s).{Back.RESET+Fore.RESET}\n")
         self.initialized : bool = True
 
-
+    #Sort save them into global process and group to active and inactive
     def __sort_processes(self) -> None:
-        self.activ_processes.clear()
-        self.inactiv_processes.clear()
+        self.active_processes.clear()
+        self.inactive_processes.clear()
 
         for name in self.processes:
             if name not in global_processes:  # Ensure process is added globally
@@ -107,14 +107,14 @@ class Cluster:
 
         for name in global_processes:
             if global_processes[name]["running"] == True:
-                if name not in global_activ_processes:
-                    global_activ_processes[name] = global_processes[name]
-                self.activ_processes = global_activ_processes.copy()
+                if name not in global_active_processes:
+                    global_active_processes[name] = global_processes[name]
+                self.active_processes = global_active_processes.copy()
             else:
-                if name not in global_inactiv_processes:
-                    global_inactiv_processes[name] = global_processes[name]
-                self.inactiv_processes = global_inactiv_processes.copy()
-                
+                if name not in global_inactive_processes:
+                    global_inactive_processes[name] = global_processes[name]
+                self.inactive_processes = global_inactive_processes.copy()
+
 
     def format_cluster_config(self) -> None:
         with open(Path.join(self.path, ".klaszter"), "w", encoding="utf8") as config_file:
@@ -123,8 +123,8 @@ class Cluster:
 
 
     def update_cluster_config(self) -> None:
-        for name in self.activ_processes:
-            data: str = f"{name}\n{self.activ_processes[name]["instance_count"]}\n{self.activ_processes[name]["cores"]}\n{self.activ_processes[name]["memory"]}\n"
+        for name in self.active_processes:
+            data: str = f"{name}\n{self.active_processes[name]["instance_count"]}\n{self.active_processes[name]["cores"]}\n{self.active_processes[name]["memory"]}\n"
 
             with open(Path.join(self.path, ".klaszter"), "a", encoding="utf8") as file:
                 file.write(data)
@@ -309,8 +309,8 @@ class Cluster:
                 del self.processes[process_name]
                 del global_processes[process_name]
 
-                global_activ_processes.pop(process_name, None)
-                global_inactiv_processes.pop(process_name, None)
+                global_active_processes.pop(process_name, None)
+                global_inactive_processes.pop(process_name, None)
 
                 # Resort, clean, and update
                 self.__update_cluster_state()
@@ -375,10 +375,10 @@ class Cluster:
             self.processes[new_process_name] = self.processes.pop(process_name)
 
             # Update active/inactive process lists
-            if process_name in global_activ_processes:
-                global_activ_processes[new_process_name] = global_activ_processes.pop(process_name)
-            elif process_name in global_inactiv_processes:
-                global_inactiv_processes[new_process_name] = global_inactiv_processes.pop(process_name)
+            if process_name in global_active_processes:
+                global_active_processes[new_process_name] = global_active_processes.pop(process_name)
+            elif process_name in global_inactive_processes:
+                global_inactive_processes[new_process_name] = global_inactive_processes.pop(process_name)
 
             # Resort processes and update cluster config
             self.__update_cluster_state()
@@ -390,7 +390,7 @@ class Cluster:
             self.print(f"{Fore.RED}Error while renaming process {process_name}: {e}")
             return False
 
-
+    # Removes unnescecary files and directories from the cluster
     def cleanup(self) -> bool:
         files: list = os.listdir(self.path)
         
@@ -417,5 +417,6 @@ class Cluster:
         self.print(f"{Fore.GREEN}Cleanup completed. Removed a total of {removed_files} incorrect files plus folders.")
         return True
     
+    # Only for debugging purposes
     def print(self, text: str):
         print(f"{Fore.BLACK}{Back.CYAN}[{Back.WHITE}{self.name}{Back.CYAN}]{Back.RESET}{Fore.CYAN}: {Fore.RESET+Back.RESET+Style.RESET_ALL}" + text + Fore.RESET+Back.RESET+Style.RESET_ALL)

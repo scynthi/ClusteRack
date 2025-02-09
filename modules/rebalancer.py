@@ -25,7 +25,7 @@ class Rebalancer:
 
     def sort_programs(self) -> None:
         expanded_processes = []
-        for name, details in self.parent.activ_processes.items():
+        for name, details in self.parent.active_processes.items():
             instance_count = int(details["instance_count"])
             for _ in range(instance_count):
                 expanded_processes.append((name, details.copy()))
@@ -38,6 +38,7 @@ class Rebalancer:
         self.assign_process_id()
 
 
+    #Unique for all instances
     def assign_process_id(self) -> None:
         used_ids = set()
 
@@ -53,7 +54,8 @@ class Rebalancer:
             process[1]['id'] = new_id
 
 
-    def clear_computer_processes(self, computer: Computer) -> None:     #This ensures that every rerun is the same nomatter the starting conditions.
+    #Ensures that every rerun is the same nomatter the starting conditions.
+    def clear_computer_processes(self, computer: Computer) -> None:
         for file in os.listdir(computer.path):
             file_path = Path.join(computer.path, file)
             if file != ".szamitogep_config" and Path.isfile(file_path):
@@ -88,14 +90,14 @@ class Rebalancer:
 
 
     # Only for debugging purposes
-    def print_computer_scores(self):
+    def print_computer_scores(self) -> None:
         print(Fore.CYAN + "Current Computer Scores:" + Style.RESET_ALL)
         for name, computer in self.sorted_computer_list:
             score = self.calculate_computer_score(computer)
             print(f"{Style.BRIGHT + Fore.CYAN}[{Fore.WHITE}{name}{Fore.CYAN}] -> {Fore.WHITE}Score: {Style.BRIGHT+Fore.GREEN}{score:.2f} {Style.NORMAL+Fore.WHITE}(Cores: {computer.free_cores}/{computer.cores}, Memory: {computer.free_memory}/{computer.memory})")
 
     # Only for debugging purposes
-    def print_assignments(self, assignments):
+    def print_assignments(self, assignments) -> None:
         if assignments == {}: 
             print(Fore.MAGENTA + Style.BRIGHT  + "\nNo assignments happened ---------" + Style.RESET_ALL + Back.RESET)
             return
@@ -201,10 +203,10 @@ class Rebalancer:
             else:
                 print(Fore.RED + f"Skipping {process_name}: Not enough resources on any computer!" + Style.RESET_ALL)
 
-                print(Fore.GREEN + Style.BRIGHT +"\nAfter Distribution:" + Style.RESET_ALL)
-                self.print_computer_scores()
+            print(Fore.GREEN + Style.BRIGHT +"\nAfter Distribution:" + Style.RESET_ALL)
+            self.print_computer_scores()
 
-                self.print_assignments(assignments)
+            self.print_assignments(assignments)
 
 
 
