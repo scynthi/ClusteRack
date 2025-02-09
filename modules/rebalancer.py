@@ -274,20 +274,3 @@ class Rebalancer:
         self.print_computer_scores()
 
         self.print_assignments(assignments)
-
-
-
-
-
-"""
-NEXT TODO:
-- start process from cluster and make it write into the .klaszter file
-- kill process from cluster and make it write into the .klaszter file
-
-- Make computers renamable
-
-- Make Status changes work :
-    give the name of a program
-    if it exist change the given status
-    run the algos according the status of the processes
-"""
