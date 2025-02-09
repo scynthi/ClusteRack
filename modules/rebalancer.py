@@ -25,7 +25,7 @@ class Rebalancer:
 
     def sort_programs(self) -> None:
         expanded_processes = []
-        for name, details in self.parent.activ_processes.items():
+        for name, details in self.parent.active_processes.items():
             instance_count = int(details["instance_count"])
             for _ in range(instance_count):
                 expanded_processes.append((name, details.copy()))
@@ -53,7 +53,8 @@ class Rebalancer:
             process[1]['id'] = new_id
 
 
-    def clear_computer_processes(self, computer: Computer) -> None:     #This ensures that every rerun is the same nomatter the starting conditions.
+    #Ensures that every rerun is the same nomatter the starting conditions.
+    def clear_computer_processes(self, computer: Computer) -> None:     
         for file in os.listdir(computer.path):
             file_path = Path.join(computer.path, file)
             if file != ".szamitogep_config" and Path.isfile(file_path):
@@ -108,6 +109,7 @@ class Rebalancer:
 
 
 
+    # The slowest, leads to the uniform computer usage
     def distribute_processes_balanced(self) -> None:
         print(Fore.BLUE + Style.BRIGHT + "\nBALANCED ALGO." + Style.RESET_ALL)
         #Step 1
@@ -163,7 +165,7 @@ class Rebalancer:
 
         self.print_assignments(assignments)
     
-
+    # Balanced speed, the best used if the computers are similar
     def distribute_processes_efficient_packing(self) -> None:
         print(Fore.BLUE + Style.BRIGHT + "\nEFFICIENT PACKING ALGO." + Style.RESET_ALL)
 
@@ -223,8 +225,7 @@ class Rebalancer:
 
         self.print_assignments(assignments)
 
-
-
+    # Fast but leads to unsatifactory packing
     def distribute_processes_speedy(self) -> None:
         print(Fore.BLUE + Style.BRIGHT + "\nSPEEDY ALGO." + Style.RESET_ALL)
 

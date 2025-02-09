@@ -11,8 +11,9 @@ from modules.interpreter import CLI_Interpreter
 # # pc3 = cluster1.create_computer("szamitogep3", 1900, 2000)
 # # pc4 = cluster1.create_computer("szamitogep4", 8000, 6000)
 
-# cluster: Cluster = Cluster(r"Test folder\klaszter1")
-# pc1 = cluster.create_computer("szamitogep1", 1000, 8000)
+cluster: Cluster = Cluster(r"Test folder\klaszter1")
+pc1 = cluster.create_computer("szamitogep1", 1000, 8000)
+
 # pc2 = cluster.create_computer("szamitogep2", 700, 4000)
 # pc3 = cluster.create_computer("szamitogep3", 2000, 2000)
 # pc4 = cluster.create_computer("szamitogep4", 1500, 16000)
@@ -28,7 +29,7 @@ from modules.interpreter import CLI_Interpreter
 
 # cluster.rename_process("apex", "titanfall")
 
-root : Root = Root(r"./mathew")
+# root : Root = Root(r"./mathew")
 
 # cluster1 : Cluster = root.create_cluster("cluster2")
 
@@ -44,3 +45,4 @@ root : Root = Root(r"./mathew")
 # pc1.rename_self("are we deaduzz")
 
 interpreter : CLI_Interpreter = CLI_Interpreter()
+# pc1.rename_self("are we deaduzz")
