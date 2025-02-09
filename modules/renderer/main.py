@@ -8,9 +8,12 @@ from modules.renderer.projection import Projection
 
 
 class SoftwareRender:
-    def __init__(self, model, frame, root):
-        self.RES = self.WIDTH, self.HEIGHT = 300, 200
+    def __init__(self, model, zoom_amount, frame, root):
+        self.RES = self.WIDTH, self.HEIGHT = 300, 200  # Full resolution
+        self.SCALED_RES = (self.WIDTH * 2, self.HEIGHT * 2)
+
         self.FPS = 60
+        self.zoom_amount = zoom_amount
         self.root = root
         self.window_moving = False
         self.frame = frame  
@@ -18,7 +21,8 @@ class SoftwareRender:
         self.canvas.grid(row=0, column=0, sticky="nsew")
 
         pg.init()
-        self.screen = pg.Surface(self.RES)
+        self.screen = pg.Surface(self.SCALED_RES)  # Render 2 times the size
+
         self.clock = pg.time.Clock()
         self.running = True
         self.tk_image = None  
@@ -27,7 +31,7 @@ class SoftwareRender:
         self.update()
 
     def create_objects(self, new_object_path):
-        self.camera = Camera(self, [-15, 0, -15])
+        self.camera = Camera(self, self.zoom_amount)
         self.projection = Projection(self)
         self.object = self.get_object_from_file(new_object_path)
         self.object.rotate_y(-math.pi / 4)
@@ -59,8 +63,12 @@ class SoftwareRender:
         self.root.after(16, self.update)
 
     def update_tkinter_canvas(self):
+        # Convert Pygame surface to an image
         pg_image_data = pg.image.tostring(self.screen, "RGB")
-        pg_image = Image.frombytes("RGB", self.RES, pg_image_data)
+        pg_image = Image.frombytes("RGB", self.SCALED_RES, pg_image_data)
+
+        # Scale it up to match the expected display size
+        pg_image = pg_image.resize(self.RES, Image.BILINEAR)
 
         self.tk_image = ImageTk.PhotoImage(pg_image)  
         self.canvas.create_image(0, 0, anchor=tk.NW, image=self.tk_image)

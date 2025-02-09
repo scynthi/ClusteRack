@@ -204,10 +204,11 @@ class UI:
 
 
     class EmbedRenderer:
-        def __init__(self, frame, model_name, root):
+        def __init__(self, frame, model_name, zoom_amount, root):
             self.frame = frame
             self.model_name = model_name
+            self.zoom_amount = zoom_amount
             self.root = root
 
         def get_renderer(self):
-            return SoftwareRender(self.model_name, self.frame, self.root)
+            return SoftwareRender(self.model_name, self.zoom_amount, self.frame, self.root)
