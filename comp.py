@@ -5,7 +5,7 @@ from modules.ui import UI, AppWindow
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.figure as figure
 from modules.computer import Computer
-from modules.ui_obj_renderer import EmbedRendererWindow
+
 
 app: CTk = AppWindow("800x500")
 #app.grid_rowconfigure(0, weight=1)
@@ -16,8 +16,6 @@ frame.grid(column=1, row=0)
 
 # pygame_frame: CTkFrame = CTkFrame(app, width=300, height=200)
 # pygame_frame.grid(column=0, row=0)
-
-pc_3d: EmbedRendererWindow = EmbedRendererWindow(app, "rack_1")
 
 fig: figure.Figure = figure.Figure(figsize=(3, 3))
 canvas: FigureCanvasTkAgg = FigureCanvasTkAgg(fig, frame)
