@@ -231,6 +231,32 @@ class Cluster:
         except Exception as e:
             self.print(f"{Fore.BLACK}{Back.RED}CRITICAL ERROR DETECTED: Error renaming cluster: {e}")
             return False
+        
+    
+    def rename_computer(self, computer_name : str, new_name : str) -> bool:
+        if not self.initialized:
+            self.print(f"{Fore.RED}Cluster failed to initialize so renaming can't be done.")
+            return False
+        
+        try:
+            parent_dir: str = Path.dirname(self.path)
+            cluster_dir: str = Path.join(self.path, self.name)
+            computer_dir: str = Path.join(cluster_dir, computer_name)
+            
+            if not Path.exists(parent_dir):
+                self.print(f"{Fore.RED}A computer with the name {parent_dir} does not exist.")
+                return False
+            
+            new_path: str = Path.join(cluster_dir, new_name)
+
+            os.rename(parent_dir, new_path)
+            self.print(f"{Fore.GREEN}Computer folder renamed to '{new_name}' successfully.")
+
+            return True
+            
+        except Exception as e:
+            self.print(f"{Fore.BLACK}{Back.RED}CRITICAL ERROR DETECTED: Error renaming computer: {e}")
+            return False
 
 
     def start_process(self, process_name: str, running: bool, cpu_req: int, ram_req: int, instance_count: int = 1, date_started: str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')) -> bool:
