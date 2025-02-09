@@ -44,5 +44,5 @@ from modules.interpreter import CLI_Interpreter
 
 # pc1.rename_self("are we deaduzz")
 
-interpreter : CLI_Interpreter = CLI_Interpreter()
+# interpreter : CLI_Interpreter = CLI_Interpreter()
 # pc1.rename_self("are we deaduzz")
