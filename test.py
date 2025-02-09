@@ -29,11 +29,15 @@ from modules.root import Root
 
 root : Root = Root(r"./mathew")
 
-cluster1 : Cluster = root.create_cluster("cluster2")
+# cluster1 : Cluster = root.create_cluster("cluster2")
 
-pc1 = cluster1.create_computer("szamitogep1", 1200, 5000)
-pc2 = cluster1.create_computer("szamitogep2", 900, 4000)
-pc3 = cluster1.create_computer("szamitogep3", 1900, 2000)
-pc4 = cluster1.create_computer("szamitogep4", 8000, 6000)
+# pc1 = cluster1.create_computer("szamitogep1", 1200, 5000)
+# pc2 = cluster1.create_computer("szamitogep2", 900, 4000)
+# pc3 = cluster1.create_computer("szamitogep3", 1900, 2000)
+# pc4 = cluster1.create_computer("szamitogep4", 8000, 6000)
 
-cluster1.rename_computer("szamitogep1", "apple gaming")
+cluster: Cluster = Cluster(r"mathew\cluster2")
+
+pc1: Computer = Computer(r"mathew\cluster2\apple gaming")
+
+pc1.rename_self("are we deaduzz")

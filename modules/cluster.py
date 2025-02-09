@@ -239,19 +239,18 @@ class Cluster:
             return False
         
         try:
-            parent_dir: str = Path.dirname(self.path)
-            cluster_dir: str = Path.join(self.path, self.name)
-            computer_dir: str = Path.join(cluster_dir, computer_name)
+            computer_dir: str = Path.join(self.path, computer_name)
             
-            if not Path.exists(parent_dir):
-                self.print(f"{Fore.RED}A computer with the name {parent_dir} does not exist.")
+            if not Path.exists(computer_dir):
+                self.print(f"{Fore.RED}A computer with the name {computer_dir} does not exist.")
                 return False
             
-            new_path: str = Path.join(cluster_dir, new_name)
+            new_path: str = Path.join(self.path, new_name)
 
-            os.rename(parent_dir, new_path)
+            os.rename(computer_dir, new_path)
             self.print(f"{Fore.GREEN}Computer folder renamed to '{new_name}' successfully.")
 
+            self.__init__(self.path)
             return True
             
         except Exception as e:
