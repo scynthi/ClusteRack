@@ -1,6 +1,7 @@
 from modules.computer import Computer
 from modules.cluster import Cluster
 from modules.root import Root
+from modules.interpreter import CLI_Interpreter
 
 # # root : Root = Root(r"./Test folder")
 
@@ -36,8 +37,10 @@ root : Root = Root(r"./mathew")
 # pc3 = cluster1.create_computer("szamitogep3", 1900, 2000)
 # pc4 = cluster1.create_computer("szamitogep4", 8000, 6000)
 
-cluster: Cluster = Cluster(r"mathew\cluster2")
+# cluster: Cluster = Cluster(r"mathew\cluster2")
 
-pc1: Computer = Computer(r"mathew\cluster2\apple gaming")
+# pc1: Computer = Computer(r"mathew\cluster2\apple gaming")
 
-pc1.rename_self("are we deaduzz")
+# pc1.rename_self("are we deaduzz")
+
+interpreter : CLI_Interpreter = CLI_Interpreter()
