@@ -252,6 +252,7 @@ class Cluster:
             os.rename(parent_dir, new_path)
             self.print(f"{Fore.GREEN}Computer folder renamed to '{new_name}' successfully.")
 
+            self.__init__(self.path)
             return True
             
         except Exception as e:
