@@ -27,6 +27,7 @@ class AppWindow(CTk):
         self.geometry(size)
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=1)
+        self.config(bg=DGRAY)
         self.minimized : bool = False
         self.maximized : bool = False
         self.normal_size = self.geometry()
