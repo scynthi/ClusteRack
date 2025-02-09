@@ -93,7 +93,7 @@ class Cluster:
         self.computers : dict = computer_dict
         self.rebalancer : Rebalancer = Rebalancer(self.path, self)
         
-        self.print(f"{Fore.BLACK}{Back.GREEN}Cluster ({cluster_name}) initialized succesfully with {len(computer_dict)} computer(s).\n")
+        self.print(f"{Fore.BLACK}{Back.GREEN}Cluster ({cluster_name}) initialized succesfully with {len(computer_dict)} computer(s).{Back.RESET+Fore.RESET}\n")
         self.initialized : bool = True
 
 

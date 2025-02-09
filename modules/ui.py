@@ -29,7 +29,7 @@ class AppWindow(CTk):
         self.grid_rowconfigure(1, weight=1)
         self.minimized : bool = False
         self.maximized : bool = False
-        
+        self.normal_size = self.geometry()
 
         title_bar : CTkFrame = Frame(self, bg=DBLUE, relief='raised', border=4)
         title_bar.grid_columnconfigure([1,2], weight=1)
@@ -129,6 +129,10 @@ class AppWindow(CTk):
             xwin : int = xwin - startx
 
             def move_window(event) -> None:
+                if self.winfo_width() == self.winfo_screenwidth():
+                    self.maximized = True
+                    self.maximize_me()
+
                 self.config(cursor="fleur")
                 self.geometry(f'+{event.x_root + xwin}+{event.y_root + ywin}')
 
@@ -179,6 +183,12 @@ class AppWindow(CTk):
 
 
 class UI:
+    def __init__(self):
+        self.LGRAY = LGRAY
+        self.LBLUE = LBLUE
+        self.DBLUE = DBLUE
+        self.DGRAY = DGRAY
+
     class Button(Button):
         def __init__(self, master : AppWindow, text : str, fg_color : str = DGRAY, bg_color : str = LBLUE, **kwargs) -> None:
             super().__init__(master, 
@@ -199,8 +209,8 @@ class UI:
                              **kwargs)
             
     class Frame(Frame):
-        def __init__(self, master, bg_color=LGRAY, **kwargs):
-            super().__init__(master,  bg=bg_color, borderwidth=4, relief="raised", **kwargs)
+        def __init__(self, master, bg_color=LGRAY, height: int = 200, **kwargs):
+            super().__init__(master,  bg=bg_color, height=height, borderwidth=4, relief="raised", **kwargs)
 
 
     class EmbedRenderer:
