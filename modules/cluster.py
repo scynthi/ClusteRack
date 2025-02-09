@@ -357,7 +357,7 @@ class Cluster:
             self.print(f"{Fore.RED}Error while editing process {process_name}: {e}")
             return False
 
-
+    # R
     def rename_process(self, process_name: str, new_process_name: str) -> bool:
         try:
             # Ensure the process exists
