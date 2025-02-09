@@ -41,7 +41,7 @@ class Computer:
                 return False
             
             if usage["core_usage_percent"] > 100:
-                self.print(f"{Fore.RED}Computer ({self.name}) is overloaded! Core limit exceeded ({usage["cpu_usage_percent"]}%).")
+                self.print(f"{Fore.RED}Computer ({self.name}) is overloaded! Core limit exceeded ({usage["core_usage_percent"]}%).")
                 return False
             
             return True
