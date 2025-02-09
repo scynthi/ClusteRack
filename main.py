@@ -9,15 +9,14 @@ from modules.computer import Computer
 
 app : AppWindow = AppWindow("1000x600")
 content : Frame = app.content
-content.grid_columnconfigure(0, weight=1)
-content.grid_rowconfigure([0,1,2], weight=1)
-
 root : Root = None
 
 class ImportUI:
     def __init__(self) -> None:
+        content.grid_columnconfigure(0, weight=1)
+        content.grid_rowconfigure(0, weight=1)
         self.center_frame: UI.Frame = UI.Frame(content)
-        self.center_frame.grid(column=0, row=1)
+        self.center_frame.grid(column=0, row=0)
 
         self.path_label: UI.Label = UI.Label(self.center_frame, text="Nincsen mappa")
         self.path_label.grid(column=0, row=0, padx=5)
@@ -49,7 +48,24 @@ class ImportUI:
 
 class DashboardUI:
     def __init__(self) -> None:
-        clusters_frame : CTkScrollableFrame = CTkScrollableFrame(content, orientation="horizontal", height=300, border_width=4, border_color="gray", corner_radius=0)
+        content.grid_rowconfigure(0, weight=0)
+        content.grid_rowconfigure(1, weight=1)
+
+        app.top_frame = UI.Frame(content, height=300)  
+        app.top_frame.grid(row=0, column=0, sticky="new")
+        app.top_frame.grid_columnconfigure(0, weight=1)
+
+        app.bottom_frame = UI.Frame(content)
+        app.bottom_frame.grid(row=1, column=0, sticky="nsew")
+        app.bottom_frame.grid_columnconfigure([0,1], weight=1)
+        app.bottom_frame.grid_rowconfigure(0, weight=1)
+
+        ClusterView()
+
+class ClusterView:
+    def __init__(self) -> None:
+        frame = app.top_frame
+        clusters_frame : CTkScrollableFrame = CTkScrollableFrame(frame, orientation="horizontal", height=300, border_width=4, border_color="gray", corner_radius=0)
         clusters_frame.grid(row=0, column=0, sticky="nwe")
 
         for i, cluster in enumerate(root.clusters.values()):
@@ -62,7 +78,7 @@ class DashboardUI:
             image_frame : UI.Frame= UI.Frame(cluster_frame)
             image_frame.grid(row=1, column=0, sticky="NSEW")
 
-            UI.Button(cluster_frame, text=f"Open {cluster.name}", command=lambda cluster_name = cluster.name: print(cluster_name)).grid(row=2, column=0, sticky="EW")
+            UI.Button(cluster_frame, text=f"Open {cluster.name}", command=lambda selected_cluster = cluster: self.open_cluster_tab(cluster)).grid(row=2, column=0, sticky="EW")
             
 
             pc_amount : int = len(cluster.computers.keys())
@@ -74,8 +90,44 @@ class DashboardUI:
             else:
                 image_frame.grid_rowconfigure(0, weight=1)
                 UI.Label(image_frame, text="0 computers have been detected").grid(row=0, column=0)
+    
+    def open_cluster_tab(self, cluster : Cluster):
+        if self.cluster_tab:
+            self.cluster_tab.kill()
+        else:
+            self.cluster_tab = ClusterBoard(cluster)
+
+
 
                 
+class ClusterBoard:
+    def __init__(self, cluster : Cluster) -> None:
+        _frame = app.bottom_frame
+        self._frame = frame
+
+        frame : UI.Frame = UI.Frame(_frame)
+        frame.grid(row=0, column=0, sticky="nsew")
+
+        cluster_frame : UI.Frame = UI.Frame(frame)
+        cluster_frame.grid(row=0, column=0)
+
+        print(cluster.name)
+
+        UI.EmbedRenderer(cluster_frame, "rack_8", 12, app).get_renderer()
+    
+    def kill(self) -> None:
+        self._frame.destroy()
+        self._frame = None
+
+
+
+class ComputerBoard:
+    def __init__(self) -> None:
+        frame = app.bottom_frame
+        computer_frame : UI.Frame = UI.Frame(frame)
+        computer_frame.grid(row=0, column=1, sticky="nsew")
+
+        UI.EmbedRenderer(computer_frame, "computer", 12, app).get_renderer()
 
 
 ImportUI()
