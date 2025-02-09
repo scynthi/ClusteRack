@@ -10,7 +10,7 @@ from modules.root import Root
 # pc3 = cluster1.create_computer("szamitogep3", 1900, 2000)
 # pc4 = cluster1.create_computer("szamitogep4", 8000, 6000)
 
-cluster: Cluster = Cluster(r"Test folder\cluster2")
+cluster: Cluster = Cluster(r"Test folder\klaszter1")
 pc1 = cluster.create_computer("szamitogep1", 1000, 8000)
 pc2 = cluster.create_computer("szamitogep2", 700, 4000)
 pc3 = cluster.create_computer("szamitogep3", 2000, 2000)

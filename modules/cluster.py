@@ -45,11 +45,15 @@ class Cluster:
             self.processes: dict = process_info_dict
 
         else:
-            self.print(f"Cluster {cluster_name} doesn`t have a config file")
+            self.print(f"{Style.BRIGHT + Fore.RED}Cluster {cluster_name} doesn`t have a config file")
+            self.print(f"{Style.BRIGHT + Fore.GREEN}Creating .klaszter file now")
 
             new_cluster_file = open(Path.join(self.path, ".klaszter"), "w", encoding="utf-8", )
             new_cluster_file.write("")
             new_cluster_file.close()
+
+            self.__init__(self.path)
+            return
 
         
         files: list = os.listdir(path)
