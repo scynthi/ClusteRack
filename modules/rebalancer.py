@@ -25,7 +25,7 @@ class Rebalancer:
 
     def sort_programs(self) -> None:
         expanded_processes = []
-        for name, details in self.parent.processes.items():
+        for name, details in self.parent.activ_processes.items():
             instance_count = int(details["instance_count"])
             for _ in range(instance_count):
                 expanded_processes.append((name, details.copy()))
@@ -63,13 +63,12 @@ class Rebalancer:
     def write_process_file(self, computer: Computer, process_name: str, process: dict) -> None:
         process_id = process["id"]
 
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         process_filename = f"{process_name}-{process_id}"
 
         file_path = Path.join(computer.path, process_filename)
         with open(file_path, "w", encoding="utf8") as file:
-            file.write(f"{timestamp}\n")
-            file.write(f"AKTÍV\n")                      #Activity system still to be implamented
+            file.write(f"{process["date_started"]}\n")
+            file.write(f"AKTÍV\n")
             file.write(f"{process['cores']}\n")
             file.write(f"{process['memory']}\n")
         file.close()
@@ -81,11 +80,11 @@ class Rebalancer:
         return core_utilization + memory_utilization  # Simple heuristic score
 
 
-    def process_fits(computer: Computer, process: dict) -> bool:
-        return (
-            computer.free_cores >= int(process["cores"])
-            and computer.free_memory >= int(process["memory"])
-        )
+    # def process_fits(computer: Computer, process: dict) -> bool:
+    #     return (
+    #         computer.free_cores >= int(process["cores"])
+    #         and computer.free_memory >= int(process["memory"])
+    #     )
 
 
     # Only for debugging purposes
@@ -98,7 +97,7 @@ class Rebalancer:
     # Only for debugging purposes
     def print_assignments(self, assignments):
         if assignments == {}: 
-            print(Fore.RED + Style.BRIGHT  + "\nNo assignments happened ---------" + Style.RESET_ALL + Back.RESET)
+            print(Fore.MAGENTA + Style.BRIGHT  + "\nNo assignments happened ---------" + Style.RESET_ALL + Back.RESET)
             return
 
         print(Fore.CYAN + Style.BRIGHT + "\nProcess Assignments:" + Style.RESET_ALL)
@@ -163,7 +162,7 @@ class Rebalancer:
         self.print_computer_scores()
 
         self.print_assignments(assignments)
-
+    
 
     def distribute_processes_efficient_packing(self) -> None:
         print(Fore.BLUE + Style.BRIGHT + "\nEFFICIENT PACKING ALGO." + Style.RESET_ALL)

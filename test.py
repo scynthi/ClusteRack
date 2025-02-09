@@ -16,6 +16,13 @@ pc2 = cluster.create_computer("szamitogep2", 700, 4000)
 pc3 = cluster.create_computer("szamitogep3", 2000, 2000)
 pc4 = cluster.create_computer("szamitogep4", 1500, 16000)
 
-cluster.rebalancer.distribute_processes_speedy()
-cluster.rebalancer.distribute_processes_efficient_packing()
-cluster.rebalancer.distribute_processes_balanced()
+# cluster.rebalancer.distribute_processes_speedy()
+# cluster.rebalancer.distribute_processes_efficient_packing()
+# cluster.rebalancer.distribute_processes_balanced()
+
+# cluster.start_process("apex", True, 100, 100, 2)
+# cluster.kill_process("apex")
+
+# cluster.edit_process_resources("apex", "instance_count", 4)
+
+cluster.rename_process("apex", "titanfall")
