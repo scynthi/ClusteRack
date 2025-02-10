@@ -29,7 +29,7 @@ class Root:
             self.path :str = path
             self.name :str = root_name
             self.clusters : dict = cluster_dict
-            self.print(f"{Fore.BLACK}{Back.GREEN}Root ({root_name}) initialized succesfully with {len(self.clusters)} computer(s).{Back.RESET+Fore.RESET}\n")
+            self.print(f"{Fore.BLACK}{Back.GREEN}Root ({root_name}) initialized succesfully with {len(self.clusters)} cluster(s).{Back.RESET+Fore.RESET}\n")
 
 
     def create_cluster(self, cluster_name: str) -> Cluster:
