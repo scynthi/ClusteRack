@@ -5,7 +5,7 @@ Inside The Rebalancing algorithms:
 2. Sort the programlist and save a copy of it based on their cores taken for them to run.
     if there are programs with the same amount of cores taken to run them we sort by the memory taken to run them.               DONE
 
-a)-----------------------------------A Last Resort----------------------------------------- Load Balancing Algo.               DONE
+a)-----------------------------------A Last Re-sort----------------------------------------- Load Balancing Algo.               DONE
 
 Heuristic Load Balancing
 3. Assign a score to all computers based that shows us how well they utalize their resources. (A higher score means the computer is heavily loaded)
