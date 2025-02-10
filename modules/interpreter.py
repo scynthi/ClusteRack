@@ -14,7 +14,7 @@ class CLI_Interpreter:
         
         root_str : str = (r"mathew")
 
-        self.mode : str
+        self.mode : str = "None"
         
         self.current_cluster : Cluster
 
@@ -22,47 +22,147 @@ class CLI_Interpreter:
 
         self.current_computer : Computer
         
-        while True:
+        self.arguments = []
         
-            command = input("Enter da command: ")
-
-            match command:
-
-                case "select root":
-
-                    self.mode = "root"
-
-                case "select cluster":
-
-                    self.current_cluster = shlex.split(command)[2]
-
-                    self.mode = "cluster"
-
-                case "select computer":
-
-                    self.current_cluster = shlex.split(command)[2]
-                    self.current_computer = shlex.split(command)[3]
-
-                    self.mode = "computer"
+        self.root_commands = {
+            "select" : {
+                "root" : (self.select, "Root"),
+                "cluster" : (self.select, "Cluster"),
+                "computer" : (self.select, "Computer")
+            },
+            "exit" : (self.exit, )
+        }
+        
+        self.cluster_commands = {
+            "select" : {
+                "root" : (self.select, "Root"),
+                "cluster" : (self.select, "Cluster"),
+                "computer" : (self.select, "Computer")
+            },
+            "exit" : (self.exit, )
             
-            try:
+        }
+        
+        self.computer_commands = {
+            "select" : {
+                "root" : (self.select, "Root"),
+                "cluster" : (self.select, "Cluster"),
+                "computer" : (self.select, "Computer")
+            },
+            "exit" : (self.exit, )
+        }
+        
+        self.noMode_commands = {
+            "select" : {
+                "root" : (self.select, "Root"),
+                "cluster" : (self.select, "Cluster"),
+                "computer" : (self.select, "Computer")
+            },
+            "exit" : (self.exit, )
+        }
+        
+        self.take_input()
                 
-                command = shlex.split(command)
                 
-            except Exception as e:
-                
-                print(f"Baj van borger {e}")
+    def take_input(self):
+        
+        command = input(f"{self.mode}>").lower()
+        
+        self.convert_input(command)
+        
+    
+    def convert_input(self, command):
+        
+        shlashed_command = shlex.split(command)
+        
+        self.shlashed_command = shlashed_command
+        
+        current_step = {}
+        
+        match self.mode:
             
-            self.command = command
+            case "Root":
+                
+                current_step = self.cicle_through_commands(self.root_commands, shlashed_command)
+                    
+            case "Cluster":
+                
+                current_step = self.cicle_through_commands(self.cluster_commands, shlashed_command)
+                
+            case "Computer":
+                
+                current_step = self.cicle_through_commands(self.computer_commands, shlashed_command)
+                
+            case _:
+                
+                current_step = self.cicle_through_commands(self.noMode_commands, shlashed_command)
+                
+        if isinstance(current_step, tuple):
             
-            match self.mode:
+            func, *args = current_step
+            
+            func(*args)
+                    
+        elif current_step:
+                    
+            print(current_step)
+            
+        self.take_input()
+        
+            
+    def select(self, mode):
+        
+        self.mode = mode
+        
+        print(f"selected the {mode}")
+        
+        self.take_input()
+        
+    
+    def exit(self):
+        
+        print("Bye Bye")
+        quit()
+        
+    def rename(self):
+        
+        pass
+        
+        
+    def cicle_through_commands(self, command_dict, shlashed_command):
+        
+        current_step : dict = command_dict
+        
+        try:
                 
-                case "root":        
-                    pass
+            for item in shlashed_command:
+                        
+                if item == "?":
+                            
+                    keys = current_step.keys()
+                            
+                    current_step = ""
+                            
+                    for coms in keys:
+                                
+                        current_step += coms + "\n"
+                                
+                    break
+                        
+                        
                 
+                current_step = current_step[item]
+                
+            return current_step
+        
+        except Exception as e:
+            
+            print("Something failed", e)
+       
+
 """
-current funcs or sum:
-case "cd":
+                current funcs or sum:
+                case "cd":
                     
                     self.current_cluster = Path.join(root_str, command[1])
                 
