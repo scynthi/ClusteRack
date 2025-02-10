@@ -385,14 +385,3 @@ class Cluster:
     # Only for debugging purposes
     def print(self, text: str):
         print(f"{Fore.BLACK}{Back.CYAN}[{Back.WHITE}{self.name}{Back.CYAN}]{Back.RESET}{Fore.CYAN}: {Fore.RESET+Back.RESET+Style.RESET_ALL}" + text + Fore.RESET+Back.RESET+Style.RESET_ALL)
-
-
-# Virus detection:
-# if there is a new file in any of the computer directories that is a valid process file we save its data and check if its it already exist in the active processes
-# ( check name and id but not resources )
-
-# if it does just delete it
-# if it doesnt ask the user wether to delete it or put it in the processes dict.
-
-# Resort the cluster after this
-# ( happens either way )

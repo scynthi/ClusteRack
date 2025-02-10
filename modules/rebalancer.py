@@ -79,14 +79,7 @@ class Rebalancer:
         core_utilization = (computer.cores - computer.free_cores) / computer.cores
         memory_utilization = (computer.memory - computer.free_memory) / computer.memory
         return core_utilization + memory_utilization  # Simple heuristic score
-
-
-    # def process_fits(computer: Computer, process: dict) -> bool:
-    #     return (
-    #         computer.free_cores >= int(process["cores"])
-    #         and computer.free_memory >= int(process["memory"])
-    #     )
-
+    
 
     # Only for debugging purposes
     def print_computer_scores(self):

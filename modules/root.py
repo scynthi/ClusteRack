@@ -106,6 +106,7 @@ class Root:
             self.print(f"CRITICAL ERROR DETECTED: force deletion failed for computer {cluster_name}.")
             return False
 
+
     def relocate_process(self, process_name: str, origin_cluster_name: str, destination_cluster_name: str) -> bool:
         origin_cluster : Cluster = self.clusters.get(origin_cluster_name)
         destination_cluster : Cluster = self.clusters.get(destination_cluster_name)
