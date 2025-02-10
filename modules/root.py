@@ -106,87 +106,121 @@ class Root:
             self.print(f"CRITICAL ERROR DETECTED: force deletion failed for computer {cluster_name}.")
             return False
 
-    # TODO : REMAKE THIS FUNCTION SO IT WORKS WITH THE NEW CLUSTER-PROCESS SYSTEM
-    def relocate_process(self, process_name: str, origin_cluster_name: str, origin_computer_name: str, destination_cluster_name: str, destination_computer_name: str) -> bool:
+    def relocate_process(self, process_name: str, origin_cluster_name: str, destination_cluster_name: str) -> bool:
         origin_cluster : Cluster = self.clusters.get(origin_cluster_name)
         destination_cluster : Cluster = self.clusters.get(destination_cluster_name)
 
-        if origin_cluster == None or destination_cluster == None:
-            self.print("Either the origin or the destination cluster does not exist.")
-            return False
-        
-
-        origin_computer : Computer = None
-        destination_computer : Computer = None
-        
-        for computer in origin_cluster.computers.values():
-            pc : Computer = computer
-
-            if pc.name == origin_computer_name:
-                origin_computer = pc
-
-        for computer in destination_cluster.computers.values():
-            pc : Computer = computer
-            
-            if pc.name == destination_computer_name:
-                destination_computer = pc
-        
-        if origin_computer == None or destination_computer == None:
-            self.print("Either the origin or the destination computer does not exist.")
-            return False
-        
-        if process_name in destination_computer.get_processes().keys():
-            self.print(f"A process with the same name and id is already running on computer {destination_computer_name}.")
+        if not origin_cluster or not destination_cluster:
+            self.print(f"{Fore.RED}Either the origin or the destination cluster does not exist.")
             return False
 
-        if not process_name in origin_computer.get_processes().keys():
-            self.print(f"Process {process_name} does not exists on computer {origin_cluster_name}/{origin_computer_name}.")
-            return False
-        
-
-        process_info : dict = origin_computer.get_process_info(process_name)
-
-        if not origin_computer.kill_process(process_name):
-            self.print(f"Can't kill process ({process_name}) on computer {origin_cluster_name}/{origin_computer_name}.")
-
-        if not destination_computer.start_process_with_dict(process_info):
-            self.print(f"Can't start process ({process_name}) on computer {destination_cluster_name}/{destination_computer_name}.")
-
-        
-
-        self.print(f"Succesfully moved process {process_name} from {origin_cluster_name}/{origin_computer_name} to cluster {destination_cluster_name}/{destination_computer_name}.")
-        return False
-
-    # TODO : REMAKE THIS FUNCTION SO IT WORKS WITH THE NEW CLUSTER-PROCESS SYSTEM
-    def move_computer(self, computer_name: str, origin_cluster_name: str, destination_cluster_name: str) -> bool:
-        if not self.clusters.get(origin_cluster_name):
-            self.print(f"The origin cluster {origin_cluster_name} could not be found. Perhaps you misstyped the name.")
+        if process_name not in origin_cluster.processes:
+            self.print(f"{Fore.RED}Process {process_name} does not exist in cluster {origin_cluster_name}.")
             return False
 
-        if not self.clusters.get(destination_cluster_name):
-            self.print(f"The destination cluster {destination_cluster_name} could not be found. Perhaps you misstyped the name.")
+        if process_name in destination_cluster.processes:
+            self.print(f"{Fore.RED}Process {process_name} already exists in cluster {destination_cluster_name}.")
             return False
 
+        process_data = origin_cluster.processes[process_name]
+
+        # Kill the process in origin_cluster
+        if not origin_cluster.kill_process(process_name):
+            self.print(f"{Fore.RED}Failed to remove process {process_name} from {origin_cluster_name}.")
+            return False
+
+        # Force refresh `origin_cluster` so it reflects process removal
+        origin_cluster.__init__(origin_cluster.path)
+
+        # Start the process in destination_cluster
+        success = destination_cluster.start_process(
+            process_name,
+            process_data["running"],
+            process_data["cores"],
+            process_data["memory"],
+            process_data["instance_count"],
+            process_data["date_started"],
+        )
+
+        if success:
+            # Force refresh `destination_cluster` so it sees the new process
+            destination_cluster.__init__(destination_cluster.path)
+            self.print(f"{Fore.GREEN}Successfully moved process {process_name} from {origin_cluster_name} to {destination_cluster_name}.")
+            return True
+        else:
+            self.print(f"{Fore.RED}Failed to start process {process_name} in {destination_cluster_name}.")
+            return False
+
+
+    def move_computer(self, origin_cluster_name: str, destination_cluster_name: str, computer_name: str) -> bool:
         origin_cluster : Cluster = self.clusters[origin_cluster_name]
         destination_cluster : Cluster = self.clusters[destination_cluster_name]
+        
+        if origin_cluster == None:
+            self.print(f"{Back.RED}The origin cluster {origin_cluster_name} could not be found. Perhaps you misstyped the name.")
+            return False
 
-
-        if not origin_cluster.computers.get(computer_name):
-            self.print(f"The computer ({computer_name}) could not be found under the cluster ({origin_cluster_name}). Perhaps you misstyped the name.")
+        if destination_cluster == None:
+            self.print(f"{Back.RED}The destination cluster {destination_cluster_name} could not be found. Perhaps you misstyped the name.")
             return False
         
+
         computer : Computer = origin_cluster.computers[computer_name]
+        if computer == None:
+            self.print(f"{Back.RED}The computer ({computer_name}) could not be found under the cluster ({origin_cluster_name}). Perhaps you misstyped the name.")
+            return False
+        
+        if computer_name in destination_cluster.computers:
+            self.print(f"{Back.RED}There is already a computer named '{computer_name}' on the destination cluster ({destination_cluster_name}). Please rename the computer and try again.")
+            return False
+
 
         computer_stats_dict : dict = {
             "computer_name" : computer.name,
             "computer_memory" : computer.memory,
             "computer_cores" : computer.cores,
-            "computer_process_dict" : computer.get_processes()
         }
 
         origin_cluster.force_delete_computer(computer_name)
 
         destination_cluster.create_computer(computer_stats_dict["computer_name"],computer_stats_dict["computer_cores"],computer_stats_dict["computer_memory"])
+
+        origin_cluster.__init__(origin_cluster.path)
+        destination_cluster.__init__(destination_cluster.path)
+
+
+    def rename_cluster(self, target_cluster : str, new_name : str) -> bool:
+        if not target_cluster in self.clusters:
+            self.print(f"{Fore.RED}Target cluster ({new_name}) could not be found. Perhapse you misstyped the name?")
+            return False
+        
+        try:
+            old_cluster: Cluster = self.clusters[target_cluster]
+            old_path: str = old_cluster.path
+            parent_dir: str = Path.dirname(old_path)
+            new_path: str = Path.join(parent_dir, new_name)
+
+            if Path.exists(new_path):
+                self.print(f"{Fore.RED}Renaming failed. There is already a cluster called {new_name}.")
+                return False
+
+            # Rename the cluster folder
+            os.rename(old_path, new_path)
+
+            # Reinitialize the cluster object with the new path
+            new_cluster = Cluster(new_path)
+
+            # Update the clusters dictionary
+            del self.clusters[target_cluster]
+            self.clusters[new_name] = new_cluster
+
+            self.print(f"{Fore.GREEN}Cluster ({target_cluster}) successfully renamed to ({new_name}).")
+
+            return True
+            
+        except Exception as e:
+            self.print(f"{Fore.BLACK}{Back.RED}CRITICAL ERROR DETECTED: Error renaming cluster: {e}")
+            return False
 
     # Only for debugging purposes
     def print(self, text: str):

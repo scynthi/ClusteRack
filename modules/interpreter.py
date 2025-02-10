@@ -58,7 +58,8 @@ class CLI_Interpreter:
             match self.mode:
                 
                 case "root":        
-
+                    pass
+                
 """
 current funcs or sum:
 case "cd":

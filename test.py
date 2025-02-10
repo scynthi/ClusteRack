@@ -3,15 +3,24 @@ from modules.cluster import Cluster
 from modules.root import Root
 from modules.interpreter import CLI_Interpreter
 
-# # root : Root = Root(r"./Test folder")
+root : Root = Root(r"./Test folder")
 
-# # cluster1 : Cluster = root.create_cluster("cluster1")
-# # pc1 = cluster1.create_computer("szamitogep1", 1200, 5000)
+cluster2 : Cluster = root.create_cluster("cluster2")
+# cluster2.kill_process("titanfall")
+
+# root.relocate_process("titanfall", "cluster2", "cluster1")
+
+# cluster1 : Cluster = root.create_cluster("cluster1")
+# pc = cluster1.create_computer("computer", 1200, 5000)
+
+# root.move_computer("cluster1", "cluster2", "computer")
+
 # # pc2 = cluster1.create_computer("szamitogep2", 900, 4000)
 # # pc3 = cluster1.create_computer("szamitogep3", 1900, 2000)
 # # pc4 = cluster1.create_computer("szamitogep4", 8000, 6000)
 
-# cluster: Cluster = Cluster(r"Test folder\klaszter1")
+
+
 # pc1 = cluster.create_computer("szamitogep1", 1000, 8000)
 
 # pc2 = cluster.create_computer("szamitogep2", 700, 4000)
@@ -44,5 +53,5 @@ from modules.interpreter import CLI_Interpreter
 
 # pc1.rename_self("are we deaduzz")
 
-interpreter : CLI_Interpreter = CLI_Interpreter()
+# interpreter : CLI_Interpreter = CLI_Interpreter()
 # pc1.rename_self("are we deaduzz")

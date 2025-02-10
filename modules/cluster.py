@@ -84,24 +84,37 @@ class Cluster:
         self.print(f"{Fore.BLACK}{Back.GREEN}Cluster ({cluster_name}) initialized succesfully with {len(computer_dict)} computer(s).{Back.RESET+Fore.RESET}\n")
         self.initialized : bool = True
 
-    #Save processes them into global process and group to active and inactive
     def __sort_processes(self) -> None:
         self.active_processes.clear()
         self.inactive_processes.clear()
 
-        for name in self.processes:
-            if name not in global_processes:  # Ensure process is added globally
-                global_processes[name] = self.processes[name]
+        # Step 1: Identify all processes currently in this cluster
+        local_processes = set(self.processes.keys())
 
-        for name in global_processes:
-            if global_processes[name]["running"] == True:
-                if name not in global_active_processes:
-                    global_active_processes[name] = global_processes[name]
-                self.active_processes = global_active_processes.copy()
+        # Step 2: Remove processes from global_processes that no longer exist in any cluster
+        for name in list(global_processes.keys()):
+            if name not in local_processes:
+                del global_processes[name]
+
+        # Step 3: Update global_processes with this cluster’s processes (only if not already present)
+        for name, details in self.processes.items():
+            if name not in global_processes:
+                global_processes[name] = details
+
+        # Step 4: Sort into active/inactive global lists
+        global_active_processes.clear()
+        global_inactive_processes.clear()
+
+        for name, details in global_processes.items():
+            if details["running"]:
+                global_active_processes[name] = details
             else:
-                if name not in global_inactive_processes:
-                    global_inactive_processes[name] = global_processes[name]
-                self.inactive_processes = global_inactive_processes.copy()
+                global_inactive_processes[name] = details
+
+        # Step 5: Update the local cluster’s active/inactive lists
+        self.active_processes = global_active_processes.copy()
+        self.inactive_processes = global_inactive_processes.copy()
+
 
     #Clear the .klaszter file so we can rewrite it
     def format_cluster_config(self) -> None:
@@ -193,31 +206,6 @@ class Cluster:
         except:
             self.print(f"{Back.RED}{Fore.BLACK}CRITICAL ERROR DETECTED: force deletion failed for computer {computer_name}.")
             self.__init__(self.path)
-            return False
-
-    # TODO : Move this function into the ROOT class
-    def rename_cluster(self, new_name : str) -> bool:
-        if not self.initialized:
-            self.print(f"{Fore.RED}Cluster failed to initialize so renaming can't be done. New cluster name would be: {new_name}.")
-            return False
-        
-        try:
-            parent_dir: str = Path.dirname(self.path)
-            new_path: str = Path.join(parent_dir, new_name)
-
-            if Path.exists(new_path):
-                self.print(f"{Fore.RED}Renaming failed. There is already a cluster called {new_name}.")
-                return False
-
-            os.rename(self.path, new_path)
-            self.path = new_path
-            self.print(f"{Fore.GREEN}Cluster folder renamed to '{new_name}' successfully.")
-
-            self.__init__(self.path)
-            return True
-            
-        except Exception as e:
-            self.print(f"{Fore.BLACK}{Back.RED}CRITICAL ERROR DETECTED: Error renaming cluster: {e}")
             return False
         
     
@@ -397,3 +385,14 @@ class Cluster:
     # Only for debugging purposes
     def print(self, text: str):
         print(f"{Fore.BLACK}{Back.CYAN}[{Back.WHITE}{self.name}{Back.CYAN}]{Back.RESET}{Fore.CYAN}: {Fore.RESET+Back.RESET+Style.RESET_ALL}" + text + Fore.RESET+Back.RESET+Style.RESET_ALL)
+
+
+# Virus detection:
+# if there is a new file in any of the computer directories that is a valid process file we save its data and check if its it already exist in the active processes
+# ( check name and id but not resources )
+
+# if it does just delete it
+# if it doesnt ask the user wether to delete it or put it in the processes dict.
+
+# Resort the cluster after this
+# ( happens either way )
