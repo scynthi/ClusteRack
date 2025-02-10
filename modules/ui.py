@@ -6,14 +6,15 @@ from ctypes import windll
 from modules.audio_manager import AudioManager 
 from modules.renderer.main import SoftwareRender
 
+audio : AudioManager = AudioManager()
 
+extra_large_font : tuple = ("VCR OSD MONO", 30)
 large_font : tuple = ("VCR OSD MONO", 15)
 small_font : tuple = ("VCR OSD MONO", 12)
-audio : AudioManager = AudioManager()
 
 LBLUE : str = "#0066ff"
 DBLUE : str = "#0052cc"
-LGRAY : int = "#cdcdcd"
+LGRAY : str = "#cdcdcd"
 DGRAY : str = "#adadad"
 
 

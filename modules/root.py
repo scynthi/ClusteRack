@@ -29,7 +29,7 @@ class Root:
             self.path :str = path
             self.name :str = root_name
             self.clusters : dict = cluster_dict
-            self.print(f"{Fore.BLACK}{Back.GREEN}Root ({root_name}) initialized succesfully with {len(self.clusters)} computer(s).{Back.RESET+Fore.RESET}\n")
+            self.print(f"{Fore.BLACK}{Back.GREEN}Root ({root_name}) initialized succesfully with {len(self.clusters)} cluster(s).{Back.RESET+Fore.RESET}\n")
 
 
     def create_cluster(self, cluster_name: str) -> Cluster:
@@ -108,8 +108,8 @@ class Root:
 
 
     def relocate_process(self, process_name: str, origin_cluster_name: str, destination_cluster_name: str) -> bool:
-        origin_cluster : Cluster = self.clusters.get(origin_cluster_name)
-        destination_cluster : Cluster = self.clusters.get(destination_cluster_name)
+        origin_cluster: Cluster = self.clusters.get(origin_cluster_name)
+        destination_cluster: Cluster = self.clusters.get(destination_cluster_name)
 
         if not origin_cluster or not destination_cluster:
             self.print(f"{Fore.RED}Either the origin or the destination cluster does not exist.")
@@ -119,21 +119,86 @@ class Root:
             self.print(f"{Fore.RED}Process {process_name} does not exist in cluster {origin_cluster_name}.")
             return False
 
+        process_data = origin_cluster.processes[process_name]  # Reference, no copy needed
+
+        # Check if process already exists in the destination
         if process_name in destination_cluster.processes:
-            self.print(f"{Fore.RED}Process {process_name} already exists in cluster {destination_cluster_name}.")
-            return False
+            self.print(f"{Fore.YELLOW}Process {process_name} already exists in {destination_cluster_name}.")
 
-        process_data = origin_cluster.processes[process_name]
+            while True:
+                print(
+                    f"\n{Fore.CYAN}Choose an option:\n"
+                    f"1: Stop (Cancel move)\n"
+                    f"2: Overwrite (Replace existing process)\n"
+                    f"3: Merge instance counts\n"
+                    f"Enter your choice (1/2/3): {Fore.RESET}",
+                    end=""
+                )
+                user_choice = input().strip()
 
-        # Kill the process in origin_cluster
+                if user_choice in ["1", "2", "3"]:
+                    break
+                else:
+                    print(f"{Fore.RED}Invalid choice! Please enter 1, 2, or 3.{Fore.RESET}")
+
+            if user_choice == "1":
+                self.print(f"{Fore.RED}Move cancelled. {process_name} was not relocated.")
+                return False
+
+            elif user_choice == "2":
+                self.print(f"{Fore.YELLOW}Overwriting process {process_name} in {destination_cluster_name}.")
+                
+                overwrite_success = destination_cluster.edit_process_resources(
+                    process_name, "instance_count", process_data["instance_count"]
+                ) and destination_cluster.edit_process_resources(
+                    process_name, "cores", process_data["cores"]
+                ) and destination_cluster.edit_process_resources(
+                    process_name, "memory", process_data["memory"]
+                ) and destination_cluster.edit_process_resources(
+                    process_name, "running", process_data["running"]
+                )
+
+                if not overwrite_success:
+                    self.print(f"{Fore.RED}Failed to overwrite process {process_name} in {destination_cluster_name}.")
+                    return False
+
+                self.print(f"{Fore.GREEN}Successfully overwrote process {process_name} in {destination_cluster_name}.")
+
+            elif user_choice == "3":
+                self.print(f"{Fore.GREEN}Merging process {process_name} into {destination_cluster_name}.")
+
+                new_instance_count = int(destination_cluster.processes[process_name]["instance_count"]) + int(
+                    process_data["instance_count"]
+                )
+
+                merge_success = destination_cluster.edit_process_resources(
+                    process_name, "instance_count", new_instance_count
+                )
+
+                if not merge_success:
+                    self.print(f"{Fore.RED}Failed to merge process {process_name} in {destination_cluster_name}.")
+                    return False
+
+                self.print(f"{Fore.GREEN}Successfully merged {process_name} into {destination_cluster_name}.")
+
+            # Regardless of case, remove the process from the origin cluster
+            if not origin_cluster.kill_process(process_name):
+                self.print(f"{Fore.RED}Failed to remove process {process_name} from {origin_cluster_name}.")
+                return False
+
+            origin_cluster.__init__(origin_cluster.path)
+            destination_cluster.__init__(destination_cluster.path)
+            return True
+
+        # If process does NOT exist in destination, perform a normal move
+        self.print(f"{Fore.GREEN}Moving {process_name} from {origin_cluster_name} to {destination_cluster_name}.")
+
         if not origin_cluster.kill_process(process_name):
             self.print(f"{Fore.RED}Failed to remove process {process_name} from {origin_cluster_name}.")
             return False
 
-        # Force refresh `origin_cluster` so it reflects process removal
         origin_cluster.__init__(origin_cluster.path)
 
-        # Start the process in destination_cluster
         success = destination_cluster.start_process(
             process_name,
             process_data["running"],
@@ -144,7 +209,6 @@ class Root:
         )
 
         if success:
-            # Force refresh `destination_cluster` so it sees the new process
             destination_cluster.__init__(destination_cluster.path)
             self.print(f"{Fore.GREEN}Successfully moved process {process_name} from {origin_cluster_name} to {destination_cluster_name}.")
             return True
