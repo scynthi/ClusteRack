@@ -21,6 +21,8 @@ DGRAY : str = "#adadad"
 class AppWindow(CTk):
     def __init__(self, size="800x600", name="ClusteRack") -> None:
         set_appearance_mode("light")
+        deactivate_automatic_dpi_awareness()
+        set_widget_scaling(1)
         super().__init__()
         FontManager.load_font(Path.join("Assets","Font", "VCR_OSD_MONO_1.001.ttf"))
         self.iconbitmap(Path.join("Assets", "Images", "logo.ico"))
@@ -32,6 +34,7 @@ class AppWindow(CTk):
         self.minimized : bool = False
         self.maximized : bool = False
         self.normal_size = self.geometry()
+
 
         title_bar : CTkFrame = Frame(self, bg=DBLUE, relief='raised', border=4)
         title_bar.grid_columnconfigure([1,2], weight=1)
