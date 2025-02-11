@@ -84,6 +84,7 @@ class Cluster:
         self.print(f"{Fore.BLACK}{Back.GREEN}Cluster ({cluster_name}) initialized succesfully with {len(computer_dict)} computer(s).{Back.RESET+Fore.RESET}\n")
         self.initialized : bool = True
 
+
     def __sort_processes(self) -> None:
         self.active_processes.clear()
         self.inactive_processes.clear()
