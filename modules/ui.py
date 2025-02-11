@@ -5,8 +5,12 @@ from PIL import Image
 from ctypes import windll
 from modules.audio_manager import AudioManager 
 from modules.renderer.main import SoftwareRender
+import pygame
+from threading import Thread
 
+Thread(target=pygame.init, daemon=True).start()
 audio : AudioManager = AudioManager()
+
 
 extra_large_font : tuple = ("VCR OSD MONO", 30)
 large_font : tuple = ("VCR OSD MONO", 15)

@@ -61,17 +61,20 @@ class DashboardUI:
         app.bottom_frame.grid_columnconfigure([0,1], weight=1)
         app.bottom_frame.grid_rowconfigure(0, weight=1)
 
-        ClusterView()
+        self.cluster_view : ClusterView = ClusterView()
+    
+    def reload_cluster_list(self):
+        self.cluster_view.reload()
 
 class ClusterView:
     def __init__(self) -> None:
         frame = app.top_frame
-        clusters_frame : CTkScrollableFrame = CTkScrollableFrame(frame, orientation="horizontal", height=300, border_width=4, border_color="gray", corner_radius=0)
-        clusters_frame.grid(row=0, column=0, sticky="nwe")
+        self.clusters_frame : CTkScrollableFrame = CTkScrollableFrame(frame, orientation="horizontal", height=300, border_width=4, border_color="gray", corner_radius=0)
+        self.clusters_frame.grid(row=0, column=0, sticky="nwe")
         self.cluster_tab = None
 
         for i, cluster in enumerate(root.clusters.values()):
-            cluster_frame : UI.Frame = UI.Frame(clusters_frame)
+            cluster_frame : UI.Frame = UI.Frame(self.clusters_frame)
             cluster_frame.grid_rowconfigure(1, weight=1)
             cluster_frame.grid(row=0, column=i, padx=20, pady=10, sticky="NS")
 
@@ -93,18 +96,25 @@ class ClusterView:
                 image_frame.grid_rowconfigure(0, weight=1)
                 UI.Label(image_frame, text="0 computers have been detected").grid(row=0, column=0)
     
-    def open_cluster_tab(self, cluster : Cluster):
+    def open_cluster_tab(self, cluster : Cluster) -> None:
         if self.cluster_tab:
             self.cluster_tab.destroy()
             self.cluster_tab = ClusterBoard(cluster)
         else:
             self.cluster_tab = ClusterBoard(cluster)
+        
+
+    def reload(self) -> None:
+        self.clusters_frame.destroy()
+        self.__init__()
 
 
 
                 
 class ClusterBoard:
     def __init__(self, cluster : Cluster) -> None:
+        self.cluster : Cluster = cluster
+
         _frame = app.bottom_frame
         self.frame : UI.Frame = UI.Frame(_frame)
         self.frame.grid(row=0, column=0, sticky="nsw")
@@ -113,16 +123,30 @@ class ClusterBoard:
         
         UI.Label(self.frame, text="Processes", font=extra_large_font).grid(row=0, column=0)
 
-        process_help_frame : UI.Frame = UI.Frame(self.frame, width=400)
+        process_help_frame : UI.Frame = UI.Frame(self.frame, width=300)
         process_help_frame.grid(row=1, column=0, rowspan=2, sticky="EWNS")
         process_help_frame.grid_rowconfigure(0, weight=1)
         process_help_frame.grid_columnconfigure(0, weight=1)
 
-        self.processes_frame : CTkScrollableFrame = CTkScrollableFrame(process_help_frame, width=400, orientation="vertical")
+        self.processes_frame : CTkScrollableFrame = CTkScrollableFrame(process_help_frame, width=300, orientation="vertical")
         self.processes_frame.grid(row=0, column=0, sticky="EWNS")
+        self.processes_frame.grid_columnconfigure(0, weight=1)
 
+        
+        UI.Label(self.processes_frame, text="Active", font=extra_large_font).grid(row=0, column=0)
         for i, process in enumerate(cluster.active_processes.keys()):
-            UI.Button(self.processes_frame, text=process).grid(row=i, column=0)
+            temp_proc_frame : UI.Frame = UI.Frame(self.processes_frame)
+            UI.Button(temp_proc_frame, text=process).grid(row=0, column=0, sticky="w")
+            UI.Label(temp_proc_frame, text=f"Instaces: {cluster.active_processes[process]["instance_count"]}").grid(row=1, column=0)
+            temp_proc_frame.grid(row=i+1, column=0, sticky="EW")
+
+
+        UI.Label(self.processes_frame, text="Inactive", font=extra_large_font).grid(row=len(cluster.active_processes.keys())+2, column=0)
+        for i, process in enumerate(cluster.inactive_processes.keys()):
+            temp_proc_frame : UI.Frame = UI.Frame(self.processes_frame)
+            UI.Button(temp_proc_frame, text=process).grid(row=0, column=0, sticky="w")
+            UI.Label(temp_proc_frame, text=f"Instaces: {cluster.active_processes[process]["instance_count"]}").grid(row=1, column=0)
+            temp_proc_frame.grid(row=len(cluster.active_processes.keys())+i+3, column=0, sticky="EW")
 
         UI.Label(self.frame, text=cluster.name, font=extra_large_font).grid(row=0, column=1)
 
@@ -171,14 +195,11 @@ class ClusterBoard:
             cur_pc_frame : UI.Frame = UI.Frame(self.computer_list_frame)
 
             image : CTkImage = CTkImage(Image.open(Path.join("Assets", "Images", "computer.png")), size=(220, 80))
-            computer_image : CTkLabel = CTkLabel(cur_pc_frame, text=pc.name, font=large_font, fg_color="white", image=image)
+            computer_image : CTkLabel = CTkLabel(cur_pc_frame, text=pc.name, font=large_font, text_color="white", image=image)
             computer_image.grid(row=0, column=0, pady=5)
 
             UI.Button(cur_pc_frame, text=f"Open {pc.name}", command=lambda pc = i: print(pc)).grid(row=1, column=0, pady=5)
             cur_pc_frame.grid(row=i, column=0, pady=5)
-
-
-
 
 
 
@@ -187,8 +208,9 @@ class ClusterBoard:
         self.rack_model.running = False
         self.frame.destroy()
 
-    def update(self):
-        pass
+    def reload(self):
+        self.destroy()
+        self.__init__(self.cluster)
 
 
 

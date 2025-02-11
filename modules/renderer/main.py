@@ -6,7 +6,6 @@ from modules.renderer.object import Object3D
 from modules.renderer.camera import Camera
 from modules.renderer.projection import Projection
 
-
 class SoftwareRender:
     def __init__(self, model, zoom_amount, frame, root):
         self.RES = self.WIDTH, self.HEIGHT = 300, 200  # Full resolution
@@ -20,7 +19,6 @@ class SoftwareRender:
         self.canvas = tk.Canvas(frame, width=self.WIDTH, height=self.HEIGHT)
         self.canvas.grid(row=0, column=0, sticky="nsew")
 
-        pg.init()
         self.screen = pg.Surface(self.SCALED_RES)  # Render 2 times the size
 
         self.clock = pg.time.Clock()

@@ -4,14 +4,14 @@ from modules.root import Root
 from modules.interpreter import CLI_Interpreter
 
 root : Root = Root(r"./Test folder")
-cluster : Cluster = root.create_cluster("test_cluster")
-
+# cluster : Cluster = root.create_cluster("test_cluster")
 # cluster.create_computer("test", 1000,1000)
 # root.relocate_process("", "")
 # root.force_delete_cluster("test_cluster")
 
 
-
+cluster : Cluster = root.clusters.get("cluster0")
+cluster.edit_process_resources("word", "running", False)
 
 
 

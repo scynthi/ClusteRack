@@ -18,14 +18,16 @@ class AudioManager:
         self.initialized : bool = True
 
         try:
-            mixer.init()
+            mixer.set_num_channels(3)
         except:
-            print("Error while initializing AudioManager. Audio will be disabled for stabilazition purposes.")
-            self.initialized = False
-            return
-        
-        mixer.set_num_channels(3)
-        
+            try:
+                mixer.init()
+                mixer.set_num_channels(3)
+            except:
+                print("Error while initializing AudioManager. Audio will be disabled for stabilazition purposes.")
+                self.initialized = False
+                return
+
         self.startup_channel: mixer.Channel = mixer.Channel(0)
         self.click_channel: mixer.Channel = mixer.Channel(1)
         self.misc_channel: mixer.Channel = mixer.Channel(2)
