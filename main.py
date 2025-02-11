@@ -108,13 +108,21 @@ class ClusterBoard:
         _frame = app.bottom_frame
         self.frame : UI.Frame = UI.Frame(_frame)
         self.frame.grid(row=0, column=0, sticky="nsw")
+        self.frame.grid_rowconfigure(2, weight=1)
+        self.frame.grid_columnconfigure(0, weight=1)
         
         UI.Label(self.frame, text="Processes", font=extra_large_font).grid(row=0, column=0)
-        self.processes_frame : UI.Frame = UI.Frame(self.frame, width=300)
-        self.processes_frame.grid(row=1, column=0, rowspan=2, sticky="EWNS")
 
-        for i in range(0, 20):
-            UI.Button(self.processes_frame, text="Im the process I speak for the cluster").grid(row=i, column=0)
+        process_help_frame : UI.Frame = UI.Frame(self.frame, width=400)
+        process_help_frame.grid(row=1, column=0, rowspan=2, sticky="EWNS")
+        process_help_frame.grid_rowconfigure(0, weight=1)
+        process_help_frame.grid_columnconfigure(0, weight=1)
+
+        self.processes_frame : CTkScrollableFrame = CTkScrollableFrame(process_help_frame, width=400, orientation="vertical")
+        self.processes_frame.grid(row=0, column=0, sticky="EWNS")
+
+        for i, process in enumerate(cluster.active_processes.keys()):
+            UI.Button(self.processes_frame, text=process).grid(row=i, column=0)
 
         UI.Label(self.frame, text=cluster.name, font=extra_large_font).grid(row=0, column=1)
 
@@ -122,17 +130,9 @@ class ClusterBoard:
         cluster_frame.grid(row=1, column=1, sticky="new")
         self.rack_model = UI.EmbedRenderer(cluster_frame, "rack_8", 12, app).get_renderer()
 
-        self.button_frame : UI.Frame = UI.Frame(self.frame)
-        self.button_frame.grid(row=2, column=1, sticky="EWNS")
-        self.button_frame.grid_columnconfigure(0, weight=1)
-
-        for i in range(0, 8):
-            UI.Button(self.button_frame, text=f"Test {i}").grid(row=i, column=0, pady=5)
-
         UI.Label(self.frame, text="Information", font=extra_large_font).grid(row=0, column=2)
         self.info_frame : UI.Frame = UI.Frame(self.frame)
-        self.info_frame.grid(column=2, row=1, sticky="EWNS")
-        self.button_frame.grid_columnconfigure(0, weight=1)
+        self.info_frame.grid(column=2, row=1, sticky="EWN")
         
         cores : int = 0
         free_cores : int = 0
@@ -152,6 +152,17 @@ class ClusterBoard:
         UI.Label(self.info_frame, text=f"Running processes: {len(cluster.active_processes.keys())}").grid(row=4, column=0, sticky="w", padx=10)
         UI.Label(self.info_frame, text=f"Stopped processes: {len(cluster.inactive_processes.keys())}").grid(row=5, column=0, sticky="w", padx=10)
         UI.Label(self.info_frame, text=f"Computers: {len(cluster.computers.keys())}").grid(row=6, column=0, sticky="w", padx=10)
+
+
+        self.button_frame : UI.Frame = UI.Frame(self.frame)
+        self.button_frame.grid(row=2, column=1, sticky="EWNS")
+        self.button_frame.grid_columnconfigure([0,1], weight=1)
+        self.button_frame.grid_columnconfigure(0, weight=1)
+
+
+        for x in range(0, 2):
+            for i in range(0, 4):
+                UI.Button(self.button_frame, text=f"Test {i}").grid(row=i, column=x, pady=5)
 
         self.computer_list_frame : CTkScrollableFrame = CTkScrollableFrame(self.frame, orientation="vertical", border_width=4, border_color="gray", corner_radius=0, width=230)
         self.computer_list_frame.grid(column=2, row=2, sticky="EWNS")
