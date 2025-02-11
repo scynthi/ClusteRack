@@ -4,20 +4,11 @@ from modules.root import Root
 from modules.interpreter import CLI_Interpreter
 
 root : Root = Root(r"./Test folder")
-cluster1 : Cluster = root.clusters.get("test_cluster")
-cluster2 : Cluster = root.clusters.get("test_cluster2")
-
-cluster1.try_delete_computer("move_comp")
-
-print(cluster1.saved_processes.keys())  # ['API']
-
-cluster1.start_process("DB", False, 4, 8)
-
-print(cluster1.saved_processes.keys())  # ['API']
+cluster : Cluster = root.clusters.get("test_cluster")
+cluster1 : Cluster = root.clusters.get("test_cluster1")
 
 
-# print(cluster2.saved_processes.keys())  # ['']
-
+pc : Computer = cluster1.computers.get("test_computer")
 
 
 """
@@ -34,20 +25,20 @@ Featres:
 - create computer D
 - try delete computer D
 - force delete computer D
-- rename computer
-- start process
-- kill process
-- edit process resources
-- rename process
+- rename computer D
+- start process D
+- kill process D
+- edit process resources D
+- rename process D
 
 - rebalancer:
-- balanced algo
-- efficient algo
-- fast algo
+- balanced algo D
+- efficient algo D
+- fast algo D
 
 - computer:
-- edit computer resources
-- get processes
+- edit computer resources TODO : FIX THIS
+- get processes D
 """
 
 """
