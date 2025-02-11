@@ -3,17 +3,19 @@ from os import path as Path
 from modules.computer import Computer
 from colorama import Fore, Style, Back
 from modules.rebalancer import *
-
-global_processes : dict = {}
-global_active_processes : dict = {}
-global_inactive_processes : dict = {}
+from datetime import datetime
 
 class Cluster:
     def __init__(self, path: str):
-        path : str = Path.normpath(fr"{path}")
+        # Initialize instance-specific dictionaries
+        self.saved_processes: dict = {}
+        self.saved_active_processes: dict = {}
+        self.saved_inactive_processes: dict = {}
+        
+        path: str = Path.normpath(fr"{path}")
         self.path: str = path
         cluster_name: str = path.split(os.sep)[-1]
-        self.name : str = cluster_name
+        self.name: str = cluster_name
 
         if Path.exists(Path.join(path, ".klaszter")):
             config_file = open(Path.join(path, ".klaszter"), "r", encoding="utf8")
@@ -46,7 +48,7 @@ class Cluster:
                 process_info_dict[app] = {"instance_count": instance_count_list[i], "cores": cores_list[i], "memory": memory_list[i], "running": True, "date_started" : datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
             self.processes: dict = process_info_dict
-            
+
             self.active_processes : dict = {}
             self.inactive_processes : dict = {}
             
@@ -89,32 +91,28 @@ class Cluster:
         self.active_processes.clear()
         self.inactive_processes.clear()
 
-        # Step 1: Identify all processes currently in this cluster
-        local_processes = set(self.processes.keys())
+        # local_processes = set(self.processes.keys())
 
-        # Step 2: Remove processes from global_processes that no longer exist in any cluster
-        for name in list(global_processes.keys()):
-            if name not in local_processes:
-                del global_processes[name]
+        # # Use instance-specific dictionaries
+        # for name in list(self.saved_processes.keys()):
+        #     if name not in local_processes:
+        #         del self.saved_processes[name]
 
-        # Step 3: Update global_processes with this cluster’s processes (only if not already present)
         for name, details in self.processes.items():
-            if name not in global_processes:
-                global_processes[name] = details
+            if name not in self.saved_processes:
+                self.saved_processes[name] = details
 
-        # Step 4: Sort into active/inactive global lists
-        global_active_processes.clear()
-        global_inactive_processes.clear()
+        self.saved_active_processes.clear()
+        self.saved_inactive_processes.clear()
 
-        for name, details in global_processes.items():
+        for name, details in self.saved_processes.items():
             if details["running"]:
-                global_active_processes[name] = details
+                self.saved_active_processes[name] = details
             else:
-                global_inactive_processes[name] = details
+                self.saved_inactive_processes[name] = details
 
-        # Step 5: Update the local cluster’s active/inactive lists
-        self.active_processes = global_active_processes.copy()
-        self.inactive_processes = global_inactive_processes.copy()
+        self.active_processes = self.saved_active_processes.copy()
+        self.inactive_processes = self.saved_inactive_processes.copy()
 
 
     #Clear the .klaszter file so we can rewrite it
@@ -235,14 +233,15 @@ class Cluster:
             return False
 
     # Explanation docs.txt
-    def start_process(self, process_name: str, running: bool, cpu_req: int, ram_req: int, instance_count: int = 1, date_started: str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')) -> bool:
-        if process_name in global_processes:
-            self.print(f"{Fore.RED}{process_name} is already a process on the cluster. Maybe try another name.")
+    def start_process(self, process_name: str, running: bool, cpu_req: int, ram_req: int, 
+                    instance_count: int = 1, date_started: str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')) -> bool:
+        if process_name in self.saved_processes:  # Changed to instance dict
+            self.print(f"{Fore.RED}{process_name} already exists on the cluster ({self.name})")
             return False
 
         try:
-            # Add process to global_processes first
-            global_processes[process_name] = {
+            # Add to instance's process dict
+            self.saved_processes[process_name] = {
                 "instance_count": instance_count,
                 "cores": cpu_req,
                 "memory": ram_req,
@@ -250,8 +249,7 @@ class Cluster:
                 "date_started": date_started
             }
             
-            # Ensure local process list is also updated before reinitializing
-            self.processes[process_name] = global_processes[process_name]
+            self.processes[process_name] = self.saved_processes[process_name]
             self.__sort_processes()  # Resort after adding a new process
             self.format_cluster_config()
             self.update_cluster_config()
@@ -259,24 +257,23 @@ class Cluster:
             self.print(f"{Fore.GREEN}Process ({process_name}) added successfully to cluster ({self.name}) as {"AKTIV" if running else f"{Fore.YELLOW + Style.BRIGHT}INAKTIV"}.")
 
             self.__init__(self.path)  # Reinitialize after ensuring all updates
+        
             return True
+        
 
         except Exception as e:
             self.print(f"{Fore.RED}Error while creating process: {process_name} -> {e}")
             return False
 
-    # Explanation docs.txt
+        # Explanation docs.txt
     def kill_process(self, process_name: str) -> bool:
         try:
-            self.print(f"{Style.BRIGHT}Attempting to kill process: {process_name}")
-
-            # Check if process exists in global processes
-            if process_name in global_processes:
+            if process_name in self.saved_processes:  # Instance-specific check
                 del self.processes[process_name]
-                del global_processes[process_name]
+                del self.saved_processes[process_name]
 
-                global_active_processes.pop(process_name, None)
-                global_inactive_processes.pop(process_name, None)
+                self.saved_active_processes.pop(process_name, None)
+                self.saved_inactive_processes.pop(process_name, None)
 
                 # Resort, clean, and update
                 self.__update_cluster_state()
@@ -293,7 +290,7 @@ class Cluster:
 
     def edit_process_resources(self, process_name: str, property_to_change : str, new_value) -> bool:
         try:
-            if process_name not in global_processes:
+            if process_name not in self.saved_processes:
                 self.print(f"{Fore.RED}Process {process_name} does not exist! Check the name and try again.")
                 return False
             
@@ -310,7 +307,7 @@ class Cluster:
                 new_value = bool(new_value)
 
             # Apply changes
-            global_processes[process_name][property_to_change] = new_value
+            self.saved_processes[process_name][property_to_change] = new_value
             self.processes[process_name][property_to_change] = new_value
 
             # Update cluster
@@ -327,24 +324,24 @@ class Cluster:
     def rename_process(self, process_name: str, new_process_name: str) -> bool:
         try:
             # Ensure the process exists
-            if process_name not in global_processes:
+            if process_name not in self.saved_processes:
                 self.print(f"{Fore.RED}Process {process_name} does not exist! Check the name and try again.")
                 return False
 
             # Ensure the new name is not already taken
-            if new_process_name in global_processes:
+            if new_process_name in self.saved_processes:
                 self.print(f"{Fore.RED}A process with the name {new_process_name} already exists!")
                 return False
 
             # Move the process to the new name
-            global_processes[new_process_name] = global_processes.pop(process_name)
+            self.saved_processes[new_process_name] = self.saved_processes.pop(process_name)
             self.processes[new_process_name] = self.processes.pop(process_name)
 
             # Update active/inactive process lists
-            if process_name in global_active_processes:
-                global_active_processes[new_process_name] = global_active_processes.pop(process_name)
-            elif process_name in global_inactive_processes:
-                global_inactive_processes[new_process_name] = global_inactive_processes.pop(process_name)
+            if process_name in self.saved_active_processes:
+                self.saved_active_processes[new_process_name] = self.saved_active_processes.pop(process_name)
+            elif process_name in self.saved_inactive_processes:
+                self.saved_inactive_processes[new_process_name] = self.saved_inactive_processes.pop(process_name)
 
             # Resort processes and update cluster config
             self.__update_cluster_state()

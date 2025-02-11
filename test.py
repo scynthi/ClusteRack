@@ -4,26 +4,21 @@ from modules.root import Root
 from modules.interpreter import CLI_Interpreter
 
 root : Root = Root(r"./Test folder")
-# cluster : Cluster = root.create_cluster("test_cluster")
-# cluster.create_computer("test", 1000,1000)
-# root.relocate_process("", "")
-# root.force_delete_cluster("test_cluster")
+cluster1 : Cluster = root.clusters.get("test_cluster")
+cluster2 : Cluster = root.clusters.get("test_cluster2")
 
-
-cluster : Cluster = root.clusters.get("cluster0")
-cluster.edit_process_resources("word", "running", False)
 
 
 
 """
 Featres:
 - root :
-- create cluster
-- try delete cluster
-- force delete cluster
-- relocate process
-- move computer
-- rename cluster
+- create cluster D
+- try delete cluster D
+- force delete cluster D
+- relocate process D
+- move computer D
+- rename cluster D
 
 - cluster:
 - create computer
