@@ -7,9 +7,21 @@ from modules.audio_manager import AudioManager
 from modules.renderer.main import SoftwareRender
 import pygame
 from threading import Thread
+from matplotlib import font_manager
+import matplotlib
 
 Thread(target=pygame.init, daemon=True).start()
 audio : AudioManager = AudioManager()
+
+set_appearance_mode("light")
+deactivate_automatic_dpi_awareness()
+set_widget_scaling(1)
+FontManager.load_font(Path.join("Assets","Font", "VCR_OSD_MONO_1.001.ttf"))
+
+font_entry : font_manager.FontEntry = font_manager.FontEntry(fname=Path.join("Assets","Font", "VCR_OSD_MONO_1.001.ttf"), name="VCR OSD MONO")
+font_manager.fontManager.ttflist.insert(0, font_entry)
+matplotlib.rcParams["font.family"] = font_entry.name
+#font_for_plot : font_manager.FontProperties = font_manager.FontProperties(font_manager.fontManager.addfont())
 
 
 extra_large_font : tuple = ("VCR OSD MONO", 30)
@@ -24,11 +36,7 @@ DGRAY : str = "#adadad"
 
 class AppWindow(CTk):
     def __init__(self, size="800x600", name="ClusteRack") -> None:
-        set_appearance_mode("light")
-        deactivate_automatic_dpi_awareness()
-        set_widget_scaling(1)
         super().__init__()
-        FontManager.load_font(Path.join("Assets","Font", "VCR_OSD_MONO_1.001.ttf"))
         self.iconbitmap(Path.join("Assets", "Images", "logo.ico"))
         self.overrideredirect(True)
         self.geometry(size)

@@ -1,10 +1,11 @@
 from customtkinter import *
 import os
-import matplotlib.axes
 from modules.ui import UI, AppWindow
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-import matplotlib.figure as figure
 from modules.computer import Computer
+
+import matplotlib.axes
+import matplotlib.figure as figure
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 
 app: CTk = AppWindow("800x500")
@@ -17,19 +18,17 @@ frame.grid(column=1, row=0)
 # pygame_frame: CTkFrame = CTkFrame(app, width=300, height=200)
 # pygame_frame.grid(column=0, row=0)
 
+pc: Computer = Computer(os.path.normpath(r"./Test folder\cluster0\szamitogep3"))
+
+button: UI.Button = UI.Button(frame, text="Start Monitoring", command=lambda: add_point())
+button.grid(column=0, row=0)
+
 fig: figure.Figure = figure.Figure(figsize=(3, 3))
 canvas: FigureCanvasTkAgg = FigureCanvasTkAgg(fig, frame)
 ax: matplotlib.axes._axes.Axes = fig.add_subplot()
 ax.set_ylim(0, 100)
 ax.set_title("CPU Usage")
-
-button: UI.Button = UI.Button(frame, text="Start Monitoring", command=lambda: add_point())
-button.grid(column=0, row=0)
-
 canvas.get_tk_widget().grid(column=0, row=1)
-
-pc: Computer = Computer(os.path.normpath(r"./Test folder\cluster0\szamitogep3"))
-
 
 time_count: list = [0]
 usage_list: list = [0]
