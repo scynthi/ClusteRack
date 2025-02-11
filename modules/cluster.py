@@ -16,6 +16,7 @@ class Cluster:
         self.path: str = path
         cluster_name: str = path.split(os.sep)[-1]
         self.name: str = cluster_name
+        self.initialized : bool = False
 
         if Path.exists(Path.join(path, ".klaszter")):
             config_file = open(Path.join(path, ".klaszter"), "r", encoding="utf8")
@@ -76,9 +77,7 @@ class Cluster:
         computer_dict: dict = {}
 
         for file in files:
-            # full_path = Path.join(path, file)
-            # if Path.isfile(Path.join(full_path, ".szamitogep_config")):
-            if Computer(Path.join(path, file)).initialized == True:
+            if Computer(Path.join(path, file)).initialized:
                 computer_dict[file] = Computer(Path.join(path, file))
         
         self.computers : dict = computer_dict
@@ -94,13 +93,6 @@ class Cluster:
     def __sort_processes(self) -> None:
         self.active_processes.clear()
         self.inactive_processes.clear()
-
-        # local_processes = set(self.processes.keys())
-
-        # # Use instance-specific dictionaries
-        # for name in list(self.saved_processes.keys()):
-        #     if name not in local_processes:
-        #         del self.saved_processes[name]
 
         for name, details in self.processes.items():
             if name not in self.saved_processes:
@@ -374,6 +366,11 @@ class Cluster:
             
             try:
                 if Path.isdir(Path.join(self.path, file)):
+                    if os.listdir(Path.join(self.path, file)):
+                        comp_files = os.listdir(Path.join(self.path, file))
+                        for i in comp_files:
+                            os.remove(Path.join(Path.join(self.path, file), i))
+
                     os.rmdir(Path.join(self.path, file))
                 else:
                     os.remove(Path.join(self.path, file))
