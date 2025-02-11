@@ -10,9 +10,7 @@ class CLI_Interpreter:
     
     def __init__(self):
         
-        root : Root = Root(r"./mathew")
-        
-        root_str : str = (r"mathew")
+        root : Root = Root(r"./Thing")
 
         self.mode : str = "None"
         
@@ -26,11 +24,17 @@ class CLI_Interpreter:
         
         self.root_commands = {
             "select" : {
-                "root" : (self.select, "Root", ),
+                "root" : (self.select, "Root", None),
                 "cluster" : {},
                 "computer" : (self.select, "Computer")
             },
-            "exit" : (self.exit, )
+            "exit" : (self.exit, ),
+            "create_cluster" : (self.current_root.create_cluster, ),
+            "try_del_cluster" : {},
+            "force_del_cluster" : {},
+            "relocate_process" : (self.current_root.relocate_process, ),
+            "move_computer" : (self.current_root.move_computer, ),
+            "rename_cluster" : {}
         }
         
         self.cluster_commands = {
@@ -56,7 +60,7 @@ class CLI_Interpreter:
         
         self.noMode_commands = {
             "select" : {
-                "root" : (self.select, "Root", ),
+                "root" : (self.select, "Root", None),
                 "cluster" : {},
                 "computer" : (self.select, "Computer")
             },
@@ -166,10 +170,6 @@ class CLI_Interpreter:
                 
                 self.cluster_commands["rename_computer"].update({f"{item}" : (self.current_cluster.rename_computer, f"{item}")})
                 
-        if self.current_root:
-            
-            clusters = self.current_root.clusters
-            
             for item in clusters.keys():
                 
                 self.cluster_commands["select"]["cluster"].update({f"{item}" : (self.select, "Cluster", clusters[f"{item}"])})
@@ -178,7 +178,16 @@ class CLI_Interpreter:
                 self.root_commands["select"]["cluster"].update({f"{item}" :(self.select, "Cluster", clusters[f"{item}"])})
                 
             self.cluster_commands["create_computer"] = (self.current_cluster.create_computer, )
-        
+                
+        if self.current_root:
+            
+            clusters = self.current_root.clusters
+            
+            for item in clusters.keys():
+                
+                self.root_commands["try_del_cluster"].update({f"{item}" : (self.current_root.try_delete_cluster, f"{item}")})
+                self.root_commands["force_del_cluster"].update({f"{item}" : (self.current_root.force_delete_cluster, f"{item}")})
+                self.root_commands["rename_cluster"].update({f"{item}" : (self.current_root.rename_cluster, f"{item}")})
     
     def exit(self):
         
