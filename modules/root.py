@@ -36,20 +36,21 @@ class Root:
         path: str = Path.join(self.path, cluster_name)
 
         if Path.exists(path):
-            self.print(f"Cluster ({cluster_name}) already exists and will NOT be created.")
+            self.print(f"{Fore.RED}Cluster ({cluster_name}) already exists and will NOT be created.")
             return self.clusters[cluster_name]
         
         try:
             os.mkdir(path)
             file = open(Path.join(path, ".klaszter"), "w", encoding="utf8")
+            file.write("")
             file.close()
-            self.print(f"Cluster ({cluster_name}) created successfully.")
+            self.print(f"{Fore.GREEN}Cluster ({cluster_name}) created successfully.")
 
             self.__init__(self.path)
 
             return Cluster(path)
         except:
-            self.print(f"Error while creating cluster '{cluster_name}'.")
+            self.print(f"{Fore.RED}Error while creating cluster '{cluster_name}'.")
             return
 
     # Only works if there are no computers in the cluster
@@ -57,13 +58,13 @@ class Root:
         path: str = Path.join(self.path, cluster_name)
 
         if not Path.exists(path):
-            self.print(f'Cluster ({cluster_name}) does not exist! Did you misspell the name?')
+            self.print(f'{Fore.RED}Cluster ({cluster_name}) does not exist! Did you misspell the name?')
             return False
         
         try:
             cluster: Cluster = Cluster(path)
             if cluster.computers:
-                self.print(f"Unable to delete cluster '{cluster_name}'. It has computers, try using force_delete_cluster()")
+                self.print(f"{Fore.RED}Unable to delete cluster '{cluster_name}'. It has computers, try using force_delete_cluster()")
                 return False
             
             if Path.exists(Path.join(path, ".klaszter")):
@@ -72,11 +73,11 @@ class Root:
             os.rmdir(path)
             self.__init__(self.path)
 
-            self.print(f"Cluster '{cluster_name}' deleted successfully.")
+            self.print(f"{Fore.GREEN}Cluster '{cluster_name}' deleted successfully.")
             return True
 
         except:
-            self.print(f"Unable to delete cluster ({cluster_name}).")
+            self.print(f"{Fore.RED}Unable to delete cluster ({cluster_name}).")
             return False
 
 
@@ -84,26 +85,30 @@ class Root:
         path: str = Path.join(self.path, cluster_name)
         
         if not Path.exists(path):
-            self.print(f'Cluster ({cluster_name}) does not exist! Did you misspell the name?')
+            self.print(f'{Fore.RED}Cluster ({cluster_name}) does not exist! Did you misspell the name?')
             return False
         
-        try:
-            if Path.exists(Path.join(path, ".klaszter")):
-                os.remove(Path.join(path, ".klaszter"))
 
+        try:
             cluster : Cluster = self.clusters[cluster_name]
 
             for computer in cluster.computers:
                 cluster.force_delete_computer(computer)
-                        
+
+            
+            if Path.exists(Path.join(path, ".klaszter")):
+                os.remove(Path.join(path, ".klaszter"))
+
+            print("--------------Before----")
             os.rmdir(path)
+            print("---------------After---")
             self.__init__(self.path)
 
-            self.print(f"Successfully force deleted cluster ({cluster_name}).")
+            self.print(f"{Fore.GREEN}Successfully force deleted cluster ({cluster_name}).")
             return True
         
         except:
-            self.print(f"CRITICAL ERROR DETECTED: force deletion failed for computer {cluster_name}.")
+            self.print(f"{Fore.RED}CRITICAL ERROR DETECTED: force deletion failed for cluster ({cluster_name}).")
             return False
 
 
@@ -217,7 +222,7 @@ class Root:
             return False
 
 
-    def move_computer(self, origin_cluster_name: str, destination_cluster_name: str, computer_name: str) -> bool:
+    def move_computer(self, computer_name: str, origin_cluster_name: str, destination_cluster_name: str) -> bool:
         origin_cluster : Cluster = self.clusters[origin_cluster_name]
         destination_cluster : Cluster = self.clusters[destination_cluster_name]
         
