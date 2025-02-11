@@ -39,7 +39,8 @@ class CLI_Interpreter:
                 "cluster" : (self.select, "Cluster"),
                 "computer" : (self.select, "Computer")
             },
-            "exit" : (self.exit, )
+            "exit" : (self.exit, ),
+            "rename_computer" : {"cluster1" : (self.rename, "cluster1")}
             
         }
         
@@ -83,25 +84,48 @@ class CLI_Interpreter:
             
             case "Root":
                 
-                current_step = self.cicle_through_commands(self.root_commands, shlashed_command)
+                current_step, arguments, success = self.cicle_through_commands(self.root_commands, shlashed_command)
                     
             case "Cluster":
                 
-                current_step = self.cicle_through_commands(self.cluster_commands, shlashed_command)
+                try:
+
+                    current_step, arguments, success = self.cicle_through_commands(self.cluster_commands, shlashed_command)
+
+                except Exception as e:
+
+                    print(f"Something went wrong {e}")
+                    self.take_input()
                 
             case "Computer":
                 
-                current_step = self.cicle_through_commands(self.computer_commands, shlashed_command)
+                try:
+
+                    current_step, arguments, success = self.cicle_through_commands(self.noMode_commands, shlashed_command)
+
+                except Exception as e:
+
+                    print(f"Something went wrong {e}")
+                    self.take_input()
                 
             case _:
                 
-                current_step = self.cicle_through_commands(self.noMode_commands, shlashed_command)
+                try:
+
+                    current_step, arguments, success = self.cicle_through_commands(self.noMode_commands, shlashed_command)
+
+                except Exception as e:
+
+                    print(f"Something went wrong {e}")
+                    self.take_input()
                 
         if isinstance(current_step, tuple):
             
-            func, *args = current_step
+            func, *default_args = current_step
+
+            all_args = (*default_args, *arguments)
             
-            func(*args)
+            func(*all_args)
                     
         elif current_step:
                     
@@ -110,7 +134,7 @@ class CLI_Interpreter:
         self.take_input()
         
             
-    def select(self, mode):
+    def select(self, mode, current = None):
         
         self.mode = mode
         
@@ -124,18 +148,31 @@ class CLI_Interpreter:
         print("Bye Bye")
         quit()
         
-    def rename(self):
+    def rename(self, original, name):
         
-        pass
+        print(original, name)
         
         
     def cicle_through_commands(self, command_dict, shlashed_command):
         
         current_step : dict = command_dict
+
+        arguments = []
         
         try:
                 
             for item in shlashed_command:
+
+                if isinstance(current_step, dict) and item not in current_step.keys():
+
+                    for keys in current_step.keys():
+
+                        if item in keys:
+
+                            return f"Did you mean {keys}?", "", False
+                        
+                    return f"Command not found", "", False
+                        
                         
                 if item == "?":
                             
@@ -149,11 +186,15 @@ class CLI_Interpreter:
                                 
                     break
                         
-                        
+                if isinstance(current_step, dict):
                 
-                current_step = current_step[item]
-                
-            return current_step
+                    current_step = current_step[item]
+
+                elif  current_step:
+
+                    arguments.append(item)
+
+            return current_step, arguments, True
         
         except Exception as e:
             
