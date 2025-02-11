@@ -105,17 +105,6 @@ class Computer:
             return {"name":str(process_info[0]), "id":str(process_info[1]), "status": status, "cores": int(process_file_info[2]), "memory": int(process_file_info[3]), "date_started": str(process_file_info[0])}
 
 
-    def start_process_with_dict(self, process_info: dict) -> bool:
-        name: str = process_info["name"]
-        id: str = process_info["id"]
-        status: bool = process_info["status"]
-        cpu_req: int = process_info["cores"]
-        ram_req: int = process_info["memory"]
-        date_started : str = process_info["date_started"]
-
-        return self.start_process(name+"-"+id, status, cpu_req, ram_req, date_started)
-
-
     def edit_resources(self, cores: int, memory: int) -> bool:
         min_cores: int = self.cores-self.free_cores
         min_memory: int = self.memory-self.free_memory
