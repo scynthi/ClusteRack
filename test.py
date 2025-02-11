@@ -7,6 +7,16 @@ root : Root = Root(r"./Test folder")
 cluster1 : Cluster = root.clusters.get("test_cluster")
 cluster2 : Cluster = root.clusters.get("test_cluster2")
 
+cluster1.try_delete_computer("move_comp")
+
+print(cluster1.saved_processes.keys())  # ['API']
+
+cluster1.start_process("DB", False, 4, 8)
+
+print(cluster1.saved_processes.keys())  # ['API']
+
+
+# print(cluster2.saved_processes.keys())  # ['']
 
 
 
@@ -21,9 +31,9 @@ Featres:
 - rename cluster D
 
 - cluster:
-- create computer
-- try delete computer
-- force delete computer
+- create computer D
+- try delete computer D
+- force delete computer D
 - rename computer
 - start process
 - kill process

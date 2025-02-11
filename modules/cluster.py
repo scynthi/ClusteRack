@@ -73,18 +73,22 @@ class Cluster:
         if ".klaszter" in files:
             files.remove(".klaszter")
 
-        self.cleanup()
-
         computer_dict: dict = {}
 
         for file in files:
-            computer_dict[file] = Computer(Path.join(path, file))
+            # full_path = Path.join(path, file)
+            # if Path.isfile(Path.join(full_path, ".szamitogep_config")):
+            if Computer(Path.join(path, file)).initialized == True:
+                computer_dict[file] = Computer(Path.join(path, file))
         
         self.computers : dict = computer_dict
         self.rebalancer : Rebalancer = Rebalancer(self.path, self)
+
+        self.cleanup()
         
         self.print(f"{Fore.BLACK}{Back.GREEN}Cluster ({cluster_name}) initialized succesfully with {len(computer_dict)} computer(s).{Back.RESET+Fore.RESET}\n")
         self.initialized : bool = True
+        self.saved_processes.keys()
 
 
     def __sort_processes(self) -> None:

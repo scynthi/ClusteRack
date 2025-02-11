@@ -17,6 +17,9 @@ class Rebalancer:
 
 
     def sort_computers(self) -> None:
+        if not self.parent.computers.items():
+            return
+
         self.sorted_computer_list = sorted(
             self.parent.computers.items(),
             key=lambda x: (-x[1].cores, x[1].memory)
@@ -24,6 +27,9 @@ class Rebalancer:
 
 
     def sort_programs(self) -> None:
+        if not self.parent.active_processes.items():
+            return
+
         expanded_processes = []
         for name, details in self.parent.active_processes.items():
             instance_count = int(details["instance_count"])

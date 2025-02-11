@@ -4,10 +4,11 @@ from datetime import datetime
 from colorama import Fore, Style, Back
 
 class Computer:
-    def __init__(self, path: str) -> None:
+    def __init__(self, path: str):
         path: str = Path.normpath(fr"{path}")
         computer_name: str = path.split(os.sep)[-1]
         self.name: str = computer_name
+        self.initialized : bool = False
 
         if Path.exists(Path.join(path, ".szamitogep_config")):
             config_file = open(Path.join(path, ".szamitogep_config"), "r", encoding="utf8")
@@ -16,7 +17,7 @@ class Computer:
 
             if len(config) != 2:
                 self.print(f"{Fore.RED}Invalid configuration file at path: {path}")
-                return False
+                return
             
             cores: int = int(config[0])
             memory: int = int(config[1])
@@ -28,8 +29,12 @@ class Computer:
 
             if not self.validate_computer(): return
             self.print(f"{Back.GREEN}{Fore.BLACK}Computer ({computer_name}) initialized with {cores} cores and {memory} of memory. {self.free_cores} cores and {self.free_memory} memory left free.{Back.RESET}\n\n")
+            
+            self.initialized = True
+
         else:
             self.print(f"{Fore.RED}There's no config file in {path}")
+            return
 
 
     def validate_computer(self) -> bool:
