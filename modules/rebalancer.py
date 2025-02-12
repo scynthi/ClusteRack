@@ -11,16 +11,13 @@ rebalancing_algos : list = ["load_balance", "best_fit", "fast"]
 
 class Rebalancer:
     def __init__(self, path: str, parent):
-        if not hasattr(self, '_cluster_initialized'):
-            # Unique to THIS SPECIFIC INSTANCE
-            self._cluster_initialized = True
+        if not hasattr(self, '_rebalancer_initialized'):
+            self._rebalancer_initialized = True
             self.default_rebalance_algo = rebalancing_algos[0]
 
         self.parent = parent
         self.sorted_computer_list = []
         self.sorted_process_list = []
-
-        # self.run_default_rebalance_algo()
         
 
     def run_default_rebalance_algo(self) -> None:
@@ -36,8 +33,9 @@ class Rebalancer:
         else:
             self.distribute_processes_balanced()
 
-
+#Utilities
     def sort_computers(self) -> None:
+        """Sort computers based on core and memory"""
         if not hasattr(self.parent, "computers"):
             return
 
@@ -48,6 +46,7 @@ class Rebalancer:
 
 
     def sort_programs(self) -> None:
+        """Sort processes based on req. core and req. memory"""
         if not self.parent.active_processes:
             return
 
@@ -66,6 +65,7 @@ class Rebalancer:
 
 
     def assign_process_id(self) -> None:
+        """Assigns a unique id to all running processes"""
         used_ids = set()
 
         for process in self.sorted_process_list:
@@ -80,8 +80,8 @@ class Rebalancer:
             process[1]['id'] = new_id
 
 
-    #Ensures that every rerun is the same nomatter the starting conditions.
-    def clear_computer_processes(self, computer: Computer) -> None:     
+    def clear_computer_processes(self, computer: Computer) -> None:
+        """Ensures that every rerun is the same nomatter the starting conditions."""
         for file in os.listdir(computer.path):
             file_path = Path.join(computer.path, file)
             if file != ".szamitogep_config" and Path.isfile(file_path):
@@ -108,29 +108,10 @@ class Rebalancer:
         return core_utilization + memory_utilization  # Simple heuristic score
     
 
-    # Only for debugging purposes
-    def print_computer_scores(self):
-        print(Fore.CYAN + "Current Computer Scores:" + Style.RESET_ALL)
-        for name, computer in self.sorted_computer_list:
-            score = self.calculate_computer_score(computer)
-            print(f"{Style.BRIGHT + Fore.CYAN}[{Fore.WHITE}{name}{Fore.CYAN}] -> {Fore.WHITE}Score: {Style.BRIGHT+Fore.GREEN}{score:.2f} {Style.NORMAL+Fore.WHITE}(Cores: {computer.free_cores}/{computer.cores}, Memory: {computer.free_memory}/{computer.memory})")
-
-    # Only for debugging purposes
-    def print_assignments(self, assignments):
-        if assignments == {}: 
-            print(Fore.MAGENTA + Style.BRIGHT  + "\nNo assignments happened ---------" + Style.RESET_ALL + Back.RESET)
-            return
-
-        print(Fore.CYAN + Style.BRIGHT + "\nProcess Assignments:" + Style.RESET_ALL)
-        for process_name, computers in assignments.items():
-            assigned_to = [comp.name for comp in computers]
-            # print(f"{Style.BRIGHT + Fore.CYAN}[{Fore.WHITE}{Fore.CYAN}] -> {Fore.WHITE}")
-            print(f"{Style.BRIGHT + Fore.CYAN}[{Fore.YELLOW}{process_name}{Fore.CYAN}] -> {Fore.WHITE}{', '.join(assigned_to)}{Style.RESET_ALL}")
-
-
-
-    # The slowest, leads to the uniform computer usage
+#Algorithms
     def distribute_processes_balanced(self) -> None:
+        """The slowest, leads to the uniform computer usage"""
+
         print(Fore.BLUE + Style.BRIGHT + "\nBALANCED ALGO." + Style.RESET_ALL)
         #Step 1
         self.sort_computers()
@@ -185,8 +166,10 @@ class Rebalancer:
 
         self.print_assignments(assignments)
     
-    # Balanced speed, the best used if the computers are similar
+
     def distribute_processes_efficient_packing(self) -> None:
+        """Balanced speed, the best used if the computers are similar"""
+
         print(Fore.BLUE + Style.BRIGHT + "\nEFFICIENT PACKING ALGO." + Style.RESET_ALL)
 
         # Step 1: Sort computers and programs
@@ -245,8 +228,10 @@ class Rebalancer:
 
         self.print_assignments(assignments)
 
-    # Fast but leads to unsatifactory packing
+
     def distribute_processes_speedy(self) -> None:
+        """Fast but leads to unsatifactory packing"""
+
         print(Fore.BLUE + Style.BRIGHT + "\nSPEEDY ALGO." + Style.RESET_ALL)
 
         # Step 1: Sort computers and programs
@@ -295,3 +280,25 @@ class Rebalancer:
         self.print_computer_scores()
 
         self.print_assignments(assignments)
+
+
+#MISC.
+    def print_computer_scores(self):
+        """DEBUGGING TOOL: A print for the terminal"""
+        print(Fore.CYAN + "Current Computer Scores:" + Style.RESET_ALL)
+        for name, computer in self.sorted_computer_list:
+            score = self.calculate_computer_score(computer)
+            print(f"{Style.BRIGHT + Fore.CYAN}[{Fore.WHITE}{name}{Fore.CYAN}] -> {Fore.WHITE}Score: {Style.BRIGHT+Fore.GREEN}{score:.2f} {Style.NORMAL+Fore.WHITE}(Cores: {computer.free_cores}/{computer.cores}, Memory: {computer.free_memory}/{computer.memory})")
+
+
+    def print_assignments(self, assignments):
+        """DEBUGGING TOOL: A print for the terminal"""
+        if assignments == {}: 
+            print(Fore.MAGENTA + Style.BRIGHT  + "\nNo assignments happened ---------" + Style.RESET_ALL + Back.RESET)
+            return
+
+        print(Fore.CYAN + Style.BRIGHT + "\nProcess Assignments:" + Style.RESET_ALL)
+        for process_name, computers in assignments.items():
+            assigned_to = [comp.name for comp in computers]
+            # print(f"{Style.BRIGHT + Fore.CYAN}[{Fore.WHITE}{Fore.CYAN}] -> {Fore.WHITE}")
+            print(f"{Style.BRIGHT + Fore.CYAN}[{Fore.YELLOW}{process_name}{Fore.CYAN}] -> {Fore.WHITE}{', '.join(assigned_to)}{Style.RESET_ALL}")

@@ -69,9 +69,10 @@ class Computer:
         cpu_usage_percentage: float = round(cpu_usage / self.cores * 100, 1)
 
         return {"memory_usage_percent": memory_usage_percentage, "core_usage_percent": cpu_usage_percentage}
-    
+
 
     def get_processes(self) -> dict:
+        """Gives back all the running processes on the computer"""
         files: list = os.listdir(self.path)
         process_list: dict = {}
 
@@ -89,6 +90,7 @@ class Computer:
 
 
     def get_process_info(self, process: str) -> dict:
+        """Gives back the info of one specific running process on the computer"""
         if Path.exists(Path.join(self.path, process)):
             process_info: list = process.split("-")
 
@@ -109,7 +111,9 @@ class Computer:
             return {"name":str(process_info[0]), "id":str(process_info[1]), "status": status, "cores": int(process_file_info[2]), "memory": int(process_file_info[3]), "date_started": str(process_file_info[0])}
 
 
+#MISC.
     def cleanup(self) -> bool:
+        """Removes unnescecary files and directories from the computer""" 
         files: list = os.listdir(self.path)
         
         self.print(f"{Fore.GREEN}Starting cleanup...")
@@ -141,5 +145,7 @@ class Computer:
         self.print(f"{Fore.GREEN}Cleanup completed. Removed a total of {removed_files} incorrect files plus folders.")
         return True
     
+    
     def print(self, text: str):
+        """DEBUGGING TOOL: A print for the terminal"""
         print(f"{Style.BRIGHT}{Fore.CYAN}[{Fore.WHITE}{self.name}{Fore.CYAN}]: {Fore.RESET+Back.RESET+Style.RESET_ALL}" + text + Fore.RESET+Back.RESET+Style.RESET_ALL)

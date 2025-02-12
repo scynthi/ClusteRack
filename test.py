@@ -7,8 +7,8 @@ root : Root = Root(r"./Test folder")
 cluster : Cluster = root.clusters.get("test_cluster")
 cluster1 : Cluster = root.clusters.get("test_cluster1")
 
-cluster1.start_process("jani", False, 100,100,2)
-cluster1.edit_process_resources("jani", "running", True)
+# cluster1.start_process("jani", False, 100,100,2)
+# cluster1.edit_process_resources("jani", "running", True)
 
 """
 Featres:
