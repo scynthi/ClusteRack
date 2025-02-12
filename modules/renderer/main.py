@@ -50,6 +50,7 @@ class SoftwareRender:
         return Object3D(self, vertex, faces)
 
     def update(self):
+        """The update loop of the rederer"""
         if not self.running or self.window_moving:
             self.root.after(50, self.update)
             return
@@ -61,7 +62,7 @@ class SoftwareRender:
         self.root.after(16, self.update)
 
     def update_tkinter_canvas(self):
-        # Convert Pygame surface to an image
+        """Convert Pygame surface to an image"""
         pg_image_data = pg.image.tostring(self.screen, "RGB")
         pg_image = Image.frombytes("RGB", self.SCALED_RES, pg_image_data)
 

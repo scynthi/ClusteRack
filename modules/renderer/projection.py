@@ -3,6 +3,7 @@ import numpy as np
 
 
 class Projection:
+    """Projection planes for the camera"""
     def __init__(self, render):
         NEAR = render.camera.near_plane
         FAR = render.camera.far_plane

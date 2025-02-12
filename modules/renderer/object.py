@@ -39,7 +39,7 @@ class Object3D:
             color, face = color_face
             polygon = vertices[face]
             if not any_func(polygon, self.render.WIDTH, self.render.HEIGHT):
-                pg.draw.polygon(self.render.screen, color, polygon, 1) # Increased linethickness so upscaling is not an issue
+                pg.draw.polygon(self.render.screen, color, polygon, 1) # If scaling the viewport causes line tearing increase the line_thickness until it goes away
 
         if self.draw_vertices:
             for vertex in vertices:
@@ -60,14 +60,3 @@ class Object3D:
 
     def rotate_z(self, angle):
         self.vertices = self.vertices @ rotate_z(angle)
-
-
-class Axes(Object3D):
-    def __init__(self, render):
-        super().__init__(render)
-        self.vertices = np.array([(0, 0, 0, 1), (1, 0, 0, 1), (0, 1, 0, 1), (0, 0, 1, 1)])
-        self.faces = np.array([(0, 1), (0, 2), (0, 3)])
-        self.colors = [pg.Color('red'), pg.Color('green'), pg.Color('blue')]
-        self.color_faces = [(color, face) for color, face in zip(self.colors, self.faces)]
-        self.draw_vertices = False
-        self.label = 'XYZ'

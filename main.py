@@ -251,7 +251,7 @@ class ComputerBoard:
         UI.Label(self.frame, computer.name, font=extra_large_font).grid(row=0, column=0)
         computer_frame : UI.Frame = UI.Frame(self.frame)
         computer_frame.grid(row=1, column=0, sticky="nesw")
-        self.computer_model = UI.EmbedRenderer(computer_frame, "computer", 12, app).get_renderer()
+        self.computer_model = UI.EmbedRenderer(computer_frame, "computer", 10, app).get_renderer()
 
         UI.Label(self.frame, "Resources", font=extra_large_font).grid(row=0, column=1)
         self.resources_frame : UI.Frame = UI.Frame(self.frame)

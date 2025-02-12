@@ -29,6 +29,7 @@ class Camera:
         self.camera_update_axii()
 
     def _clamp_distance(self):
+        """Ensures a minimum and maximum distance from an object"""
         pos = self.position[:3]
         distance = np.linalg.norm(pos)
         

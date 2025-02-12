@@ -23,9 +23,8 @@ class Cluster:
         self.name = self.path.split(os.sep)[-1]
         self.rebalancer : Rebalancer = Rebalancer(self.path, self)
 
-        self.restart_cluster()
+        self.update_cluster()
 
- 
         self.print(f"{Fore.BLACK}{Back.GREEN}Cluster ({self.name}) initialized succesfully with {len(self.computers)} computer(s).{Back.RESET+Fore.RESET}\n")
         self.initialized : bool = True
         self._saved_processes.keys()
@@ -33,7 +32,7 @@ class Cluster:
 
 #Cluster
     def _load_config(self):
-        """Load/reload config file without resetting saved processes"""
+        """Load/reload config file"""
         if Path.exists(Path.join(self.path, ".klaszter")):
             config_file = open(Path.join(self.path, ".klaszter"), "r", encoding="utf8")
             config: list = config_file.readlines()
@@ -69,10 +68,7 @@ class Cluster:
 
             self.processes : dict = process_info_dict
             self.__sort_processes()
-            self.format_cluster_config()
             self.update_cluster_config()
-
-            # self.rebalancer.distribute_processes_balanced()
 
             return
 
@@ -87,12 +83,11 @@ class Cluster:
             self._load_config()
             self.cleanup()
             self._load_computers()
-
-            # self.rebalancer.distribute_processes_balanced()
             return
 
 
     def _load_computers(self):
+        """Update the computer references"""
         files: list = os.listdir(self.path)
 
         if ".klaszter" in files:
@@ -106,7 +101,8 @@ class Cluster:
         self.computers : dict = computer_dict
 
 
-    def restart_cluster(self):
+    def update_cluster(self):
+        """Update the whole cluster without reinitializing the class"""
         self._load_config()
         self.cleanup()
         self._load_computers()
@@ -128,7 +124,7 @@ class Cluster:
             else:
                 self._saved_inactive_processes[name] = details
 
-        # Update public-facing views
+        # Update public process dicts
         self.active_processes = self._saved_active_processes.copy()
         self.inactive_processes = self._saved_inactive_processes.copy()
 
@@ -149,29 +145,18 @@ class Cluster:
     def run_default_rebalance_algo(self):
         self.rebalancer.run_default_rebalance_algo()
 
-    #Clear the .klaszter file so we can rewrite it
-    def format_cluster_config(self) -> None:
-        with open(Path.join(self.path, ".klaszter"), "w", encoding="utf8") as config_file:
-            config_file.write("")
-        config_file.close()
-
 
     def update_cluster_config(self) -> None:
+        """Write process data into the config file of the cluster"""
+
+        full_data : str = ""
         for name in self.active_processes:
             data: str = f"{name}\n{self.active_processes[name]["instance_count"]}\n{self.active_processes[name]["cores"]}\n{self.active_processes[name]["memory"]}\n"
+            full_data += data
 
-            with open(Path.join(self.path, ".klaszter"), "a", encoding="utf8") as file:
-                file.write(data)
-            file.close()
-
-    # Group tasks update processes, clean the config, and reinitialize the cluster
-    def __update_cluster_state(self):
-        """Update config file without full reinitialization"""
-        self.__sort_processes()
-        self.format_cluster_config()
-        self.update_cluster_config()
-        self._load_config()  # Reload from updated file
-
+        with open(Path.join(self.path, ".klaszter"), "w", encoding="utf8") as file:
+            file.write(full_data)
+        file.close()
 
 #Computers
     def create_computer(self, computer_name: str, cores: int, memory: int) -> Computer:
@@ -189,15 +174,17 @@ class Cluster:
 
             self.print(f"{Fore.GREEN}Computer ({computer_name}) created successfully.")
             
-            self.restart_cluster()
+            self.update_cluster()
             return Computer(path)   
         except:
             self.print(f"{Fore.RED}Error while creating computer '{computer_name}'.")
-            self.restart_cluster()
+            self.update_cluster()
             return
         
-    # Only works if there are no processes running under the computer
+
     def try_delete_computer(self, computer_name: str) -> bool:
+        """CAN Delete computers with no running processes"""
+
         path: str = Path.join(self.path, computer_name)
 
         if not Path.exists(path):
@@ -214,17 +201,19 @@ class Cluster:
             os.rmdir(path)
 
             self.print(f"{Fore.GREEN}Computer '{computer_name}' deleted successfully.")
-            self.restart_cluster()
+            self.update_cluster()
 
             return True
         except:
             self.print(f"{Fore.RED}Unable to delete computer ({computer_name}).")
-            self.restart_cluster()
+            self.update_cluster()
 
             return False
 
 
     def force_delete_computer(self, computer_name: str) -> bool:
+        """CAN Delete any computer"""
+
         path: str = Path.join(self.path, computer_name)
 
         if not Path.exists(path):
@@ -237,12 +226,12 @@ class Cluster:
 
             os.rmdir(path)
             self.print(f"{Fore.GREEN}Successfully force deleted computer ({computer_name}).")
-            self.restart_cluster()
+            self.update_cluster()
 
             return True
         except:
             self.print(f"{Back.RED}{Fore.BLACK}CRITICAL ERROR DETECTED: force deletion failed for computer {computer_name}.")
-            self.restart_cluster()
+            self.update_cluster()
 
             return False
         
@@ -274,7 +263,7 @@ class Cluster:
                 file.write(f"{computer.cores}\n{computer.memory}")
             file.close()
 
-            self.restart_cluster()
+            self.update_cluster()
             self.print(f"{Fore.GREEN}Succesfully edited resources on computer ({computer.name}). Memory: {prev_memory} -> {memory}, cores: {prev_cores} -> {cores}")
 
 
@@ -305,7 +294,7 @@ class Cluster:
             os.rename(computer_dir, new_path)
             self.print(f"{Fore.GREEN}Computer folder renamed to '{new_name}' successfully.")
 
-            self.restart_cluster()
+            self.update_cluster()
 
             return True
             
@@ -331,7 +320,8 @@ class Cluster:
             }
             
             # Update config file
-            self.__update_cluster_state()
+            self.update_cluster()
+
 
             self.print(f"{Fore.GREEN}Process ({process_name}) added successfully to cluster ({self.name}) as {"AKTIV" if running else f"{Fore.YELLOW + Style.BRIGHT}INAKTIV"}.")
             return True
@@ -339,8 +329,6 @@ class Cluster:
         except Exception as e:
             self.print(f"{Fore.RED}Error while creating process: {process_name} -> {e}")
             return False
-
-        # Explanation docs.txt
     
     
     def kill_process(self, process_name: str) -> bool:
@@ -352,7 +340,7 @@ class Cluster:
                 self._saved_inactive_processes.pop(process_name, None)
 
                 # Resort, clean, and update
-                self.__update_cluster_state()
+                self.update_cluster()
 
                 self.print(f"{Style.BRIGHT}Process {process_name} successfully killed.")
                 return True
@@ -386,7 +374,7 @@ class Cluster:
             self._saved_processes[process_name][property_to_change] = new_value
         
             # Update cluster
-            self.__update_cluster_state()
+            self.update_cluster()
 
             self.print(f"{Fore.GREEN}Updated process ({process_name}): {property_to_change} -> {new_value}")
             return True
@@ -398,12 +386,10 @@ class Cluster:
 
     def rename_process(self, process_name: str, new_process_name: str) -> bool:
         try:
-            # Ensure the process exists
             if process_name not in self._saved_processes:
                 self.print(f"{Fore.RED}Process {process_name} does not exist! Check the name and try again.")
                 return False
 
-            # Ensure the new name is not already taken
             if new_process_name in self._saved_processes:
                 self.print(f"{Fore.RED}A process with the name {new_process_name} already exists!")
                 return False
@@ -418,8 +404,7 @@ class Cluster:
             elif process_name in self._saved_inactive_processes:
                 self._saved_inactive_processes[new_process_name] = self._saved_inactive_processes.pop(process_name)
 
-            # Resort processes and update cluster config
-            self.__update_cluster_state()
+            self.update_cluster()
 
             self.print(f"{Fore.GREEN}Process {process_name} successfully renamed to {new_process_name}.")
             return True
@@ -429,9 +414,9 @@ class Cluster:
             return False
 
 
-
-    # Removes unnescecary files and directories from the cluster
+#MISC.
     def cleanup(self) -> bool:
+        """Removes unnescecary files and directories from the cluster""" 
         files: list = os.listdir(self.path)
         
         self.print(f"{Fore.GREEN}Starting cleanup...")
@@ -461,6 +446,7 @@ class Cluster:
         self.print(f"{Fore.GREEN}Cleanup completed. Removed a total of {removed_files} incorrect files plus folders.")
         return True
 
-    # Only for debugging purposes
+    
     def print(self, text: str):
+        """DEBUGGING TOOL: A print for the terminal"""
         print(f"{Fore.BLACK}{Back.CYAN}[{Back.WHITE}{self.name}{Back.CYAN}]{Back.RESET}{Fore.CYAN}: {Fore.RESET+Back.RESET+Style.RESET_ALL}" + text + Fore.RESET+Back.RESET+Style.RESET_ALL)

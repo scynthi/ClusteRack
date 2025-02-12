@@ -1,6 +1,7 @@
 import math
 import numpy as np
 
+"""Matrixtranslations for object rotations"""
 
 def translate(pos):
     tx, ty, tz = pos
