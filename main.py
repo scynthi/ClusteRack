@@ -78,11 +78,10 @@ class ClusterView:
             cluster_frame.grid_rowconfigure(1, weight=1)
             cluster_frame.grid(row=0, column=i, padx=20, pady=10, sticky="NS")
 
-            UI.Label(cluster_frame, text=cluster.name, font=large_font).grid(row=0, column=0)
-
             image_frame : UI.Frame= UI.Frame(cluster_frame)
             image_frame.grid(row=1, column=0, sticky="NSEW")
 
+            UI.Label(cluster_frame, text=cluster.name, font=large_font).grid(row=0, column=0)
             UI.Button(cluster_frame, text=f"Open {cluster.name}", command=lambda selected_cluster = cluster: self.open_cluster_tab(selected_cluster)).grid(row=2, column=0, sticky="EW")
             
 
@@ -90,12 +89,25 @@ class ClusterView:
             if pc_amount != 0:
                 for x in range(pc_amount):
                     image : CTkImage = CTkImage(Image.open(Path.join("Assets", "Images", "rack.png")), size=(80, 200))
-                    button : CTkLabel = CTkLabel(image_frame, text="", image=image)
-                    button.grid(row=0, column=x, padx=5)
+                    label : CTkLabel = CTkLabel(image_frame, text="", image=image)
+                    label.grid(row=0, column=x, padx=5)
             else:
                 image_frame.grid_rowconfigure(0, weight=1)
                 UI.Label(image_frame, text="0 computers have been detected").grid(row=0, column=0)
-    
+
+        add_cluster_frame : UI.Frame = UI.Frame(self.clusters_frame)
+        add_cluster_frame.grid_rowconfigure(1, weight=1)
+        add_cluster_frame.grid(row=0, column=len(root.clusters.values())+1, padx=20, pady=10, sticky="NS")
+
+
+        image_frame : UI.Frame= UI.Frame(add_cluster_frame)
+        image_frame.grid(row=1, column=0, sticky="NSEW")
+        image_frame.grid_rowconfigure(0, weight=1)
+
+        UI.Label(add_cluster_frame, text="New cluster", font=large_font).grid(row=0, column=0)
+        UI.Button(image_frame, text="Create new cluster", command=UI.SubWindow).grid(row=0, column=0)
+
+
     def open_cluster_tab(self, cluster : Cluster) -> None:
         if self.cluster_tab:
             self.cluster_tab.destroy()
@@ -139,7 +151,7 @@ class ClusterBoard:
         UI.Label(self.processes_frame, text="Active", font=extra_large_font).grid(row=0, column=0)
         for i, process in enumerate(cluster.active_processes.keys()):
             temp_proc_frame : UI.Frame = UI.Frame(self.processes_frame)
-            temp_proc_frame.grid(row=i+1, column=0, sticky="EW")
+            temp_proc_frame.grid(row=i+1, column=0, sticky="EW", pady=5)
 
             UI.Button(temp_proc_frame, text=process).grid(row=0, column=0, sticky="w")
             UI.Label(temp_proc_frame, text=f"Instaces: {cluster.active_processes[process]["instance_count"]}").grid(row=1, column=0)
@@ -148,7 +160,7 @@ class ClusterBoard:
         UI.Label(self.processes_frame, text="Inactive", font=extra_large_font).grid(row=len(cluster.active_processes.keys())+2, column=0)
         for i, process in enumerate(cluster.inactive_processes.keys()):
             temp_proc_frame : UI.Frame = UI.Frame(self.processes_frame)
-            temp_proc_frame.grid(row=len(cluster.inactive_processes.keys())+i+4, column=0, sticky="EW")
+            temp_proc_frame.grid(row=len(cluster.inactive_processes.keys())+i+4, column=0, sticky="EW", pady=5)
 
             UI.Button(temp_proc_frame, text=process).grid(row=0, column=0, sticky="w")
             UI.Label(temp_proc_frame, text=f"Instaces: {cluster.inactive_processes[process]["instance_count"]}").grid(row=1, column=0)
@@ -191,7 +203,7 @@ class ClusterBoard:
 
         for x in range(0, 2):
             for i in range(0, 4):
-                UI.Button(self.button_frame, text=f"Test {i}").grid(row=i, column=x, pady=5)
+                UI.Button(self.button_frame, text=f"Test {i}", command=UI.SubWindow).grid(row=i, column=x, pady=5)
 
         self.computer_list_frame : CTkScrollableFrame = CTkScrollableFrame(self.frame, orientation="vertical", border_width=4, border_color="gray", corner_radius=0, width=230)
         self.computer_list_frame.grid(column=2, row=2, sticky="EWNS")
