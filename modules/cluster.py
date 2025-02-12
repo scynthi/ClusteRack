@@ -1,3 +1,4 @@
+import shutil
 import os
 from os import path as Path
 from modules.computer import Computer
@@ -5,11 +6,14 @@ from colorama import Fore, Style, Back
 from modules.rebalancer import *
 from datetime import datetime
 
+rebalancing_algos : list = ["load_balance", "best_fit", "fast"]
+
 class Cluster:
     def __init__(self, path: str):
         if not hasattr(self, '_cluster_initialized'):
             # Unique to THIS SPECIFIC INSTANCE
             self._cluster_initialized = True
+            self.default_rebalance_algo = rebalancing_algos[1]
             self._saved_processes = {}
             self._saved_active_processes = {}
             self._saved_inactive_processes = {}
@@ -17,17 +21,17 @@ class Cluster:
         # Always process config but preserve state
         self.path = Path.normpath(fr"{path}")
         self.name = self.path.split(os.sep)[-1]
-        self._load_config()  # Separate config loading
-        self._load_computers()  # Separate computer loading
-
         self.rebalancer : Rebalancer = Rebalancer(self.path, self)
 
-        self.cleanup()
-        
+        self.restart_cluster()
+
+ 
         self.print(f"{Fore.BLACK}{Back.GREEN}Cluster ({self.name}) initialized succesfully with {len(self.computers)} computer(s).{Back.RESET+Fore.RESET}\n")
         self.initialized : bool = True
         self._saved_processes.keys()
 
+
+#Cluster
     def _load_config(self):
         """Load/reload config file without resetting saved processes"""
         if Path.exists(Path.join(self.path, ".klaszter")):
@@ -68,6 +72,8 @@ class Cluster:
             self.format_cluster_config()
             self.update_cluster_config()
 
+            # self.rebalancer.distribute_processes_balanced()
+
             return
 
         else:
@@ -79,7 +85,10 @@ class Cluster:
             new_cluster_file.close()
 
             self._load_config()
+            self.cleanup()
             self._load_computers()
+
+            # self.rebalancer.distribute_processes_balanced()
             return
 
 
@@ -92,10 +101,16 @@ class Cluster:
         computer_dict: dict = {}
 
         for file in files:
-            # if Computer(Path.join(self.path, file)).initialized:
             computer_dict[file] = Computer(Path.join(self.path, file))
         
         self.computers : dict = computer_dict
+
+
+    def restart_cluster(self):
+        self._load_config()
+        self.cleanup()
+        self._load_computers()
+        self.run_default_rebalance_algo()
 
 
     def __sort_processes(self) -> None:
@@ -117,6 +132,22 @@ class Cluster:
         self.active_processes = self._saved_active_processes.copy()
         self.inactive_processes = self._saved_inactive_processes.copy()
 
+
+    def set_default_rebalance_algo(self, new_algo_name : str) -> bool:
+        if not new_algo_name in rebalancing_algos:
+            self.print(f"{Fore.RED}There is no rebalancing algorithm called {new_algo_name}.")
+            return False
+
+        old_algo_name = self.rebalancer.default_rebalance_algo
+
+        self.rebalancer.default_rebalance_algo = new_algo_name
+        
+        self.print(f"{Fore.GREEN}Succesfully changed the default rebalancing algorithm from {Fore.YELLOW + Style.BRIGHT}{old_algo_name}{Fore.GREEN + Style.RESET_ALL} to {Fore.YELLOW + Style.BRIGHT}{new_algo_name}")
+        return True
+
+
+    def run_default_rebalance_algo(self):
+        self.rebalancer.run_default_rebalance_algo()
 
     #Clear the .klaszter file so we can rewrite it
     def format_cluster_config(self) -> None:
@@ -142,6 +173,7 @@ class Cluster:
         self._load_config()  # Reload from updated file
 
 
+#Computers
     def create_computer(self, computer_name: str, cores: int, memory: int) -> Computer:
         path: str = Path.join(self.path, computer_name)
 
@@ -157,13 +189,11 @@ class Cluster:
 
             self.print(f"{Fore.GREEN}Computer ({computer_name}) created successfully.")
             
-            self._load_config()
-            self._load_computers()
+            self.restart_cluster()
             return Computer(path)   
         except:
             self.print(f"{Fore.RED}Error while creating computer '{computer_name}'.")
-            self._load_config()
-            self._load_computers()
+            self.restart_cluster()
             return
         
     # Only works if there are no processes running under the computer
@@ -184,13 +214,13 @@ class Cluster:
             os.rmdir(path)
 
             self.print(f"{Fore.GREEN}Computer '{computer_name}' deleted successfully.")
-            self._load_config()
-            self._load_computers()
+            self.restart_cluster()
+
             return True
         except:
             self.print(f"{Fore.RED}Unable to delete computer ({computer_name}).")
-            self._load_config()
-            self._load_computers()
+            self.restart_cluster()
+
             return False
 
 
@@ -207,16 +237,57 @@ class Cluster:
 
             os.rmdir(path)
             self.print(f"{Fore.GREEN}Successfully force deleted computer ({computer_name}).")
-            self._load_config()
-            self._load_computers()
+            self.restart_cluster()
+
             return True
         except:
             self.print(f"{Back.RED}{Fore.BLACK}CRITICAL ERROR DETECTED: force deletion failed for computer {computer_name}.")
-            self._load_config()
-            self._load_computers()
+            self.restart_cluster()
+
             return False
         
-    
+
+    def edit_computer_resources(self, computer_name: str, cores: int, memory: int) -> bool:
+        computer : Computer = self.computers[computer_name]    
+        
+        min_cores: int = computer.cores - computer.free_cores
+        min_memory: int = computer.memory - computer.free_memory
+
+        if cores < min_cores:
+            self.print(f"{Fore.RED}Can't set core count to {cores} on computer ({computer.name}). Required minimum cores: {min_cores} ")
+            return False
+            
+        if memory < min_memory:
+            self.print(f"{Fore.RED}Can't set memory size to {memory} on computer ({computer.name}). Required minimum memory size: {min_memory} ")
+            return False
+
+        prev_cores: int = computer.cores
+        prev_memory: int = computer.memory
+
+        computer.cores = cores
+        computer.memory = memory
+            
+        if computer.validate_computer():
+            computer.calculate_resource_usage()
+
+            with open(Path.join(computer.path, ".szamitogep_config"), "w", encoding="utf-8") as file:
+                file.write(f"{computer.cores}\n{computer.memory}")
+            file.close()
+
+            self.restart_cluster()
+            self.print(f"{Fore.GREEN}Succesfully edited resources on computer ({computer.name}). Memory: {prev_memory} -> {memory}, cores: {prev_cores} -> {cores}")
+
+
+            return True
+        
+        else:
+            self.print(f"{Fore.BLACK}{Back.RED}CRITICAL ERROR DETECTED: can't validate computer ({computer.name}). Setting back previus resources.")
+            computer.cores = prev_cores
+            computer.memory = memory
+            computer.calculate_resource_usage()
+            return False
+
+
     def rename_computer(self, computer_name : str, new_name : str) -> bool:
         if not self.initialized:
             self.print(f"{Fore.RED}Cluster failed to initialize so renaming can't be done.")
@@ -234,49 +305,16 @@ class Cluster:
             os.rename(computer_dir, new_path)
             self.print(f"{Fore.GREEN}Computer folder renamed to '{new_name}' successfully.")
 
-            self._load_config()
-            self._load_computers()
+            self.restart_cluster()
+
             return True
             
         except Exception as e:
             self.print(f"{Fore.BLACK}{Back.RED}CRITICAL ERROR DETECTED: Error renaming computer: {e}")
             return False
 
-    # Explanation docs.txt
-    # def start_process(self, process_name: str, running: bool, cpu_req: int, ram_req: int, 
-    #                 instance_count: int = 1, date_started: str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')) -> bool:
-    #     if process_name in self.saved_processes:  # Changed to instance dict
-    #         self.print(f"{Fore.RED}{process_name} already exists on the cluster ({self.name})")
-    #         return False
 
-    #     try:
-    #         # Add to instance's process dict
-    #         self.saved_processes[process_name] = {
-    #             "instance_count": instance_count,
-    #             "cores": cpu_req,
-    #             "memory": ram_req,
-    #             "running": running,
-    #             "date_started": date_started
-    #         }
-            
-    #         self.processes[process_name] = self.saved_processes[process_name]
-
-    #         print(self.saved_processes.keys(), "from cluster")
-    #         self.__sort_processes()  # Resort after adding a new process
-    #         self.format_cluster_config()
-    #         self.update_cluster_config()
-
-    #         self.print(f"{Fore.GREEN}Process ({process_name}) added successfully to cluster ({self.name}) as {"AKTIV" if running else f"{Fore.YELLOW + Style.BRIGHT}INAKTIV"}.")
-
-    #         self.__init__(self.path)  # Reinitialize after ensuring all updates
-        
-    #         return True
-        
-
-    #     except Exception as e:
-    #         self.print(f"{Fore.RED}Error while creating process: {process_name} -> {e}")
-    #         return False
-        
+#Processes
     def start_process(self, process_name: str, running: bool, cpu_req: int, ram_req: int, instance_count: int = 1, date_started: str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')) -> bool:
         if process_name in self._saved_processes:
             self.print(f"{Fore.RED}{process_name} already exists")
@@ -390,6 +428,8 @@ class Cluster:
             self.print(f"{Fore.RED}Error while renaming process {process_name}: {e}")
             return False
 
+
+
     # Removes unnescecary files and directories from the cluster
     def cleanup(self) -> bool:
         files: list = os.listdir(self.path)
@@ -406,22 +446,21 @@ class Cluster:
                 continue
             
             try:
-                if Path.isdir(Path.join(self.path, file)):
-                    if os.listdir(Path.join(self.path, file)):
-                        comp_files = os.listdir(Path.join(self.path, file))
-                        for i in comp_files:
-                            os.remove(Path.join(Path.join(self.path, file), i))
-
-                    os.rmdir(Path.join(self.path, file))
+                target_path = Path.join(self.path, file)
+                
+                if Path.isdir(target_path):
+                    shutil.rmtree(target_path)
                 else:
-                    os.remove(Path.join(self.path, file))
-                self.print(f"{Fore.YELLOW}Removed {file} from filesystem since it was marked as incorrect. ")
+                    os.remove(target_path)
+
+                self.print(f"{Fore.YELLOW}Removed {file} from filesystem since it was marked as incorrect.")
             except:
-                pass
+                self.print(f"{Fore.BLACK}{Back.RED}CRITICAL ERROR DETECTED: can't delete file or folder ({file}). Cluster might be unstable.")
+                return False
         
         self.print(f"{Fore.GREEN}Cleanup completed. Removed a total of {removed_files} incorrect files plus folders.")
         return True
-    
+
     # Only for debugging purposes
     def print(self, text: str):
         print(f"{Fore.BLACK}{Back.CYAN}[{Back.WHITE}{self.name}{Back.CYAN}]{Back.RESET}{Fore.CYAN}: {Fore.RESET+Back.RESET+Style.RESET_ALL}" + text + Fore.RESET+Back.RESET+Style.RESET_ALL)

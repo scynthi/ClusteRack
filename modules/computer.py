@@ -1,3 +1,4 @@
+import shutil
 import os
 from os import path as Path
 from datetime import datetime
@@ -8,7 +9,6 @@ class Computer:
         path: str = Path.normpath(fr"{path}")
         computer_name: str = path.split(os.sep)[-1]
         self.name: str = computer_name
-        self.initialized : bool = False
 
         if Path.exists(Path.join(path, ".szamitogep_config")):
             config_file = open(Path.join(path, ".szamitogep_config"), "r", encoding="utf8")
@@ -28,9 +28,8 @@ class Computer:
             self.path: str = path
 
             if not self.validate_computer(): return
+            self.cleanup()
             self.print(f"{Back.GREEN}{Fore.BLACK}Computer ({computer_name}) initialized with {cores} cores and {memory} of memory. {self.free_cores} cores and {self.free_memory} memory left free.{Back.RESET}\n\n")
-            
-            self.initialized = True
 
         else:
             self.print(f"{Fore.RED}There's no config file in {path}")
@@ -110,36 +109,6 @@ class Computer:
             return {"name":str(process_info[0]), "id":str(process_info[1]), "status": status, "cores": int(process_file_info[2]), "memory": int(process_file_info[3]), "date_started": str(process_file_info[0])}
 
 
-    def edit_resources(self, cores: int, memory: int) -> bool:
-        min_cores: int = self.cores-self.free_cores
-        min_memory: int = self.memory-self.free_memory
-
-        if cores < min_cores:
-            self.print(f"{Fore.RED}Can't set core count to {cores} on computer ({self.name}). Required minimum cores: {min_cores} ")
-            return False
-        
-        if memory < min_memory:
-            self.print(f"{Fore.RED}Can't set memory size to {memory} on computer ({self.name}). Required minimum memory size: {min_memory} ")
-            return False
-
-        prev_cores: int = self.cores
-        prev_memory: int = self.memory
-
-        self.cores = cores
-        self.memory = memory
-        
-        if self.validate_computer():
-            self.calculate_resource_usage()
-            self.print(f"{Fore.GREEN}Succesfully edited resources on computer ({self.name}). Memory: {prev_memory} -> {memory}, cores: {prev_cores} -> {cores}")
-            return True
-        else:
-            self.print(f"{Fore.BLACK}{Back.RED}CRITICAL ERROR DETECTED: can't validate computer ({self.name}). Setting back previus resources.")
-            self.cores = prev_cores
-            self.memory = memory
-            self.calculate_resource_usage()
-            return False
-
-
     def cleanup(self) -> bool:
         files: list = os.listdir(self.path)
         
@@ -155,13 +124,15 @@ class Computer:
                 self.get_process_info(file)
             except:
                 try:
-                    if Path.isfile(Path.join(self.path, file)):
+                    target_path = Path.join(self.path, file)
+
+                    if Path.isfile(target_path):
                         self.print(f"Removing file ({file}).")
                         os.remove(Path.join(self.path, file))
                         removed_files += 1
                     else:
                         self.print(f"Removing folder ({file}).")
-                        os.rmdir(Path.join(self.path, file))
+                        shutil.rmtree(target_path)
                         removed_files += 1
                 except:
                     self.print(f"{Fore.BLACK}{Back.RED}CRITICAL ERROR DETECTED: can't delete file or folder ({file}). Computer might be unstable.")

@@ -7,17 +7,38 @@ from os import path as Path
 from modules.computer import Computer
 from colorama import Fore, Style, Back
 
+rebalancing_algos : list = ["load_balance", "best_fit", "fast"]
+
 class Rebalancer:
     def __init__(self, path: str, parent):
+        if not hasattr(self, '_cluster_initialized'):
+            # Unique to THIS SPECIFIC INSTANCE
+            self._cluster_initialized = True
+            self.default_rebalance_algo = rebalancing_algos[0]
+
         self.parent = parent
         self.sorted_computer_list = []
         self.sorted_process_list = []
 
-        self.distribute_processes_balanced()
+        # self.run_default_rebalance_algo()
+        
+
+    def run_default_rebalance_algo(self) -> None:
+        if self.default_rebalance_algo == rebalancing_algos[0]:
+            self.distribute_processes_balanced()
+
+        elif self.default_rebalance_algo == rebalancing_algos[1]:
+            self.distribute_processes_efficient_packing()
+
+        elif self.default_rebalance_algo == rebalancing_algos[2]:
+            self.distribute_processes_speedy()
+
+        else:
+            self.distribute_processes_balanced()
 
 
     def sort_computers(self) -> None:
-        if not self.parent.computers.items():
+        if not hasattr(self.parent, "computers"):
             return
 
         self.sorted_computer_list = sorted(
@@ -27,7 +48,7 @@ class Rebalancer:
 
 
     def sort_programs(self) -> None:
-        if not self.parent.active_processes.items():
+        if not self.parent.active_processes:
             return
 
         expanded_processes = []

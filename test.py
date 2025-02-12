@@ -7,10 +7,6 @@ root : Root = Root(r"./Test folder")
 cluster : Cluster = root.clusters.get("test_cluster")
 cluster1 : Cluster = root.clusters.get("test_cluster1")
 
-
-pc : Computer = cluster1.computers.get("test_computer")
-
-
 """
 Featres:
 - root :
@@ -22,9 +18,12 @@ Featres:
 - rename cluster D
 
 - cluster:
+- set_default_rebalance_algo <load_balance (or) best_fit (or) fast> D
+- run_default_rebalance D
 - create computer D
 - try delete computer D
 - force delete computer D
+- edit computer resources D
 - rename computer D
 - start process D
 - kill process D
@@ -37,8 +36,8 @@ Featres:
 - fast algo D
 
 - computer:
-- edit computer resources TODO : FIX THIS
 - get processes D
+
 """
 
 """
@@ -73,6 +72,3 @@ CLI Commands
 - edit_resources <core> <memory>
 - get_processes
 """
-
-# Just write test code here
-# I cleaned it cause we dont use the commented stuff anyway
