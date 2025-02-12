@@ -11,7 +11,7 @@ class SoftwareRender:
         self.RES = self.WIDTH, self.HEIGHT = 300, 200  # Full resolution
         self.SCALED_RES = (self.WIDTH * 2, self.HEIGHT * 2)
 
-        self.FPS = 30
+        self.FPS = 60
         self.zoom_amount = zoom_amount
         self.root = root
         self.window_moving = False

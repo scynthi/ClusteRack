@@ -9,6 +9,10 @@ import pygame
 from threading import Thread
 from matplotlib import font_manager
 import matplotlib
+import matplotlib.axes
+import matplotlib.figure as figure
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from modules.computer import Computer
 
 Thread(target=pygame.init, daemon=True).start()
 audio : AudioManager = AudioManager()
@@ -239,3 +243,44 @@ class UI:
 
         def get_renderer(self):
             return SoftwareRender(self.model_name, self.zoom_amount, self.frame, self.root)
+    
+    class Plot():
+        def __init__(self, computer : Computer, frame : Frame, title : str, property : str) -> None:
+            self.title : str = title
+            self.frame : UI.Frame = frame
+            self.computer : Computer = computer
+            self.property : str = property
+
+            self.fig: figure.Figure = figure.Figure(figsize=(3, 3), facecolor=LGRAY)
+            self.canvas: FigureCanvasTkAgg = FigureCanvasTkAgg(self.fig, self.frame)
+            self.canvas.get_tk_widget().grid(column=0, row=0)
+            self.ax: matplotlib.axes._axes.Axes = self.fig.add_subplot()
+
+            self.time_count: list = [0]
+            self.usage_list: list = [0]
+            self.add_point_to_plot()
+
+        def add_point_to_plot(self) -> None:
+            self.ax.clear()
+            self.ax.set_ylim(0, 100)
+            self.ax.set_title(self.title)
+
+
+            if len(self.time_count) == 30:
+                last_usage: float = self.usage_list[-1]
+                last_time: int = self.time_count[-1]
+
+                self.usage_list.clear()
+                self.time_count.clear()
+
+                self.usage_list.append(last_usage)
+                self.time_count.append(last_time)
+
+            usage: float = self.computer.calculate_resource_usage()[self.property]
+            self.usage_list.append(usage)
+            self.time_count.append(int(self.time_count[-1]+1))
+
+            self.ax.plot(self.time_count, self.usage_list, color=LBLUE)
+            self.canvas.draw()
+            
+            self.frame.after(400, self.add_point_to_plot)

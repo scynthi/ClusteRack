@@ -2,10 +2,6 @@ from customtkinter import *
 from tkinter import *
 from PIL import Image
 from os import path as Path
-import matplotlib.axes
-import matplotlib.figure as figure
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-
 from modules.ui import UI, AppWindow, DGRAY, LGRAY, DBLUE, LBLUE, large_font, small_font, extra_large_font
 from modules.root import Root
 from modules.cluster import Cluster
@@ -125,7 +121,8 @@ class ClusterBoard:
         self.frame : UI.Frame = UI.Frame(_frame)
         self.frame.grid(row=0, column=0, sticky="nsw")
         self.frame.grid_rowconfigure(2, weight=1)
-        #self.frame.grid_columnconfigure(0, weight=1)
+
+        #self.cluster.edit_process_resources("word", "running", False)
         
         UI.Label(self.frame, text="Processes", font=extra_large_font).grid(row=0, column=0)
 
@@ -142,17 +139,19 @@ class ClusterBoard:
         UI.Label(self.processes_frame, text="Active", font=extra_large_font).grid(row=0, column=0)
         for i, process in enumerate(cluster.active_processes.keys()):
             temp_proc_frame : UI.Frame = UI.Frame(self.processes_frame)
+            temp_proc_frame.grid(row=i+1, column=0, sticky="EW")
+
             UI.Button(temp_proc_frame, text=process).grid(row=0, column=0, sticky="w")
             UI.Label(temp_proc_frame, text=f"Instaces: {cluster.active_processes[process]["instance_count"]}").grid(row=1, column=0)
-            temp_proc_frame.grid(row=i+1, column=0, sticky="EW")
 
 
         UI.Label(self.processes_frame, text="Inactive", font=extra_large_font).grid(row=len(cluster.active_processes.keys())+2, column=0)
         for i, process in enumerate(cluster.inactive_processes.keys()):
             temp_proc_frame : UI.Frame = UI.Frame(self.processes_frame)
+            temp_proc_frame.grid(row=len(cluster.inactive_processes.keys())+i+4, column=0, sticky="EW")
+
             UI.Button(temp_proc_frame, text=process).grid(row=0, column=0, sticky="w")
-            UI.Label(temp_proc_frame, text=f"Instaces: {cluster.active_processes[process]["instance_count"]}").grid(row=1, column=0)
-            temp_proc_frame.grid(row=len(cluster.active_processes.keys())+i+3, column=0, sticky="EW")
+            UI.Label(temp_proc_frame, text=f"Instaces: {cluster.inactive_processes[process]["instance_count"]}").grid(row=1, column=0)
 
         UI.Label(self.frame, text=cluster.name, font=extra_large_font).grid(row=0, column=1)
 
@@ -206,6 +205,8 @@ class ClusterBoard:
 
             UI.Button(cur_pc_frame, text=f"Open {pc.name}", command=lambda pc = pc: self.open_computer_tab(pc)).grid(row=1, column=0, pady=5)
             cur_pc_frame.grid(row=i, column=0, pady=5)
+        #self.cluster.edit_process_resources("word", "running", True)
+        
 
 
     def open_computer_tab(self, computer : Computer) -> None:
@@ -250,46 +251,38 @@ class ComputerBoard:
         UI.Label(self.resources_frame, text=f"Free memory: {self.computer.free_memory} MB").grid(row=3, column=0, sticky="w", padx=10)
         UI.Label(self.resources_frame, text=f"Processes: {len(self.computer.get_processes().keys())}").grid(row=4, column=0, sticky="w", padx=10)
     
+        self.processes_frame : UI.Frame = UI.Frame(self.frame)
+        self.processes_frame.grid(row=2, column=0, columnspan=2, sticky="nsew")
+        self.processes_frame.grid_rowconfigure(0, weight=1)
+        self.processes_frame.grid_columnconfigure(0, weight=1)
+
+        self.processes_scrollbar_frame : CTkScrollableFrame = CTkScrollableFrame(self.processes_frame, orientation="vertical")
+        self.processes_scrollbar_frame.grid(row=0, column=0, sticky="nsew")
+        self.processes_scrollbar_frame.grid_rowconfigure(0, weight=1)
+
+        UI.Label(self.processes_scrollbar_frame, "Process list", font=extra_large_font).grid(row=0, column=0)
+
+        for i, process in enumerate(self.computer.get_processes()):
+            process_info : dict = self.computer.get_process_info(process)
+
+            process_help_frame : UI.Frame = UI.Frame(self.processes_scrollbar_frame)
+            process_help_frame.grid(row=i+1, column=0, pady=5, sticky="EW")
+
+            UI.Button(process_help_frame, process).grid(row=0, column=0, padx=10)
+            UI.Label(process_help_frame, f"Cores: {process_info["cores"]}").grid(row=0, column=1, padx=10)
+            UI.Label(process_help_frame, f"Memory: {process_info["memory"]}").grid(row=0, column=2, padx=10)
+            UI.Label(process_help_frame, f"Running: {process_info["status"]}").grid(row=0, column=3, padx=10)
+
+
         UI.Label(self.frame, "Usage %", font=extra_large_font).grid(row=0, column=2)
         self.cpu_usage_frame : UI.Frame = UI.Frame(self.frame)
         self.cpu_usage_frame.grid(row=1, column=2)
-        fig: figure.Figure = figure.Figure(figsize=(3, 3), facecolor=LGRAY)
-        canvas: FigureCanvasTkAgg = FigureCanvasTkAgg(fig, self.cpu_usage_frame)
-        canvas.get_tk_widget().grid(column=0, row=0)
-        ax: matplotlib.axes._axes.Axes = fig.add_subplot()
+        UI.Plot(self.computer, self.cpu_usage_frame, "Core usage %", "core_usage_percent")
 
-
-        core_time_count: list = [0]
-        core_usage_list: list = [0]
-
-        def add_point_to_cpu_usage_plot() -> None:
-            ax.clear()
-            ax.set_ylim(0, 100)
-            ax.set_title("CPU Usage")
-
-
-            if len(core_time_count) == 30:
-                last_usage: float = core_usage_list[-1]
-                last_time: int = core_time_count[-1]
-
-                core_usage_list.clear()
-                core_time_count.clear()
-
-                core_usage_list.append(last_usage)
-                core_time_count.append(last_time)
-
-            usage: float = self.computer.calculate_resource_usage()["core_usage_percent"]
-            core_usage_list.append(usage)
-            core_time_count.append(int(core_time_count[-1]+1))
-
-            ax.plot(core_time_count, core_usage_list, color=LBLUE)
-            canvas.draw()
-            
-            self.frame.after(400, add_point_to_cpu_usage_plot)
-        add_point_to_cpu_usage_plot()
-
-
-
+        self.memory_usage_frame : UI.Frame = UI.Frame(self.frame)
+        self.memory_usage_frame.grid(row=2, column=2)
+        UI.Plot(self.computer, self.memory_usage_frame, "Memory usage %", "memory_usage_percent")
+        
 
 
     def destroy(self) -> None:
