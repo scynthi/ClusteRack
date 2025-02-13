@@ -14,55 +14,55 @@ class CLI_Interpreter:
 
         self.mode : str = "None"
         
-        self.current_cluster : Cluster
+        self.current_cluster : Cluster = None
 
         self.current_root : Root = root
 
-        self.current_computer : Computer
+        self.current_computer : Computer = None
         
         self.arguments = []
         
         self.root_commands = {
             "select" : {
-                "root" : (self.select, "Root", None),
+                "root" : (self.select_root, ),
                 "cluster" : {},
-                "computer" : (self.select, "Computer")
+                "computer" : {}
             },
             "exit" : (self.exit, ),
             "create_cluster" : (self.current_root.create_cluster, ),
             "try_del_cluster" : {},
             "force_del_cluster" : {},
-            "relocate_process" : (self.current_root.relocate_process, ),
+            "relocate_process" : {"<process name" : {}},
+
             "move_computer" : (self.current_root.move_computer, ),
             "rename_cluster" : {}
         }
-        
+
         self.cluster_commands = {
             "select" : {
-                "root" : (self.select, "Root", ),
+                "root" : (self.select_root, ),
                 "cluster" : {},
-                "computer" : (self.select, "Computer")
+                "computer" : {}
             },
             "exit" : (self.exit, ),
             "rename_computer" : {},
-            "create_computer" : ()
-            
+            "create_computer" : {"<computer name" : ()}
         }
         
         self.computer_commands = {
             "select" : {
-                "root" : (self.select, "Root", ),
+                "root" : (self.select_root, ),
                 "cluster" : {},
-                "computer" : (self.select, "Computer")
+                "computer" : {}
             },
             "exit" : (self.exit, )
         }
         
         self.noMode_commands = {
             "select" : {
-                "root" : (self.select, "Root", None),
+                "root" : (self.select_root, ),
                 "cluster" : {},
-                "computer" : (self.select, "Computer")
+                "computer" : {}
             },
             "exit" : (self.exit, )
         }
@@ -71,10 +71,22 @@ class CLI_Interpreter:
         
         for item in clusters.keys():
             
-            self.cluster_commands["select"]["cluster"].update({f"{item}" : (self.select, "Cluster", clusters[f"{item}"])})
-            self.noMode_commands["select"]["cluster"].update({f"{item}" : (self.select, "Cluster", clusters[f"{item}"])})
-            self.computer_commands["select"]["cluster"].update({f"{item}" : (self.select, "Cluster", clusters[f"{item}"])})
-            self.root_commands["select"]["cluster"].update({f"{item}" :(self.select, "Cluster", clusters[f"{item}"])})
+            self.cluster_commands["select"]["cluster"].update({f"{item}" : (self.select_others, )})
+            self.noMode_commands["select"]["cluster"].update({f"{item}" : (self.select_others, )})
+            self.computer_commands["select"]["cluster"].update({f"{item}" : (self.select_others, )})
+            self.root_commands["select"]["cluster"].update({f"{item}" :(self.select_others, )})
+            
+            self.cluster_commands["select"]["computer"].update({f"{item}" : {}})
+            self.noMode_commands["select"]["computer"].update({f"{item}" : {}})
+            self.computer_commands["select"]["computer"].update({f"{item}" : {}})
+            self.root_commands["select"]["computer"].update({f"{item}" : {}})
+                
+            for comps in clusters[item].computers:
+                
+                self.cluster_commands["select"]["computer"][f"{item}"].update({f"{comps}" : (self.select_others, )})
+                self.noMode_commands["select"]["computer"][f"{item}"].update({f"{comps}" : (self.select_others, )})
+                self.computer_commands["select"]["computer"][f"{item}"].update({f"{comps}" : (self.select_others, )})
+                self.root_commands["select"]["computer"][f"{item}"].update({f"{comps}" : (self.select_others, )})
         
         self.take_input()
                 
@@ -96,11 +108,11 @@ class CLI_Interpreter:
         
         match self.mode:
             
-            case "Root":
+            case "root":
                 
                 current_step, arguments, success = self.cicle_through_commands(self.root_commands, shlashed_command)
                     
-            case "Cluster":
+            case "cluster":
                 
                 try:
 
@@ -111,7 +123,7 @@ class CLI_Interpreter:
                     print(f"Something went wrong {e}")
                     self.take_input()
                 
-            case "Computer":
+            case "computer":
                 
                 try:
 
@@ -147,8 +159,18 @@ class CLI_Interpreter:
             
         self.take_input()
         
+    def select_root(self, mode):
+        
+        self.mode = mode
+        
+        self.update_dicts()
+   
+        print(f"selected the {mode}")
+        
+        self.take_input()
+        
             
-    def select(self, mode, current):
+    def select_others(self, mode, current):
         
         self.mode = mode
         
@@ -168,16 +190,22 @@ class CLI_Interpreter:
                 
             for item in computers.keys():
                 
-                self.cluster_commands["rename_computer"].update({f"{item}" : (self.current_cluster.rename_computer, f"{item}")})
+                self.cluster_commands["rename_computer"].update({f"{item}" : (self.current_cluster.rename_computer, )})
                 
             for item in clusters.keys():
                 
-                self.cluster_commands["select"]["cluster"].update({f"{item}" : (self.select, "Cluster", clusters[f"{item}"])})
-                self.noMode_commands["select"]["cluster"].update({f"{item}" : (self.select, "Cluster", clusters[f"{item}"])})
-                self.computer_commands["select"]["cluster"].update({f"{item}" : (self.select, "Cluster", clusters[f"{item}"])})
-                self.root_commands["select"]["cluster"].update({f"{item}" :(self.select, "Cluster", clusters[f"{item}"])})
+                self.cluster_commands["select"]["cluster"].update({f"{item}" : (self.select, )})
+                self.noMode_commands["select"]["cluster"].update({f"{item}" : (self.select, )})
+                self.computer_commands["select"]["cluster"].update({f"{item}" : (self.select, )})
+                self.root_commands["select"]["cluster"].update({f"{item}" :(self.select, )})
                 
-            self.cluster_commands["create_computer"] = (self.current_cluster.create_computer, )
+            self.cluster_commands["create_computer"]["<computer name"] = (self.current_cluster.create_computer, )
+            
+            for item in self.current_cluster.processes.keys():
+                
+                for jitem in self.current_cluster.processes.keys():
+                
+                    self.cluster_commands["relocate_process"]["<process name"].update({f"{item}" : {f"{jitem}" : (self.current_root.relocate_process, )}})
                 
         if self.current_root:
             
@@ -185,9 +213,16 @@ class CLI_Interpreter:
             
             for item in clusters.keys():
                 
-                self.root_commands["try_del_cluster"].update({f"{item}" : (self.current_root.try_delete_cluster, f"{item}")})
-                self.root_commands["force_del_cluster"].update({f"{item}" : (self.current_root.force_delete_cluster, f"{item}")})
-                self.root_commands["rename_cluster"].update({f"{item}" : (self.current_root.rename_cluster, f"{item}")})
+                self.root_commands["try_del_cluster"].update({f"{item}" : (self.current_root.try_delete_cluster, )})
+                self.root_commands["force_del_cluster"].update({f"{item}" : (self.current_root.force_delete_cluster, )})
+                self.root_commands["rename_cluster"].update({f"{item}" : (self.current_root.rename_cluster, )})
+                
+            for item in self.current_root.clusters.keys():
+                
+                for jitem in self.current_root.clusters.keys():
+                
+                    self.root_commands["relocate_process"]["<process name"].update({f"{item}" : {f"{jitem}" : (self.current_root.relocate_process, )}})
+                
     
     def exit(self):
         
@@ -195,44 +230,63 @@ class CLI_Interpreter:
         quit()
         
     def cicle_through_commands(self, command_dict, shlashed_command):
-        
+
         current_step : dict = command_dict
 
         arguments = []
-        
+
         try:
-                
+
             for item in shlashed_command:
                 
+                temp = False
+                
+                temp_item = item
+
                 if item == "?":
-                            
+   
                     keys = current_step.keys()
                             
                     current_step = ""
                             
                     for coms in keys:
+                        
+                        if "<" in coms:
+                            
+                            current_step += coms[1:] + "\n"
+                            
+                        else:
                                 
-                        current_step += coms + "\n"
+                            current_step += coms + "\n"
                                 
                     return current_step, "", True
 
                 if isinstance(current_step, dict) and item not in current_step.keys():
+                    
+                    for fitem in current_step.keys():
+                    
+                        if fitem.startswith("<"):
+                            
+                            temp = True
+                            
+                            temp_item = fitem
+                            
+                    if not temp:
 
-                    for keys in current_step.keys():
+                        for keys in current_step.keys():
 
-                        if item in keys:
+                            if item in keys:
 
-                            return f"Did you mean {keys}?", "", False
+                                return f"Did you mean {keys}?", "", False
                         
-                    return f"Command not found", "", False
-                        
-                if isinstance(current_step, dict):
+                        return f"Command not found", "", False  
                 
-                    current_step = current_step[item]
-
-                elif  current_step:
-
-                    arguments.append(item)
+                arguments.append(item)
+                current_step = current_step[temp_item]
+                
+            arguments.pop(0)
+            
+            print(arguments)
             
             if not isinstance(current_step, dict):
 
@@ -247,35 +301,6 @@ class CLI_Interpreter:
         except Exception as e:
             
             print("Something failed", e)
-       
-
-"""
-                current funcs or sum:
-                case "cd":
-                    
-                    self.current_cluster = Path.join(root_str, command[1])
-                
-                case "rename":
-                    
-                    if len(command) != 3:
-                        
-                        return "Brother you have to give it 2 arguments"
-                    
-                    Cluster(self.current_cluster).rename_computer(command[1], command[2])
-                    
-                case "create":
-                    
-                    if len(command) != 4:
-                        
-                        return "Brother you have to give it 4 arguments"
-                    
-                    Cluster(self.current_cluster).create_computer(command[1], int(command[2]), int(command[3]))
-                    
-                case "exit":
-                    
-                    break   
-"""
-
 
 """
 TODO
