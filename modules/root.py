@@ -1,3 +1,4 @@
+import shutil
 import os
 from os import path as Path
 from modules.cluster import Cluster
@@ -29,6 +30,8 @@ class Root:
             self.path :str = path
             self.name :str = root_name
             self.clusters : dict = cluster_dict
+
+            self.cleanup()
             self.print(f"{Fore.BLACK}{Back.GREEN}Root ({root_name}) initialized succesfully with {len(self.clusters)} cluster(s).{Back.RESET+Fore.RESET}\n")
 
 
@@ -113,8 +116,6 @@ class Root:
                 self.print(f"{Fore.RED}Failed to remove process {process_name} from {origin_cluster_name}.")
                 return False
 
-            origin_cluster.__init__(origin_cluster.path)
-            destination_cluster.__init__(destination_cluster.path)
             return True
 
         # If process does NOT exist in destination, perform a normal move
@@ -123,8 +124,6 @@ class Root:
         if not origin_cluster.kill_process(process_name):
             self.print(f"{Fore.RED}Failed to remove process {process_name} from {origin_cluster_name}.")
             return False
-
-        origin_cluster.__init__(origin_cluster.path)
 
         success = destination_cluster.start_process(
             process_name,
@@ -136,7 +135,6 @@ class Root:
         )
 
         if success:
-            destination_cluster.__init__(destination_cluster.path)
             self.print(f"{Fore.GREEN}Successfully moved process {process_name} from {origin_cluster_name} to {destination_cluster_name}.")
             return True
         else:
@@ -300,6 +298,40 @@ class Root:
 
 
 #MISC.
+    def cleanup(self) -> bool:
+        """Removes unnescecary files and directories from the root""" 
+        files: list = os.listdir(self.path)
+        
+        self.print(f"{Fore.GREEN}Starting cleanup...")
+
+        removed_files : int = 0
+
+        try:
+            for file in files:
+                target_path = Path.join(self.path, file)
+
+                if Path.isdir(target_path):
+                    if ".klaszter" in os.listdir(target_path):
+                        continue
+
+                    shutil.rmtree(target_path)
+                    removed_files += 1
+            
+                else:
+                    os.remove(target_path)
+                    removed_files += 1
+
+                self.print(f"{Fore.YELLOW}Removed {file} from filesystem since it was marked as incorrect.")
+                
+        except:
+            self.print(f"{Fore.BLACK}{Back.RED}CRITICAL ERROR DETECTED: can't delete file or folder ({file}). Root might be unstable.")
+            return False
+        
+
+        self.print(f"{Fore.GREEN}Cleanup completed. Removed a total of {removed_files} incorrect files plus folders.")
+        return True
+
+
     def print(self, text: str):
         """DEBUGGING TOOL: A print for the terminal"""
         print(f"{Fore.BLACK}{Back.CYAN}[{Back.LIGHTBLUE_EX}ROOT{Back.CYAN}]{Back.RESET}{Fore.CYAN}: {Fore.RESET+Back.RESET+Style.RESET_ALL}" + text + Fore.RESET+Back.RESET+Style.RESET_ALL)

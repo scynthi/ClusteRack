@@ -320,6 +320,8 @@ class Cluster:
             }
             
             # Update config file
+            self.__sort_processes()
+            self.update_cluster_config()
             self.update_cluster()
 
 
@@ -340,6 +342,8 @@ class Cluster:
                 self._saved_inactive_processes.pop(process_name, None)
 
                 # Resort, clean, and update
+                self.__sort_processes()
+                self.update_cluster_config()
                 self.update_cluster()
 
                 self.print(f"{Style.BRIGHT}Process {process_name} successfully killed.")
@@ -435,8 +439,10 @@ class Cluster:
                 
                 if Path.isdir(target_path):
                     shutil.rmtree(target_path)
+                    removed_files += 1
                 else:
                     os.remove(target_path)
+                    removed_files += 1
 
                 self.print(f"{Fore.YELLOW}Removed {file} from filesystem since it was marked as incorrect.")
             except:
