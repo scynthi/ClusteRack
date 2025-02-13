@@ -176,9 +176,6 @@ class Root:
 
         destination_cluster.create_computer(computer_stats_dict["computer_name"],computer_stats_dict["computer_cores"],computer_stats_dict["computer_memory"])
 
-        origin_cluster.__init__(origin_cluster.path)
-        destination_cluster.__init__(destination_cluster.path)
-
 
 #Cluster
     def create_cluster(self, cluster_name: str) -> Cluster:
@@ -250,9 +247,7 @@ class Root:
             if Path.exists(Path.join(path, ".klaszter")):
                 os.remove(Path.join(path, ".klaszter"))
 
-            print("--------------Before----")
             os.rmdir(path)
-            print("---------------After---")
             self.__init__(self.path)
 
             self.print(f"{Fore.GREEN}Successfully force deleted cluster ({cluster_name}).")

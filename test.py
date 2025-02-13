@@ -12,6 +12,8 @@ root.relocate_process("MAN", "test_cluster1", "test_cluster")
 cluster1.start_process("jani", False, 100,100,2)
 # cluster1.kill_process("jani")
 
+root.move_computer("test_computer", "test_cluster", "test_cluster1")
+
 # cluster1.rename_process("jani", "internet")
 # cluster1.edit_process_resources("internet", "running", True)
 
@@ -22,7 +24,7 @@ cluster1.start_process("jani", False, 100,100,2)
 
 """
 TODO nekem : mindenki jo uzenetet adjon vissza for CLI
-            check if everything works again, Try to beat the shit out of the program see if it dies or not revive repeat
+     
 """
 
 """
@@ -60,9 +62,10 @@ Featres:
 
 """
 CLI Commands
-- select <root obj>
-- select <cluster obj> <cluster name>
-- select <computer obj> <cluster name> <computer name>
+- Mode select:
+- select <root>
+- select <cluster> <cluster name>
+- select <computer> <cluster name> <computer name>
 
 - Root comms:
 - create_cluster <cluster name>
@@ -88,5 +91,5 @@ CLI Commands
 
 - Computer comms:
 - edit_resources <core> <memory>
-- get_processes
+- get_processes - Just gives back a dict of the subprocesses under the computer
 """
