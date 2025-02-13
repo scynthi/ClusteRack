@@ -26,7 +26,7 @@ class CLI_Interpreter:
             "select" : {
                 "root" : (self.select_root, ),
                 "cluster" : {},
-                "computer" : {}
+                "computer" : {"non_args" : 1}
             },
             "exit" : (self.exit, ),
             "create_cluster" : (self.current_root.create_cluster, ),
@@ -42,7 +42,7 @@ class CLI_Interpreter:
             "select" : {
                 "root" : (self.select_root, ),
                 "cluster" : {},
-                "computer" : {}
+                "computer" : {"non_args" : 1}
             },
             "exit" : (self.exit, ),
             "rename_computer" : {},
@@ -53,7 +53,7 @@ class CLI_Interpreter:
             "select" : {
                 "root" : (self.select_root, ),
                 "cluster" : {},
-                "computer" : {}
+                "computer" : {"non_args" : 1}
             },
             "exit" : (self.exit, )
         }
@@ -62,7 +62,7 @@ class CLI_Interpreter:
             "select" : {
                 "root" : (self.select_root, ),
                 "cluster" : {},
-                "computer" : {}
+                "computer" : {"non_args" : 1}
             },
             "exit" : (self.exit, )
         }
@@ -71,10 +71,10 @@ class CLI_Interpreter:
         
         for item in clusters.keys():
             
-            self.cluster_commands["select"]["cluster"].update({f"{item}" : (self.select_others, )})
-            self.noMode_commands["select"]["cluster"].update({f"{item}" : (self.select_others, )})
-            self.computer_commands["select"]["cluster"].update({f"{item}" : (self.select_others, )})
-            self.root_commands["select"]["cluster"].update({f"{item}" :(self.select_others, )})
+            self.cluster_commands["select"]["cluster"].update({f"{item}" : (self.select_cluster, )})
+            self.noMode_commands["select"]["cluster"].update({f"{item}" : (self.select_cluster, )})
+            self.computer_commands["select"]["cluster"].update({f"{item}" : (self.select_cluster, )})
+            self.root_commands["select"]["cluster"].update({f"{item}" :(self.select_cluster, )})
             
             self.cluster_commands["select"]["computer"].update({f"{item}" : {}})
             self.noMode_commands["select"]["computer"].update({f"{item}" : {}})
@@ -83,10 +83,10 @@ class CLI_Interpreter:
                 
             for comps in clusters[item].computers:
                 
-                self.cluster_commands["select"]["computer"][f"{item}"].update({f"{comps}" : (self.select_others, )})
-                self.noMode_commands["select"]["computer"][f"{item}"].update({f"{comps}" : (self.select_others, )})
-                self.computer_commands["select"]["computer"][f"{item}"].update({f"{comps}" : (self.select_others, )})
-                self.root_commands["select"]["computer"][f"{item}"].update({f"{comps}" : (self.select_others, )})
+                self.cluster_commands["select"]["computer"][f"{item}"].update({f"{comps}" : (self.select_computer, ), "!value!" : clusters[item]})
+                self.noMode_commands["select"]["computer"][f"{item}"].update({f"{comps}" : (self.select_computer, )})
+                self.computer_commands["select"]["computer"][f"{item}"].update({f"{comps}" : (self.select_computer, )})
+                self.root_commands["select"]["computer"][f"{item}"].update({f"{comps}" : (self.select_computer, )})
         
         self.take_input()
                 
@@ -170,11 +170,11 @@ class CLI_Interpreter:
         self.take_input()
         
             
-    def select_others(self, mode, current):
+    def select_cluster(self, mode, cluster):
         
         self.mode = mode
         
-        self.current_cluster = current
+        self.current_cluster = cluster
         
         self.update_dicts()
    
@@ -182,7 +182,25 @@ class CLI_Interpreter:
         
         self.take_input()
 
+        
+    def select_computer(self, mode, cluster, computer):
+        
+        self.mode = mode
+        
+        self.current_computer = computer
+        
+        self.current_cluster = cluster
+        
+        self.update_dicts()
+   
+        print(f"selected the {mode}")
+        
+        self.take_input()
+        
+
     def update_dicts(self):
+        
+        print(self.current_cluster)
         
         if self.current_cluster:
         
@@ -234,10 +252,16 @@ class CLI_Interpreter:
         current_step : dict = command_dict
 
         arguments = []
+        
+        skips = 1
 
         try:
-
             for item in shlashed_command:
+                
+                if "non_args" in current_step.keys():
+                
+                    skips = current_step["non_args"]
+                    print(current_step["non_args"])
                 
                 temp = False
                 
@@ -248,18 +272,24 @@ class CLI_Interpreter:
                     keys = current_step.keys()
                             
                     current_step = ""
-                            
+                         
                     for coms in keys:
                         
-                        if "<" in coms:
-                            
-                            current_step += coms[1:] + "\n"
-                            
-                        else:
+                        if coms != "non_args":
+                        
+                            if "<" in coms:
                                 
-                            current_step += coms + "\n"
+                                current_step += coms[1:] + "\n"
+                                
+                            else:
+                                    
+                                current_step += coms + "\n"
                                 
                     return current_step, "", True
+                
+                if item == "non_args":
+                    
+                    return "Can't type non_args", "", False
 
                 if isinstance(current_step, dict) and item not in current_step.keys():
                     
@@ -284,7 +314,7 @@ class CLI_Interpreter:
                 arguments.append(item)
                 current_step = current_step[temp_item]
                 
-            arguments.pop(0)
+            arguments = arguments[skips:]
             
             print(arguments)
             
