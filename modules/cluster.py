@@ -1,89 +1,207 @@
-import shutil
 import os
+import random
+import string
 from os import path as Path
+from datetime import datetime
 from modules.computer import Computer
 from colorama import Fore, Style, Back
 from modules.rebalancer import *
-from datetime import datetime
-
-rebalancing_algos : list = ["load_balance", "best_fit", "fast"]
 
 class Cluster:
     def __init__(self, path: str):
-        if not hasattr(self, '_cluster_initialized'):
-            # Unique to THIS SPECIFIC INSTANCE
-            self._cluster_initialized = True
-            self.default_rebalance_algo = rebalancing_algos[1]
-            self._saved_processes = {}
-            self._saved_active_processes = {}
-            self._saved_inactive_processes = {}
+        path = Path.normpath(fr"{path}")
+        self.path = path
+        cluster_name = path.split(os.sep)[-1]
+        self.name = cluster_name
+        
+        self.computers = {}
+        self._load_computers()
 
-        # Always process config but preserve state
-        self.path = Path.normpath(fr"{path}")
-        self.name = self.path.split(os.sep)[-1]
-        self.rebalancer : Rebalancer = Rebalancer(self.path, self)
+        # Ignore if `.klaszter` file is missing
+        config_path = Path.join(path, ".klaszter")
+        if not Path.exists(config_path):
+            self.print(f"{Fore.YELLOW}Skipping {cluster_name}: No .klaszter file found.")
+            return
 
-        self.update_cluster()
+        self.programs = {}  # Stores program details (name, instance count, cores, memory)
+        self.instances = {}  # Stores instance details (id, running, date_started)
+        self.distributable_instances = []
+
+        self._load_programs(config_path)
+        self.print(f"{Fore.GREEN}Cluster ({self.name}) initialized with {len(self.programs)} programs.")
 
         self.print(f"{Fore.BLACK}{Back.GREEN}Cluster ({self.name}) initialized succesfully with {len(self.computers)} computer(s).{Back.RESET+Fore.RESET}\n")
-        self.initialized : bool = True
-        self._saved_processes.keys()
+
+        # self.print(self.programs)
+        self.print(self.instances)
+        # self.print(self.distributable_instances)
 
 
-#Cluster
-    def _load_config(self):
-        """Load/reload config file"""
-        if Path.exists(Path.join(self.path, ".klaszter")):
-            config_file = open(Path.join(self.path, ".klaszter"), "r", encoding="utf8")
-            config: list = config_file.readlines()
-            config_file.close()
+    def _load_programs(self, klaszter_path):
+        """Load programs with accurate state tracking"""
+        with open(klaszter_path, "r", encoding="utf8") as file:
+            lines = [line.strip() for line in file.readlines()]
 
-            for line in config:
-                config[config.index(line)] = line.strip()
+        self.programs = {}
+        self.instances = {}
+        self.distributable_instances = []
 
-            app_list: list = []
-            instance_count_list: list = []
-            cores_list: list = []
-            memory_list: list = []
+        for i in range(0, len(lines), 4):
+            try:
+                program_name = lines[i]
+                required_count = int(lines[i + 1])
+                cores = int(lines[i + 2])
+                memory = int(lines[i + 3])
 
-            process_info_dict: dict = {}
+                # Store program requirements
+                self.programs[program_name] = {
+                    "required_count": required_count,
+                    "cores": cores,
+                    "memory": memory
+                }
 
-            for app in config[0::4]:
-                app_list.append(app)
+                # Find all valid existing instances
+                existing_instances = self._get_valid_existing_instances(
+                    program_name, cores, memory
+                )
 
-            for instance_count in config[1::4]:
-                instance_count_list.append(instance_count)
+                # Initialize tracking for this program
+                self.instances[program_name] = {}
+                active_count = 0
 
-            for cores in config[2::4]:
-                cores_list.append(cores)
-            
-            for memory in config[3::4]:
-                memory_list.append(memory)
+                # Process existing instances FIRST
+                for idx, instance in enumerate(existing_instances):
+                    full_id = f"{program_name}-{instance['id']}"
+                    is_active = idx < required_count
+                    
+                    # Add to tracking FIRST
+                    self.instances[program_name][full_id] = {
+                        "date_started": instance["date_started"],
+                        "computer": instance["computer"],
+                        "active": instance["status"]  # Initial state from file
+                    }
 
-            for i, app in enumerate(app_list):
-                process_info_dict[app] = {"instance_count": instance_count_list[i], "cores": cores_list[i], "memory": memory_list[i], "running": True, "date_started" : datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+                    # THEN update status if needed
+                    if instance["status"] != is_active:
+                        self._set_instance_status(full_id, is_active)
+                    
+                    if self.instances[program_name][full_id]["active"]:
+                        active_count += 1
 
-            self.active_processes : dict = {}
-            self.inactive_processes : dict = {}
+                # Create new instances if needed
+                new_needed = max(required_count - active_count, 0)
+                for _ in range(new_needed):
+                    instance_id = f"{program_name}-{self._generate_instance_id()}"
+                    self.instances[program_name][instance_id] = {
+                        "date_started": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                        "computer": None,
+                        "active": True
+                    }
 
-            self.processes : dict = process_info_dict
-            self.__sort_processes()
-            self.update_cluster_config()
+                # Update distributable instances
+                self._update_distributable_instances()
 
+            except (IndexError, ValueError) as e:
+                self.print(f"{Fore.RED}Error loading program: {str(e)}")
+                continue
+
+
+    def _find_matching_instances(self, program_name, req_cores, req_mem):
+        """Find all instances matching program specs across cluster"""
+        matching = []
+        for computer in self.computers.values():
+            instances = computer.get_prog_instances()
+            for filename, details in instances.items():
+                if (details["name"] == program_name and
+                    details["cores"] == req_cores and
+                    details["memory"] == req_mem):
+                    matching.append({
+                        "id": details["id"],  # The unique ID part
+                        "active": details["status"],
+                        "computer": computer.name,
+                        "date_started": details["date_started"]
+                    })
+        return matching
+
+
+    def _get_valid_existing_instances(self, program_name, req_cores, req_mem):
+        """Get valid instances matching exact specifications"""
+        instances = []
+        for computer in self.computers.values():
+            for filename, details in computer.get_prog_instances().items():
+                if (details["name"] == program_name and
+                    details["cores"] == req_cores and
+                    details["memory"] == req_mem):
+                    instances.append({
+                        "id": filename.split("-")[-1],  # Extract unique ID part
+                        "status": details["status"],
+                        "date_started": details["date_started"],
+                        "computer": computer.name
+                    })
+        return instances
+
+    
+    def _update_distributable_instances(self):
+        """Refresh distributable instances list"""
+        self.distributable_instances = [
+            {
+                "id": instance_id,
+                "program": program_name,
+                "date_started": data["date_started"],
+                "cores": self.programs[program_name]["cores"],
+                "memory": self.programs[program_name]["memory"]
+            }
+            for program_name in self.instances
+            for instance_id, data in self.instances[program_name].items()
+            if data["computer"] is None
+        ]
+
+
+    def _set_instance_status(self, full_id: str, active: bool):
+        """Update instance status with existence check"""
+        # Check if instance exists in tracking
+        program = full_id.split("-")[0]
+        if program not in self.instances or full_id not in self.instances[program]:
+            self.print(f"{Fore.RED}Instance {full_id} not in tracking")
             return
 
-        else:
-            self.print(f"{Style.BRIGHT + Fore.RED}Cluster {self.name} doesn`t have a config file")
-            self.print(f"{Style.BRIGHT + Fore.GREEN}Creating .klaszter file now")
+        # Rest of the method remains the same
+        success = self.edit_instance(full_id, "status", active)
+        
+        if success:
+            self.instances[program][full_id]["active"] = active
+            self._update_distributable_instances()
 
-            new_cluster_file = open(Path.join(self.path, ".klaszter"), "w", encoding="utf-8", )
-            new_cluster_file.write("")
-            new_cluster_file.close()
 
-            self._load_config()
-            self.cleanup()
-            self._load_computers()
-            return
+    def _clean_invalid_instances(self):
+        """Remove instances that don't match any program requirements"""
+        all_program_specs = {
+            prog: (self.programs[prog]["cores"], self.programs[prog]["memory"])
+            for prog in self.programs
+        }
+
+        for computer in self.computers.values():
+            instances = computer.get_prog_instances()
+            for instance_id, details in instances.items():
+                if not details:
+                    continue
+                
+                # Check if instance matches any program requirements
+                match_found = any(
+                    details["name"] == prog and
+                    details["cores"] == spec[0] and
+                    details["memory"] == spec[1]
+                    for prog, spec in all_program_specs.items()
+                )
+                
+                if not match_found:
+                    try:
+                        invalid_path = Path.join(computer.path, instance_id)
+                        if Path.exists(invalid_path):
+                            os.remove(invalid_path)
+                            self.print(f"{Fore.YELLOW}Removed orphaned instance {instance_id}")
+                    except Exception as e:
+                        self.print(f"{Fore.RED}Failed to remove invalid instance: {str(e)}")
 
 
     def _load_computers(self):
@@ -101,358 +219,75 @@ class Cluster:
         self.computers : dict = computer_dict
 
 
-    def update_cluster(self):
-        """Update the whole cluster without reinitializing the class"""
-        self._load_config()
-        self.cleanup()
-        self._load_computers()
-        self.run_default_rebalance_algo()
+    def _generate_instance_id(self):
+        """Generates a unique 6-character instance ID."""
+        return ''.join(random.choices(string.ascii_letters + string.digits, k=6))
 
 
-    def __sort_processes(self) -> None:
-        # Merge .klaszter processes into saved processes
-        for name, details in self.processes.items():
-            self._saved_processes[name] = details
+    def _generate_instance_list(self):
+        """Creates a flat list of all program instances for the rebalancer."""
+        instance_list = []
 
-        # Update active/inactive from ALL saved processes
-        self._saved_active_processes.clear()
-        self._saved_inactive_processes.clear()
-        
-        for name, details in self._saved_processes.items():
-            if details["running"]:
-                self._saved_active_processes[name] = details
-            else:
-                self._saved_inactive_processes[name] = details
+        for program_name, instances in self.instances.items():
+            cores = self.programs[program_name]["cores"]
+            memory = self.programs[program_name]["memory"]
 
-        # Update public process dicts
-        self.active_processes = self._saved_active_processes.copy()
-        self.inactive_processes = self._saved_inactive_processes.copy()
+            for instance_id, instance_data in instances.items():
+                instance_list.append({
+                    "name": f"{program_name}-{instance_id}",
+                    "running": instance_data["running"],
+                    "cores": cores,
+                    "memory": memory,
+                    "date_started": instance_data["date_started"]
+                })
 
-
-    def set_default_rebalance_algo(self, new_algo_name : str) -> bool:
-        if not new_algo_name in rebalancing_algos:
-            self.print(f"{Fore.RED}There is no rebalancing algorithm called {new_algo_name}.")
-            return False
-
-        old_algo_name = self.rebalancer.default_rebalance_algo
-
-        self.rebalancer.default_rebalance_algo = new_algo_name
-        
-        self.print(f"{Fore.GREEN}Succesfully changed the default rebalancing algorithm from {Fore.YELLOW + Style.BRIGHT}{old_algo_name}{Fore.GREEN + Style.RESET_ALL} to {Fore.YELLOW + Style.BRIGHT}{new_algo_name}")
-        return True
-
-
-    def run_default_rebalance_algo(self):
-        self.rebalancer.run_default_rebalance_algo()
-
-
-    def update_cluster_config(self) -> None:
-        """Write process data into the config file of the cluster"""
-
-        full_data : str = ""
-        for name in self.active_processes:
-            data: str = f"{name}\n{self.active_processes[name]["instance_count"]}\n{self.active_processes[name]["cores"]}\n{self.active_processes[name]["memory"]}\n"
-            full_data += data
-
-        with open(Path.join(self.path, ".klaszter"), "w", encoding="utf8") as file:
-            file.write(full_data)
-        file.close()
-
-#Computers
-    def create_computer(self, computer_name: str, cores: int, memory: int) -> Computer:
-        path: str = Path.join(self.path, computer_name)
-
-        if Path.exists(path):
-            self.print(f"{Fore.RED}Computer ({computer_name}) already exists and will NOT be created.")
-            return self.computers[computer_name]
-        
-        try:
-            os.mkdir(path)
-            config_file = open(Path.join(path, ".szamitogep_config"), "w", encoding="utf8")
-            config_file.write(f"{cores}\n{memory}")
-            config_file.close()
-
-            self.print(f"{Fore.GREEN}Computer ({computer_name}) created successfully.")
-            
-            self.update_cluster()
-            return Computer(path)   
-        except:
-            self.print(f"{Fore.RED}Error while creating computer '{computer_name}'.")
-            self.update_cluster()
-            return
-        
-
-    def try_delete_computer(self, computer_name: str) -> bool:
-        """CAN Delete computers with no running processes"""
-
-        path: str = Path.join(self.path, computer_name)
-
-        if not Path.exists(path):
-            self.print(f"{Fore.RED}Computer ({computer_name}) does not exist! Did you misspell the name?")
-            return False
-        
-        try:
-            computer: Computer = Computer(path)
-            if computer.get_processes():
-                self.print(f"{Fore.RED}Unable to delete computer '{computer_name}'. It has processes, try using force_delete_computer().")
-                return False
-            
-            os.remove(Path.join(path, ".szamitogep_config"))
-            os.rmdir(path)
-
-            self.print(f"{Fore.GREEN}Computer '{computer_name}' deleted successfully.")
-            self.update_cluster()
-
-            return True
-        except:
-            self.print(f"{Fore.RED}Unable to delete computer ({computer_name}).")
-            self.update_cluster()
-
-            return False
-
-
-    def force_delete_computer(self, computer_name: str) -> bool:
-        """CAN Delete any computer"""
-
-        path: str = Path.join(self.path, computer_name)
-
-        if not Path.exists(path):
-            self.print(f"{Fore.RED}Computer ({computer_name}) does not exist! Did you misspell the name?")
-            return False
-        
-        try:
-            for file in os.listdir(path):
-                os.remove(Path.join(path, file))
-
-            os.rmdir(path)
-            self.print(f"{Fore.GREEN}Successfully force deleted computer ({computer_name}).")
-            self.update_cluster()
-
-            return True
-        except:
-            self.print(f"{Back.RED}{Fore.BLACK}CRITICAL ERROR DETECTED: force deletion failed for computer {computer_name}.")
-            self.update_cluster()
-
-            return False
-        
-
-    def edit_computer_resources(self, computer_name: str, cores: int, memory: int) -> bool:
-        computer : Computer = self.computers[computer_name]    
-        
-        min_cores: int = computer.cores - computer.free_cores
-        min_memory: int = computer.memory - computer.free_memory
-
-        if cores < min_cores:
-            self.print(f"{Fore.RED}Can't set core count to {cores} on computer ({computer.name}). Required minimum cores: {min_cores} ")
-            return False
-            
-        if memory < min_memory:
-            self.print(f"{Fore.RED}Can't set memory size to {memory} on computer ({computer.name}). Required minimum memory size: {min_memory} ")
-            return False
-
-        prev_cores: int = computer.cores
-        prev_memory: int = computer.memory
-
-        computer.cores = cores
-        computer.memory = memory
-            
-        if computer.validate_computer():
-            computer.calculate_resource_usage()
-
-            with open(Path.join(computer.path, ".szamitogep_config"), "w", encoding="utf-8") as file:
-                file.write(f"{computer.cores}\n{computer.memory}")
-            file.close()
-
-            self.update_cluster()
-            self.print(f"{Fore.GREEN}Succesfully edited resources on computer ({computer.name}). Memory: {prev_memory} -> {memory}, cores: {prev_cores} -> {cores}")
-
-
-            return True
-        
-        else:
-            self.print(f"{Fore.BLACK}{Back.RED}CRITICAL ERROR DETECTED: can't validate computer ({computer.name}). Setting back previus resources.")
-            computer.cores = prev_cores
-            computer.memory = memory
-            computer.calculate_resource_usage()
-            return False
-
-
-    def rename_computer(self, computer_name : str, new_name : str) -> bool:
-        if not self.initialized:
-            self.print(f"{Fore.RED}Cluster failed to initialize so renaming can't be done.")
-            return False
-        
-        try:
-            computer_dir: str = Path.join(self.path, computer_name)
-            
-            if not Path.exists(computer_dir):
-                self.print(f"{Fore.RED}A computer with the name {computer_dir} does not exist.")
-                return False
-            
-            new_path: str = Path.join(self.path, new_name)
-
-            os.rename(computer_dir, new_path)
-            self.print(f"{Fore.GREEN}Computer folder renamed to '{new_name}' successfully.")
-
-            self.update_cluster()
-
-            return True
-            
-        except Exception as e:
-            self.print(f"{Fore.BLACK}{Back.RED}CRITICAL ERROR DETECTED: Error renaming computer: {e}")
-            return False
-
-
-#Processes
-    def start_process(self, process_name: str, running: bool, cpu_req: int, ram_req: int, instance_count: int = 1, date_started: str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')) -> bool:
-        if process_name in self._saved_processes:
-            self.print(f"{Fore.RED}{process_name} already exists")
-            return False
-
-        try:
-            # Update instance's saved processes
-            self._saved_processes[process_name] = {
-                "instance_count": instance_count,
-                "cores": cpu_req,
-                "memory": ram_req,
-                "running": running,
-                "date_started": date_started
-            }
-            
-            # Update config file
-            self.__sort_processes()
-            self.update_cluster_config()
-            self.update_cluster()
-
-
-            self.print(f"{Fore.GREEN}Process ({process_name}) added successfully to cluster ({self.name}) as {"AKTIV" if running else f"{Fore.YELLOW + Style.BRIGHT}INAKTIV"}.")
-            return True
-        
-        except Exception as e:
-            self.print(f"{Fore.RED}Error while creating process: {process_name} -> {e}")
-            return False
+        return instance_list
     
-    
-    def kill_process(self, process_name: str) -> bool:
-        try:
-            if process_name in self._saved_processes:
-                del self.processes[process_name]
-                del self._saved_processes[process_name]
-                self._saved_active_processes.pop(process_name, None)
-                self._saved_inactive_processes.pop(process_name, None)
 
-                # Resort, clean, and update
-                self.__sort_processes()
-                self.update_cluster_config()
-                self.update_cluster()
+    def edit_instance(self, instance_id: str, property_name: str, new_value: str) -> bool:
+        """Edit instance with full state synchronization"""
+        # Find target computer using full instance ID
+        target_computer = next(
+            (comp for comp in self.computers.values() 
+             if instance_id in comp.get_prog_instances()), 
+            None
+        )
 
-                self.print(f"{Style.BRIGHT}Process {process_name} successfully killed.")
-                return True
-            
-            self.print(f"{Fore.RED}Error: Process {process_name} does not exist in global_processes!")
-            return False
-        except Exception as e:
-            self.print(f"{Fore.RED}Error while killing process {process_name}: {e}")
+        if not target_computer:
+            self.print(f"{Fore.RED}Instance {instance_id} not found")
             return False
 
-
-    def edit_process_resources(self, process_name: str, property_to_change : str, new_value) -> bool:
-        try:
-            if process_name not in self._saved_processes:
-                self.print(f"{Fore.RED}Process {process_name} does not exist! Check the name and try again.")
-                return False
-            
-            allowed_properties = ["instance_count", "cores", "memory", "running"]
-            
-            if property_to_change not in allowed_properties:
-                self.print(f"{Fore.RED}Invalid property. Allowed: {allowed_properties}")
-                return False
-
-            # Convert new_value to correct type
-            if property_to_change in ["instance_count", "cores", "memory"]:
-                new_value = int(new_value)
-            elif property_to_change == "running":
-                new_value = bool(new_value)
-
-            # Apply changes
-            self._saved_processes[process_name][property_to_change] = new_value
-        
-            # Update cluster
-            self.update_cluster()
-
-            self.print(f"{Fore.GREEN}Updated process ({process_name}): {property_to_change} -> {new_value}")
-            return True
-
-        except Exception as e:
-            self.print(f"{Fore.RED}Error while editing process {process_name}: {e}")
+        # Validate property
+        valid_props = ["status", "cores", "memory", "computer"]
+        if property_name not in valid_props:
+            self.print(f"{Fore.RED}Invalid property: {property_name}")
             return False
 
+        # Special handling for status
+        if property_name == "status":
+            new_value = "AKTÍV" if new_value else "INAKTÍV"
 
-    def rename_process(self, process_name: str, new_process_name: str) -> bool:
-        try:
-            if process_name not in self._saved_processes:
-                self.print(f"{Fore.RED}Process {process_name} does not exist! Check the name and try again.")
-                return False
-
-            if new_process_name in self._saved_processes:
-                self.print(f"{Fore.RED}A process with the name {new_process_name} already exists!")
-                return False
-
-            # Move the process to the new name
-            self._saved_processes[new_process_name] = self._saved_processes.pop(process_name)
-            self.processes[new_process_name] = self.processes.pop(process_name)
-
-            # Update active/inactive process lists
-            if process_name in self._saved_active_processes:
-                self._saved_active_processes[new_process_name] = self._saved_active_processes.pop(process_name)
-            elif process_name in self._saved_inactive_processes:
-                self._saved_inactive_processes[new_process_name] = self._saved_inactive_processes.pop(process_name)
-
-            self.update_cluster()
-
-            self.print(f"{Fore.GREEN}Process {process_name} successfully renamed to {new_process_name}.")
-            return True
-
-        except Exception as e:
-            self.print(f"{Fore.RED}Error while renaming process {process_name}: {e}")
-            return False
-
-
-#MISC.
-    def cleanup(self) -> bool:
-        """Removes unnescecary files and directories from the cluster""" 
-        files: list = os.listdir(self.path)
-        
-        self.print(f"{Fore.GREEN}Starting cleanup...")
-
-        if Path.exists(Path.join(self.path, ".klaszter")):
-            files.remove(".klaszter")
-
-        removed_files : int = 0
-
-        for file in files:
-            if Path.exists(Path.join(self.path, file, ".szamitogep_config")):
-                continue
+        # Perform edit
+        if target_computer.edit_instance(instance_id, property_name, new_value):
+            program = instance_id.split("-")[0]
+            instance_data = self.instances.get(program, {}).get(instance_id)
             
-            try:
-                target_path = Path.join(self.path, file)
-                
-                if Path.isdir(target_path):
-                    shutil.rmtree(target_path)
-                    removed_files += 1
+            if instance_data:
+                # Update local state
+                if property_name == "status":
+                    instance_data["active"] = (new_value == "AKTÍV")
+                elif property_name == "computer":
+                    instance_data["computer"] = new_value
                 else:
-                    os.remove(target_path)
-                    removed_files += 1
+                    instance_data[property_name] = int(new_value)
+                
+                # Update distributable list
+                self._update_distributable_instances()
+            
+            return True
+        return False
 
-                self.print(f"{Fore.YELLOW}Removed {file} from filesystem since it was marked as incorrect.")
-            except:
-                self.print(f"{Fore.BLACK}{Back.RED}CRITICAL ERROR DETECTED: can't delete file or folder ({file}). Cluster might be unstable.")
-                return False
-        
-        self.print(f"{Fore.GREEN}Cleanup completed. Removed a total of {removed_files} incorrect files plus folders.")
-        return True
 
-    
     def print(self, text: str):
-        """DEBUGGING TOOL: A print for the terminal"""
-        print(f"{Fore.BLACK}{Back.CYAN}[{Back.WHITE}{self.name}{Back.CYAN}]{Back.RESET}{Fore.CYAN}: {Fore.RESET+Back.RESET+Style.RESET_ALL}" + text + Fore.RESET+Back.RESET+Style.RESET_ALL)
+        """Debugging print method."""
+        print(f"{Fore.BLACK}{Back.CYAN}[{Back.WHITE}{self.name}{Back.CYAN}]{Back.RESET}{Fore.CYAN}: {text}{Style.RESET_ALL}")
