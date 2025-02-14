@@ -4,20 +4,21 @@ from modules.root import Root
 from modules.interpreter import CLI_Interpreter
 
 root : Root = Root(r"./Test folder")
-cluster : Cluster = root.clusters.get("test_cluster")
-cluster1 : Cluster = root.clusters.get("test_cluster1")
+# cluster : Cluster = root.clusters.get("test_cluster")
 
 root.relocate_process("MAN", "test_cluster1", "test_cluster")
 
-cluster1.start_process("jani", False, 100,100,2)
+# cluster1.start_process("jani", False, 100,100,2)
 # cluster1.kill_process("jani")
 
-root.move_computer("test_computer", "test_cluster", "test_cluster1")
+# root.move_computer("test_computer", "test_cluster", "test_cluster1")
 
 # cluster1.rename_process("jani", "internet")
 # cluster1.edit_process_resources("internet", "running", True)
 
 # root.relocate_process("internet", "test_cluster1", "test_cluster")
+
+
 
 
 
