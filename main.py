@@ -134,24 +134,44 @@ class ClusterBoard:
         self.frame.grid(row=0, column=0, sticky="nsw")
         self.frame.grid_rowconfigure(2, weight=1)
 
-        #self.cluster.edit_process_resources("word", "running", False)
-        
-        UI.Label(self.frame, text="Processes", font=extra_large_font).grid(row=0, column=0)
+        button_frame_helper : UI.Frame = UI.Frame(self.frame)
+        button_frame_helper.grid(row=1, column=0, rowspan=2, sticky="EWNS")
+        button_frame_helper.grid_rowconfigure(0, weight=1)
 
-        process_help_frame : UI.Frame = UI.Frame(self.frame, width=300)
-        process_help_frame.grid(row=1, column=0, rowspan=2, sticky="EWNS")
+        self.button_frame : CTkScrollableFrame = CTkScrollableFrame(button_frame_helper)
+        self.button_frame.grid(row=0, column=0, sticky="EWNS")
+        self.button_frame.grid_columnconfigure(0, weight=1)
+
+        UI.Label(self.button_frame, text=f"Cluster", font=extra_large_font).grid(row=0, column=0, pady=5, padx=10, sticky="we")
+        UI.Button(self.button_frame, text=f"Rename cluster", command=UI.SubWindow).grid(row=1, column=0, pady=5, padx=10, sticky="we")
+        UI.Button(self.button_frame, text=f"Rename computer", command=UI.SubWindow).grid(row=2, column=0, pady=5, padx=10, sticky="we")
+        UI.Button(self.button_frame, text=f"Move computer", command=UI.SubWindow).grid(row=3, column=0, pady=5, padx=10, sticky="we")
+        UI.Button(self.button_frame, text=f"Create computer", command=UI.SubWindow).grid(row=4, column=0, pady=5, padx=10, sticky="we")
+        UI.Button(self.button_frame, text=f"Edit computer", command=UI.SubWindow).grid(row=5, column=0, pady=5, padx=10, sticky="we")
+        UI.Button(self.button_frame, text=f"Delete computer", command=UI.SubWindow).grid(row=6, column=0, pady=5, padx=10, sticky="we")
+
+
+        UI.Button(self.button_frame, text=f"Algorithm settings", command=UI.SubWindow).grid(row=7, column=0, pady=5, padx=10, sticky="we")
+        UI.Button(self.button_frame, text=f"Start process", command=UI.SubWindow).grid(row=8, column=0, pady=5, padx=10, sticky="we")
+        UI.Button(self.button_frame, text=f"Relocate process", command=UI.SubWindow).grid(row=9, column=0, pady=5, padx=10, sticky="we")
+        UI.Button(self.button_frame, text=f"Kill process", command=UI.SubWindow).grid(row=10, column=0, pady=5, padx=10, sticky="we")
+        UI.Button(self.button_frame, text=f"Edit process", command=UI.SubWindow).grid(row=11, column=0, pady=5, padx=10, sticky="we")
+        UI.Button(self.button_frame, text=f"Rename process", command=UI.SubWindow).grid(row=12, column=0, pady=5, padx=10, sticky="we")
+
+        process_help_frame : UI.Frame = UI.Frame(self.frame)
+        process_help_frame.grid(row=2, column=1, sticky="EWNS")
         process_help_frame.grid_rowconfigure(0, weight=1)
         process_help_frame.grid_columnconfigure(0, weight=1)
 
-        self.processes_frame : CTkScrollableFrame = CTkScrollableFrame(process_help_frame, width=300, orientation="vertical")
+        self.processes_frame : CTkScrollableFrame = CTkScrollableFrame(process_help_frame, orientation="vertical")
         self.processes_frame.grid(row=0, column=0, sticky="EWNS")
         self.processes_frame.grid_columnconfigure(0, weight=1)
 
-        
-        UI.Label(self.processes_frame, text="Active", font=extra_large_font).grid(row=0, column=0)
+        UI.Label(self.processes_frame, text="Program list", font=extra_large_font).grid(row=0, column=0)
+        UI.Label(self.processes_frame, text="Active", font=extra_large_font).grid(row=1, column=0)
         for i, process in enumerate(cluster.active_processes.keys()):
             temp_proc_frame : UI.Frame = UI.Frame(self.processes_frame)
-            temp_proc_frame.grid(row=i+1, column=0, sticky="EW", pady=5)
+            temp_proc_frame.grid(row=i+2, column=0, sticky="EW", pady=5)
 
             UI.Button(temp_proc_frame, text=process).grid(row=0, column=0, sticky="w")
             UI.Label(temp_proc_frame, text=f"Instaces: {cluster.active_processes[process]["instance_count"]}").grid(row=1, column=0)
@@ -160,7 +180,7 @@ class ClusterBoard:
         UI.Label(self.processes_frame, text="Inactive", font=extra_large_font).grid(row=len(cluster.active_processes.keys())+2, column=0)
         for i, process in enumerate(cluster.inactive_processes.keys()):
             temp_proc_frame : UI.Frame = UI.Frame(self.processes_frame)
-            temp_proc_frame.grid(row=len(cluster.inactive_processes.keys())+i+4, column=0, sticky="EW", pady=5)
+            temp_proc_frame.grid(row=len(cluster.inactive_processes.keys())+i+5, column=0, sticky="EW", pady=5)
 
             UI.Button(temp_proc_frame, text=process).grid(row=0, column=0, sticky="w")
             UI.Label(temp_proc_frame, text=f"Instaces: {cluster.inactive_processes[process]["instance_count"]}").grid(row=1, column=0)
@@ -192,18 +212,8 @@ class ClusterBoard:
         UI.Label(self.info_frame, text=f"Free memory: {free_memory} MB").grid(row=3, column=0, sticky="w", padx=10)
         UI.Label(self.info_frame, text=f"Running processes: {len(cluster.active_processes.keys())}").grid(row=4, column=0, sticky="w", padx=10)
         UI.Label(self.info_frame, text=f"Stopped processes: {len(cluster.inactive_processes.keys())}").grid(row=5, column=0, sticky="w", padx=10)
-        UI.Label(self.info_frame, text=f"Computers: {len(cluster.computers.keys())}").grid(row=6, column=0, sticky="w", padx=10)
+        UI.Label(self.info_frame, text=f"Computers: {len(cluster.computers.keys())}").grid(row=6, column=0, sticky="w", padx=10)        
 
-
-        self.button_frame : UI.Frame = UI.Frame(self.frame)
-        self.button_frame.grid(row=2, column=1, sticky="EWNS")
-        self.button_frame.grid_columnconfigure([0,1], weight=1)
-        self.button_frame.grid_columnconfigure(0, weight=1)
-
-
-        for x in range(0, 2):
-            for i in range(0, 4):
-                UI.Button(self.button_frame, text=f"Test {i}", command=UI.SubWindow).grid(row=i, column=x, pady=5)
 
         self.computer_list_frame : CTkScrollableFrame = CTkScrollableFrame(self.frame, orientation="vertical", border_width=4, border_color="gray", corner_radius=0, width=230)
         self.computer_list_frame.grid(column=2, row=2, sticky="EWNS")
@@ -217,7 +227,6 @@ class ClusterBoard:
 
             UI.Button(cur_pc_frame, text=f"Open {pc.name}", command=lambda pc = pc: self.open_computer_tab(pc)).grid(row=1, column=0, pady=5)
             cur_pc_frame.grid(row=i, column=0, pady=5)
-        #self.cluster.edit_process_resources("word", "running", True)
         
 
 
