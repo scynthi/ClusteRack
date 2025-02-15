@@ -24,8 +24,6 @@ class CLI_Interpreter:
 
         self.current_root : Root = root
         
-        computers = self.current_cluster.computers
-        
         self.previous_commands = []
 
         self.current_computer : Computer = None
@@ -93,24 +91,26 @@ class CLI_Interpreter:
         
         clusters = root.clusters
         
-        for item in clusters.keys():
-            
-            self.cluster_commands["select"]["cluster"].update({f"{item}" : {"?algo" : (self.select_cluster, ), "?value" : clusters[item]}})
-            self.noMode_commands["select"]["cluster"].update({f"{item}" : {"?algo" : (self.select_cluster, ), "?value" : clusters[item]}})
-            self.computer_commands["select"]["cluster"].update({f"{item}" : {"?algo" : (self.select_cluster, ), "?value" : clusters[item]}})
-            self.root_commands["select"]["cluster"].update({f"{item}" : {"?algo" : (self.select_cluster, ), "?value" : clusters[item]}})
-            
-            self.cluster_commands["select"]["computer"].update({f"{item}" : {}})
-            self.noMode_commands["select"]["computer"].update({f"{item}" : {}})
-            self.computer_commands["select"]["computer"].update({f"{item}" : {}})
-            self.root_commands["select"]["computer"].update({f"{item}" : {}})
+        if clusters:
+        
+            for item in clusters.keys():
                 
-            for comps in clusters[item].computers:
+                self.cluster_commands["select"]["cluster"].update({f"{item}" : {"?algo" : (self.select_cluster, ), "?value" : clusters[item]}})
+                self.noMode_commands["select"]["cluster"].update({f"{item}" : {"?algo" : (self.select_cluster, ), "?value" : clusters[item]}})
+                self.computer_commands["select"]["cluster"].update({f"{item}" : {"?algo" : (self.select_cluster, ), "?value" : clusters[item]}})
+                self.root_commands["select"]["cluster"].update({f"{item}" : {"?algo" : (self.select_cluster, ), "?value" : clusters[item]}})
                 
-                self.cluster_commands["select"]["computer"][f"{item}"].update({f"{comps}" : {"?value" : clusters[item].computers[comps], "?algo" : (self.select_computer, )}, "?value" : clusters[item]})
-                self.noMode_commands["select"]["computer"][f"{item}"].update({f"{comps}" : {"?value" : clusters[item].computers[comps], "?algo" : (self.select_computer, )}, "?value" : clusters[item]})
-                self.computer_commands["select"]["computer"][f"{item}"].update({f"{comps}" : {"?value" : clusters[item].computers[comps], "?algo" : (self.select_computer, )}, "?value" : clusters[item]})
-                self.root_commands["select"]["computer"][f"{item}"].update({f"{comps}" : {"?value" : clusters[item].computers[comps], "?algo" : (self.select_computer, )}, "?value" : clusters[item]})
+                self.cluster_commands["select"]["computer"].update({f"{item}" : {}})
+                self.noMode_commands["select"]["computer"].update({f"{item}" : {}})
+                self.computer_commands["select"]["computer"].update({f"{item}" : {}})
+                self.root_commands["select"]["computer"].update({f"{item}" : {}})
+                    
+                for comps in clusters[item].computers:
+                    
+                    self.cluster_commands["select"]["computer"][f"{item}"].update({f"{comps}" : {"?value" : clusters[item].computers[comps], "?algo" : (self.select_computer, )}, "?value" : clusters[item]})
+                    self.noMode_commands["select"]["computer"][f"{item}"].update({f"{comps}" : {"?value" : clusters[item].computers[comps], "?algo" : (self.select_computer, )}, "?value" : clusters[item]})
+                    self.computer_commands["select"]["computer"][f"{item}"].update({f"{comps}" : {"?value" : clusters[item].computers[comps], "?algo" : (self.select_computer, )}, "?value" : clusters[item]})
+                    self.root_commands["select"]["computer"][f"{item}"].update({f"{comps}" : {"?value" : clusters[item].computers[comps], "?algo" : (self.select_computer, )}, "?value" : clusters[item]})
         
         self.take_input("")
                 
@@ -412,33 +412,33 @@ class CLI_Interpreter:
         
 
     def update_dicts(self):
-        
-        print(self.current_cluster)
 
         clusters = self.current_root.clusters
         
         if self.current_computer:
             
             self.computer_commands["get_processes"]["?algo"] = (self.current_computer.get_processes, )
+            
+        if clusters:
         
-        for item in clusters.keys():
-            
-            self.cluster_commands["select"]["cluster"].update({f"{item}" : {"?algo" : (self.select_cluster, ), "?value" : clusters[item]}})
-            self.noMode_commands["select"]["cluster"].update({f"{item}" : {"?algo" : (self.select_cluster, ), "?value" : clusters[item]}})
-            self.computer_commands["select"]["cluster"].update({f"{item}" : {"?algo" : (self.select_cluster, ), "?value" : clusters[item]}})
-            self.root_commands["select"]["cluster"].update({f"{item}" : {"?algo" : (self.select_cluster, ), "?value" : clusters[item]}})
-            
-            self.cluster_commands["select"]["computer"].update({f"{item}" : {}})
-            self.noMode_commands["select"]["computer"].update({f"{item}" : {}})
-            self.computer_commands["select"]["computer"].update({f"{item}" : {}})
-            self.root_commands["select"]["computer"].update({f"{item}" : {}})
+            for item in clusters.keys():
                 
-            for comps in clusters[item].computers:
+                self.cluster_commands["select"]["cluster"].update({f"{item}" : {"?algo" : (self.select_cluster, ), "?value" : clusters[item]}})
+                self.noMode_commands["select"]["cluster"].update({f"{item}" : {"?algo" : (self.select_cluster, ), "?value" : clusters[item]}})
+                self.computer_commands["select"]["cluster"].update({f"{item}" : {"?algo" : (self.select_cluster, ), "?value" : clusters[item]}})
+                self.root_commands["select"]["cluster"].update({f"{item}" : {"?algo" : (self.select_cluster, ), "?value" : clusters[item]}})
                 
-                self.cluster_commands["select"]["computer"][f"{item}"].update({f"{comps}" : {"?value" : clusters[item].computers[comps], "?algo" : (self.select_computer, )}, "?value" : clusters[item]})
-                self.noMode_commands["select"]["computer"][f"{item}"].update({f"{comps}" : {"?value" : clusters[item].computers[comps], "?algo" : (self.select_computer, )}, "?value" : clusters[item]})
-                self.computer_commands["select"]["computer"][f"{item}"].update({f"{comps}" : {"?value" : clusters[item].computers[comps], "?algo" : (self.select_computer, )}, "?value" : clusters[item]})
-                self.root_commands["select"]["computer"][f"{item}"].update({f"{comps}" : {"?value" : clusters[item].computers[comps], "?algo" : (self.select_computer, )}, "?value" : clusters[item]})
+                self.cluster_commands["select"]["computer"].update({f"{item}" : {}})
+                self.noMode_commands["select"]["computer"].update({f"{item}" : {}})
+                self.computer_commands["select"]["computer"].update({f"{item}" : {}})
+                self.root_commands["select"]["computer"].update({f"{item}" : {}})
+                    
+                for comps in clusters[item].computers:
+                    
+                    self.cluster_commands["select"]["computer"][f"{item}"].update({f"{comps}" : {"?value" : clusters[item].computers[comps], "?algo" : (self.select_computer, )}, "?value" : clusters[item]})
+                    self.noMode_commands["select"]["computer"][f"{item}"].update({f"{comps}" : {"?value" : clusters[item].computers[comps], "?algo" : (self.select_computer, )}, "?value" : clusters[item]})
+                    self.computer_commands["select"]["computer"][f"{item}"].update({f"{comps}" : {"?value" : clusters[item].computers[comps], "?algo" : (self.select_computer, )}, "?value" : clusters[item]})
+                    self.root_commands["select"]["computer"][f"{item}"].update({f"{comps}" : {"?value" : clusters[item].computers[comps], "?algo" : (self.select_computer, )}, "?value" : clusters[item]})
         
         if self.current_cluster:
         
@@ -479,21 +479,21 @@ class CLI_Interpreter:
                 
         if self.current_root:
             
-            clusters = self.current_root.clusters
+            if clusters:
             
-            for item in clusters.keys():
-                
-                self.root_commands["try_del_cluster"].update({f"{item}" : {"?algo" : (self.current_root.try_delete_cluster, )}})
-                self.root_commands["force_del_cluster"].update({f"{item}" : {"?algo" : (self.current_root.force_delete_cluster, )}})
-                self.root_commands["rename_cluster"].update({f"{item}" : {"<cluster name" : {"?algo" : (self.current_root.rename_cluster, )}}})
-                
-            for item in self.current_root.clusters.keys():
-                
-                self.root_commands["relocate_process"]["<process name"].update({f"{item}" : {}})
-                
-                for jitem in self.current_root.clusters.keys():
+                for item in clusters.keys():
                     
-                    self.root_commands["relocate_process"]["<process name"][f"{item}"].update({f"{jitem}" : {"?algo" : (self.current_root.relocate_process, )}})
+                    self.root_commands["try_del_cluster"].update({f"{item}" : {"?algo" : (self.current_root.try_delete_cluster, )}})
+                    self.root_commands["force_del_cluster"].update({f"{item}" : {"?algo" : (self.current_root.force_delete_cluster, )}})
+                    self.root_commands["rename_cluster"].update({f"{item}" : {"<cluster name" : {"?algo" : (self.current_root.rename_cluster, )}}})
+                    
+                for item in self.current_root.clusters.keys():
+                    
+                    self.root_commands["relocate_process"]["<process name"].update({f"{item}" : {}})
+                    
+                    for jitem in self.current_root.clusters.keys():
+                        
+                        self.root_commands["relocate_process"]["<process name"][f"{item}"].update({f"{jitem}" : {"?algo" : (self.current_root.relocate_process, )}})
                 
     
     def exit(self):
