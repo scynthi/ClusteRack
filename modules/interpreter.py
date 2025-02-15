@@ -7,10 +7,17 @@ from modules.computer import Computer
 from modules.root import Root
 import msvcrt
 import sys
+import ctypes
 
 class CLI_Interpreter:
     
     def __init__(self):
+        
+        kernel32 = ctypes.windll.kernel32
+        std_output_handle = kernel32.GetStdHandle(-11)
+        mode = ctypes.c_ulong(0)
+        kernel32.GetConsoleMode(std_output_handle, ctypes.byref(mode))
+        kernel32.SetConsoleMode(std_output_handle, mode.value | 0x0004)  # Enable Virtual Terminal Processing
         
         root : Root = Root(r"./Thing")
 
@@ -146,12 +153,15 @@ class CLI_Interpreter:
                 prompt = "None"
 
         user_input = f"{default_text}"
-        sys.stdout.write(f"{prompt}>{user_input}")
+        if len(user_input) > 0:
+            cursor_pos = len(user_input)
+        else:
+            cursor_pos = 0
+        sys.stdout.write(f"{prompt}>{user_input[:cursor_pos]}|{user_input[cursor_pos:]}")
         sys.stdout.flush()
         
         prev_com_index = -1
         
-        cursor_pos = 0
         
         while True:
             
@@ -162,71 +172,70 @@ class CLI_Interpreter:
                 current_step, arguments, success, user_input = self.cicle_through_commands(self.root_commands, shlex.split(user_input), user_input, True)
                 cursor_pos = len(user_input)
                 sys.stdout.write("\r")
-                sys.stdout.write(f"{prompt}>{user_input[:cursor_pos] + "|" + user_input[cursor_pos:]}")
+                sys.stdout.write(f"{prompt}>{user_input[:cursor_pos]}|{user_input[cursor_pos:]}")
                 sys.stdout.write("\033[K")
                 sys.stdout.flush()
                 continue  # Keep waiting for user input
             
-            elif key_event == b'\x48':  # Up arrow
+            elif key_event == b'\x00' or key_event == b'\xe0':
                 
-                if prev_com_index < len(self.previous_commands) - 1:
+                ch2 = msvcrt.getch()
+                
+                if ch2 == b'\x4b':  # Left arrow key
+                    if cursor_pos > 0:
+                        cursor_pos -= 1
+                        sys.stdout.write("\r")
+                        sys.stdout.write(f"{prompt}>{user_input[:cursor_pos]}|{user_input[cursor_pos:]}")
+                        sys.stdout.write("\033[1D")
+                        sys.stdout.flush()
+                elif ch2 == b'\x4d':  # Right arrow key
+                    if cursor_pos < len(user_input):
+                        cursor_pos += 1
+                        sys.stdout.write("\r")
+                        sys.stdout.write(f"{prompt}>{user_input[:cursor_pos]}|{user_input[cursor_pos:]}")
+                        sys.stdout.write("\033[1C")
+                        sys.stdout.flush()
+                        
+                elif ch2 == b'\x48':  # Up arrow
                     
-                    prev_com_index += 1
+                    if prev_com_index < len(self.previous_commands) - 1:
+                        
+                        prev_com_index += 1
 
-                if len(self.previous_commands) != 0:
+                    if len(self.previous_commands) != 0:
+                        
+                        user_input = self.previous_commands[prev_com_index]
+                        
+                    cursor_pos = len(user_input)
+                        
+                    sys.stdout.write("\r")
+                    sys.stdout.write(f"{prompt}>{user_input[:cursor_pos]}|{user_input[cursor_pos:]}")
+                    sys.stdout.write("\033[K")
+                    sys.stdout.flush()
                     
-                    user_input = self.previous_commands[prev_com_index]
-                
-                cursor_pos = len(user_input)
-                sys.stdout.write("\r")
-                sys.stdout.write(f"{prompt}>{user_input[:cursor_pos] + "|" + user_input[cursor_pos:]}")
-                sys.stdout.write("\033[K")
-                sys.stdout.flush()
-                
-            elif key_event == b'\x50':  # Down arrow
-                
-                if prev_com_index > 0:
+                elif ch2 == b'\x50':  # Down arrow
                     
-                    prev_com_index -= 1
- 
-                if len(self.previous_commands) != 0:
-                    
-                    user_input = self.previous_commands[prev_com_index]
-                
-                cursor_pos = len(user_input)
-                sys.stdout.write("\r")
-                sys.stdout.write(f"{prompt}>{user_input[:cursor_pos] + "|" + user_input[cursor_pos:]}")
-                sys.stdout.write("\033[K")
-                sys.stdout.flush()
-                
-            elif key_event == b'\x4b':  # Left arrow
-                
-                if cursor_pos > 0:
-                    cursor_pos -= 1
-                    
-                print(cursor_pos)
-                
-                sys.stdout.write("\r")
-                sys.stdout.write(f"{prompt}>{user_input[:cursor_pos] + "|" + user_input[cursor_pos:]}")
-                sys.stdout.write("\033[K")
-                sys.stdout.flush()
-                continue
-                
-            elif key_event == b'\x4d':  # Right arrow
-                
-                if cursor_pos < len(user_input):
-                    cursor_pos += 1
-                
-                print(len(user_input), user_input)
-                print(cursor_pos)
-                    
-                sys.stdout.write("\r")
-                sys.stdout.write(f"{prompt}>{user_input[:cursor_pos] + "|" + user_input[cursor_pos:]}")
-                sys.stdout.write("\033[K")
-                sys.stdout.flush()
+                    if prev_com_index > 0:
+                        
+                        prev_com_index -= 1
+    
+                    if len(self.previous_commands) != 0:
+                        
+                        user_input = self.previous_commands[prev_com_index]
+                        
+                    cursor_pos = len(user_input)
+                        
+                    sys.stdout.write("\r")
+                    sys.stdout.write(f"{prompt}>{user_input[:cursor_pos]}|{user_input[cursor_pos:]}")
+                    sys.stdout.write("\033[K")
+                    sys.stdout.flush()
             
             elif key_event == b"\r":
                 
+                sys.stdout.write("\r")
+                sys.stdout.write(f"{prompt}>{user_input}")
+                sys.stdout.write("\033[K")
+                sys.stdout.flush()
                 print()
                 if "\x00" in user_input:
                     
@@ -235,11 +244,12 @@ class CLI_Interpreter:
                 break  # Stop input
             
             elif key_event == b"\x08":
+                
                 if cursor_pos > 0:
                     user_input = user_input[:cursor_pos-1] + user_input[cursor_pos:]
                     cursor_pos -= 1
                 sys.stdout.write("\r")
-                sys.stdout.write(f"{prompt}>{user_input[:cursor_pos] + "|" + user_input[cursor_pos:]}")
+                sys.stdout.write(f"{prompt}>{user_input[:cursor_pos]}|{user_input[cursor_pos:]}")
                 sys.stdout.write("\033[K")
                 sys.stdout.flush()
                 continue
@@ -249,17 +259,17 @@ class CLI_Interpreter:
                 user_input += " "
                 cursor_pos += 1
                 sys.stdout.write("\r")
-                sys.stdout.write(f"{prompt}>{user_input[:cursor_pos] + "|" + user_input[cursor_pos:]}")
+                sys.stdout.write(f"{prompt}>{user_input[:cursor_pos]}|{user_input[cursor_pos:]}")
                 sys.stdout.write("\033[K")
                 sys.stdout.flush()
                 continue
             
             else:
-                
+
                 user_input = user_input[:cursor_pos] + key_event.decode('utf-8') + user_input[cursor_pos:]
                 cursor_pos += 1
                 sys.stdout.write("\r")
-                sys.stdout.write(f"{prompt}>{user_input[:cursor_pos] + "|" + user_input[cursor_pos:]}")
+                sys.stdout.write(f"{prompt}>{user_input[:cursor_pos]}|{user_input[cursor_pos:]}")
                 sys.stdout.write("\033[K")
                 sys.stdout.flush()
                 continue
