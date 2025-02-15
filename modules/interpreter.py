@@ -5,6 +5,9 @@ import shlex
 from modules.cluster import Cluster
 from modules.computer import Computer
 from modules.root import Root
+import time
+import keyboard
+import sys
 
 class CLI_Interpreter:
     
@@ -64,14 +67,14 @@ class CLI_Interpreter:
                 "computer" : {"non_args" : 1}
             },
             "exit" : {"?algo" : (self.exit, )},
-            "set_default_rebalance_algo" : {"load_balance" : {"?algo" : (self.current_cluster.set_default_rebalance_algo, )}, "best_fit" : {"?algo" : (self.current_cluster.set_default_rebalance_algo, )}, "fast" : {"?algo" : (self.current_cluster.set_default_rebalance_algo, )}},
-            "run_default_rebalance" : {"?algo" : (self.current_cluster.run_default_rebalance_algo, )},
-            "run_rebalance" : {"?algo" : (self.current_cluster.run_default_rebalance_algo, )},
+            # "set_default_rebalance_algo" : {"load_balance" : {"?algo" : (self.current_cluster.set_default_rebalance_algo, )}, "best_fit" : {"?algo" : (self.current_cluster.set_default_rebalance_algo, )}, "fast" : {"?algo" : (self.current_cluster.set_default_rebalance_algo, )}},
+            # "run_default_rebalance" : {"?algo" : (self.current_cluster.run_default_rebalance_algo, )},
+            # "run_rebalance" : {"?algo" : (self.current_cluster.run_default_rebalance_algo, )},
             "create_computer" : {"<computer name" : ()},
             "try_del_computer" : {},
             "force_del_computer" : {},
             "rename_computer" : {},
-            "start_process" : {"<process name" : {"<running" : {"<cpu_req" : {"<ram_req" : {"<instance_count" : {"<date_started" : {"?algo" : (self.current_cluster.start_process, )}}}}}}},
+            # "start_process" : {"<process name" : {"<running" : {"<cpu_req" : {"<ram_req" : {"<instance_count" : {"<date_started" : {"?algo" : (self.current_cluster.start_process, )}}}}}}},
             "kill_process" : {},
             "edit_process_resources" : {},
             "rename_process" : {}
@@ -118,30 +121,81 @@ class CLI_Interpreter:
                 self.computer_commands["select"]["computer"][f"{item}"].update({f"{comps}" : {"?value" : clusters[item].computers[comps], "?algo" : (self.select_computer, )}, "?value" : clusters[item]})
                 self.root_commands["select"]["computer"][f"{item}"].update({f"{comps}" : {"?value" : clusters[item].computers[comps], "?algo" : (self.select_computer, )}, "?value" : clusters[item]})
         
-        self.take_input()
+        self.take_input("")
                 
                 
-    def take_input(self):
+    def take_input(self, default_text):
         
         match self.mode.lower():
             
             case "computer":
                 
-                command = input(f"{self.current_root.name.capitalize()}>{self.current_cluster.name.capitalize()}>{self.current_computer.name.capitalize()}>").lower()
+                prompt = f"{self.current_root.name.capitalize()}>{self.current_cluster.name.capitalize()}>{self.current_computer.name.capitalize()}"
                 
             case "cluster":
                 
-                command = input(f"{self.current_root.name.capitalize()}>{self.current_cluster.name.capitalize()}>").lower()
+                prompt = f"{self.current_root.name.capitalize()}>{self.current_cluster.name.capitalize()}"
                 
             case "root":
                 
-                command = input(f"{self.current_root.name.capitalize()}>").lower()
+                prompt = f"{self.current_root.name.capitalize()}"
                 
             case _:
                 
-                command = input("None>").lower()
+                prompt = "None"
+
+        user_input = f"{default_text}"
+        sys.stdout.write(f"{prompt}>{user_input}")
+        sys.stdout.flush()
         
-        self.convert_input(command)
+        while True:
+            
+            key_event = keyboard.read_event()
+
+            if key_event.event_type == "down":  # Only capture key presses (not releases)
+                
+                if key_event.name == "tab":
+                    
+                    current_step, arguments, success, user_input = self.cicle_through_commands(self.root_commands, shlex.split(user_input), user_input, True)
+                    sys.stdout.write("\r")
+                    sys.stdout.write(f"{prompt}>{user_input}")
+                    sys.stdout.write("\033[K")
+                    sys.stdout.flush()
+                    continue  # Keep waiting for user input
+                
+                elif key_event.name == "enter":
+                    
+                    print("\n", flush=True)
+                    break  # Stop input
+                
+                elif key_event.name == "backspace":
+                    
+                    user_input = user_input[:-1]  # Remove last character
+                    sys.stdout.write("\r")
+                    sys.stdout.write(f"{prompt}>{user_input}")
+                    sys.stdout.write("\033[K")
+                    sys.stdout.flush()
+                    continue
+                
+                elif key_event.name == "space":
+                    
+                    user_input += " "
+                    sys.stdout.write("\r")
+                    sys.stdout.write(f"{prompt}>{user_input}")
+                    sys.stdout.write("\033[K")
+                    sys.stdout.flush()
+                    continue
+                
+                elif len(key_event.name) == 1:  # Normal character input
+                    
+                    user_input += key_event.name
+                    sys.stdout.write("\r")
+                    sys.stdout.write(f"{prompt}>{user_input}")
+                    sys.stdout.write("\033[K")
+                    sys.stdout.flush()
+                    continue
+        
+        self.convert_input(user_input.lower())
 
     
     def convert_input(self, command):
@@ -158,40 +212,41 @@ class CLI_Interpreter:
             
             case "root":
                 
-                current_step, arguments, success = self.cicle_through_commands(self.root_commands, shlashed_command)
+                current_step, arguments, success, default_text = self.cicle_through_commands(self.root_commands, shlashed_command, command, False)
                     
             case "cluster":
                 
                 try:
 
-                    current_step, arguments, success = self.cicle_through_commands(self.cluster_commands, shlashed_command)
+                    current_step, arguments, success, default_text = self.cicle_through_commands(self.cluster_commands, shlashed_command, command, False)
 
                 except Exception as e:
 
                     print(f"Something went wrong {e}")
-                    self.take_input()
+                    self.take_input("")
                 
             case "computer":
                 
                 try:
 
-                    current_step, arguments, success = self.cicle_through_commands(self.noMode_commands, shlashed_command)
+                    current_step, arguments, success, default_text = self.cicle_through_commands(self.noMode_commands, shlashed_command, command, False)
 
                 except Exception as e:
 
                     print(f"Something went wrong {e}")
-                    self.take_input()
+                    self.take_input("")
                 
             case _:
                 
                 try:
 
-                    current_step, arguments, success = self.cicle_through_commands(self.noMode_commands, shlashed_command)
+                    current_step, arguments, success, default_text = self.cicle_through_commands(self.noMode_commands, shlashed_command, command, False)
 
                 except Exception as e:
 
                     print(f"Something went wrong {e}")
-                    self.take_input()
+                    self.take_input("")
+        
                 
         if isinstance(current_step, tuple):
             
@@ -200,14 +255,16 @@ class CLI_Interpreter:
             all_args = (*default_args, *arguments)
             
             returning = func(*all_args)
+            
+            if returning:
+            
+                print(returning)
                     
         elif current_step:
                     
             print(current_step)
-            
-        print(returning)
-            
-        self.take_input()
+
+        self.take_input(f"{default_text}")
         
     def select_root(self, mode):
         
@@ -217,7 +274,7 @@ class CLI_Interpreter:
    
         print(f"selected the {mode}")
         
-        self.take_input()
+        self.take_input("")
         
             
     def select_cluster(self, mode, cluster):
@@ -230,7 +287,7 @@ class CLI_Interpreter:
    
         print(f"selected the {mode}")
         
-        self.take_input()
+        self.take_input("")
 
         
     def select_computer(self, mode, cluster, computer):
@@ -245,7 +302,7 @@ class CLI_Interpreter:
    
         print(f"selected the {mode}")
         
-        self.take_input()
+        self.take_input("")
         
 
     def update_dicts(self):
@@ -279,9 +336,10 @@ class CLI_Interpreter:
                 
             for item in computers.keys():
                 
-                self.cluster_commands["rename_computer"].update({f"{item}" : {"?algo" : (self.current_cluster.rename_computer, )}})
-                self.cluster_commands["try_del_computer"].update({f"{item}" : {"?algo" : (self.current_cluster.try_delete_computer, )}})
-                self.cluster_commands["force_del_computer"].update({f"{item}" : {"?algo" : (self.current_cluster.force_delete_computer, )}})
+                # self.cluster_commands["rename_computer"].update({f"{item}" : {"?algo" : (self.current_cluster.rename_computer, )}})
+                # self.cluster_commands["try_del_computer"].update({f"{item}" : {"?algo" : (self.current_cluster.try_delete_computer, )}})
+                # self.cluster_commands["force_del_computer"].update({f"{item}" : {"?algo" : (self.current_cluster.force_delete_computer, )}})
+                pass
                 
             for item in clusters.keys():
                 
@@ -292,16 +350,16 @@ class CLI_Interpreter:
                 
                 
             
-            for item in self.current_cluster.processes.keys():
+            # for item in self.current_cluster.processes.keys():
                 
-                self.cluster_commands["kill_process"].update({f"{item}" : {"?algo" : (self.current_cluster.kill_process, )}})
-                self.cluster_commands["edit_process_resources"].update({f"{item}" : {"instance count" : {"<New value (int)" : {"?algo" : (self.current_cluster.edit_process_resources, )}}, 
-                                                                                     "cores" : {"<New value (int)" : {"?algo" : (self.current_cluster.edit_process_resources, )}},
-                                                                                     "memory" : {"<New value (int)" : {"?algo" : (self.current_cluster.edit_process_resources, )}},
-                                                                                     "running" : {"<New value" : {"?algo" : (self.current_cluster.edit_process_resources, )}}}})
-                self.cluster_commands["rename_process"].update({f"{item}" : {"<Process name" : {"?algo" : (self.current_cluster.rename_process, )}}})
+            #     self.cluster_commands["kill_process"].update({f"{item}" : {"?algo" : (self.current_cluster.kill_process, )}})
+            #     self.cluster_commands["edit_process_resources"].update({f"{item}" : {"instance count" : {"<New value (int)" : {"?algo" : (self.current_cluster.edit_process_resources, )}}, 
+            #                                                                          "cores" : {"<New value (int)" : {"?algo" : (self.current_cluster.edit_process_resources, )}},
+            #                                                                          "memory" : {"<New value (int)" : {"?algo" : (self.current_cluster.edit_process_resources, )}},
+            #                                                                          "running" : {"<New value" : {"?algo" : (self.current_cluster.edit_process_resources, )}}}})
+            #     self.cluster_commands["rename_process"].update({f"{item}" : {"<Process name" : {"?algo" : (self.current_cluster.rename_process, )}}})
                 
-            self.cluster_commands["create_computer"]["<computer name"] = {"?algo" : (self.current_cluster.create_computer, )}
+            # self.cluster_commands["create_computer"]["<computer name"] = {"?algo" : (self.current_cluster.create_computer, )}
             
             for item in clusters.keys():
                 
@@ -329,11 +387,12 @@ class CLI_Interpreter:
                 
     
     def exit(self):
-        
+
         print("Bye Bye")
-        quit()
-        
-    def cicle_through_commands(self, command_dict, shlashed_command):
+        sys.stdout.write()
+        sys.exit()
+
+    def cicle_through_commands(self, command_dict, shlashed_command, original_command, tab):
 
         current_step : dict = command_dict
 
@@ -372,11 +431,11 @@ class CLI_Interpreter:
                                     
                                 current_step += coms + "\n"
                                 
-                    return current_step, "", True
+                    return current_step, "", True, ""
                 
                 if item == "non_args" or item == "?value":
                     
-                    return "Can't type that bruw", "", False
+                    return "Can't type that bruw", "", False, original_command
 
                 if isinstance(current_step, dict) and item not in current_step.keys():
                     
@@ -389,14 +448,29 @@ class CLI_Interpreter:
                             temp_item = fitem
                             
                     if not temp:
+                        
+                        items = 0
+                        
+                        finished = ""
 
                         for keys in current_step.keys():
 
                             if item in keys:
+                                
+                                items += 1
+                                finished = keys
 
-                                return f"Did you mean {keys}?", "", False
+                        if items == 1 and tab:
+
+                            finished = finished[len(item):]
+
+                            original_command += finished
+                            
+                            print(original_command)
+                            
+                            return f"Did you mean {keys}?", "", False, original_command
                         
-                        return f"Command not found", "", False
+                        return f"Command not found", "", False, original_command
                 
                 if type(current_step[temp_item]) != tuple:
                     
@@ -414,13 +488,13 @@ class CLI_Interpreter:
             
             if not isinstance(current_step, dict):
 
-                return current_step, arguments, True
+                return current_step, arguments, True, ""
             
             else:
                 
                 current_step = "That is not a full command"
                 
-                return current_step, "", False
+                return current_step, "", False, original_command
         
         except Exception as e:
             
