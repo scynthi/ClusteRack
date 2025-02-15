@@ -7,49 +7,28 @@ from modules.computer import Computer
 from modules.root import Root
 import msvcrt
 import sys
-import ctypes
 
 class CLI_Interpreter:
     
     def __init__(self):
         
-        kernel32 = ctypes.windll.kernel32
-        std_output_handle = kernel32.GetStdHandle(-11)
-        mode = ctypes.c_ulong(0)
-        kernel32.GetConsoleMode(std_output_handle, ctypes.byref(mode))
-        kernel32.SetConsoleMode(std_output_handle, mode.value | 0x0004)  # Enable Virtual Terminal Processing
-        
         root : Root = Root(r"./Thing")
+        
+        self.folder = r"./sutoandar"
+        
+        self.run = False
 
         self.mode : str = "None"
         
-        clusters = root.clusters
-        
-        clusterkeys = []
-        
-        for key in clusters.keys():
-
-            clusterkeys.append(key)
-            
-        cluster = clusters[clusterkeys[0]]
-        
-        self.current_cluster : Cluster = cluster
+        self.current_cluster : Cluster = None
 
         self.current_root : Root = root
         
         computers = self.current_cluster.computers
         
         self.previous_commands = []
-        
-        comps = []
-        
-        for key in computers.keys():
-            
-            comps.append(computers[key])
-            
-        computer = comps[0]
 
-        self.current_computer : Computer = computer
+        self.current_computer : Computer = None
         
         self.arguments = []
         
@@ -65,7 +44,8 @@ class CLI_Interpreter:
             "force_del_cluster" : {},
             "relocate_process" : {"<process name" : {}},
             "move_computer" : (self.current_root.move_computer, ),
-            "rename_cluster" : {}
+            "rename_cluster" : {},
+            "run" : {"<file name" : {"?algo" : (self.read_file, )}}
         }
 
         self.cluster_commands = {
@@ -85,7 +65,8 @@ class CLI_Interpreter:
             # "start_process" : {"<process name" : {"<running" : {"<cpu_req" : {"<ram_req" : {"<instance_count" : {"<date_started" : {"?algo" : (self.current_cluster.start_process, )}}}}}}},
             "kill_process" : {},
             "edit_process_resources" : {},
-            "rename_process" : {}
+            "rename_process" : {},
+            "run" : {"<file name" : {"?algo" : (self.read_file, )}}
         }
         
         self.computer_commands = {
@@ -94,7 +75,10 @@ class CLI_Interpreter:
                 "cluster" : {},
                 "computer" : {"non_args" : 1}
             },
-            "exit" : {"?algo" : (self.exit, )}
+            "exit" : {"?algo" : (self.exit, )},
+            "run" : {"<file name" : {"?algo" : (self.read_file, )}},
+            "edit_resources" : {},
+            "get_processes" : {"?algo" : ()}
         }
         
         self.noMode_commands = {
@@ -104,8 +88,7 @@ class CLI_Interpreter:
                 "computer" : {"non_args" : 1}
             },
             "exit" : {"?algo" : (self.exit, )},
-            "edit_resources" : {},
-            "get_processes" : {"?algo" : (self.current_computer.get_processes, )}
+            "run" : {"<file name" : {"?algo" : (self.read_file, )}}
         }
         
         clusters = root.clusters
@@ -274,7 +257,55 @@ class CLI_Interpreter:
                 sys.stdout.flush()
                 continue
         
-        self.convert_input(user_input.lower())
+        self.convert_input(user_input)
+        
+    
+    def read_file(self, file_name):
+        
+        file = file_name + ".txt"
+        
+        file = Path.join(self.folder, file)
+        
+        with open(file, "r") as f:
+            
+            temp_commands = f.readlines()
+            f.close()
+        
+        commands = []
+            
+        for coms in temp_commands:
+            
+            commands.append(coms.replace("\n", ""))
+            
+        print(commands)
+        
+        self.run = True
+            
+        for item in commands:
+            
+            match self.mode.lower():
+            
+                case "computer":
+                    
+                    prompt = f"{self.current_root.name.capitalize()}>{self.current_cluster.name.capitalize()}>{self.current_computer.name.capitalize()}>"
+                    
+                case "cluster":
+                    
+                    prompt = f"{self.current_root.name.capitalize()}>{self.current_cluster.name.capitalize()}>"
+                    
+                case "root":
+                    
+                    prompt = f"{self.current_root.name.capitalize()}>"
+                    
+                case _:
+                    
+                    prompt = "None>"
+            
+            print(f"{prompt}{item}")
+            self.convert_input(item)
+            
+        self.run = False
+            
 
     
     def convert_input(self, command):
@@ -342,8 +373,10 @@ class CLI_Interpreter:
         elif current_step:
                     
             print(current_step)
+            
+        if not self.run:
 
-        self.take_input(f"{default_text}")
+            self.take_input(f"{default_text}")
         
     def select_root(self, mode):
         
@@ -352,8 +385,6 @@ class CLI_Interpreter:
         self.update_dicts()
    
         print(f"selected the {mode}")
-        
-        self.take_input("")
         
             
     def select_cluster(self, mode, cluster):
@@ -365,8 +396,6 @@ class CLI_Interpreter:
         self.update_dicts()
    
         print(f"selected the {mode}")
-        
-        self.take_input("")
 
         
     def select_computer(self, mode, cluster, computer):
@@ -381,14 +410,16 @@ class CLI_Interpreter:
    
         print(f"selected the {mode}")
         
-        self.take_input("")
-        
 
     def update_dicts(self):
         
         print(self.current_cluster)
 
         clusters = self.current_root.clusters
+        
+        if self.current_computer:
+            
+            self.computer_commands["get_processes"]["?algo"] = (self.current_computer.get_processes, )
         
         for item in clusters.keys():
             

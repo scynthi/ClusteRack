@@ -1,0 +1,5 @@
+select root
+create_cluster borgerer
+select cluster borgerer
+create_computer computer1
+select computer borgerer computer1
