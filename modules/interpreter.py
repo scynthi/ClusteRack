@@ -5,8 +5,7 @@ import shlex
 from modules.cluster import Cluster
 from modules.computer import Computer
 from modules.root import Root
-import time
-import keyboard
+import msvcrt
 import sys
 
 class CLI_Interpreter:
@@ -32,6 +31,8 @@ class CLI_Interpreter:
         self.current_root : Root = root
         
         computers = self.current_cluster.computers
+        
+        self.previous_commands = []
         
         comps = []
         
@@ -148,52 +149,120 @@ class CLI_Interpreter:
         sys.stdout.write(f"{prompt}>{user_input}")
         sys.stdout.flush()
         
+        prev_com_index = -1
+        
+        cursor_pos = 0
+        
         while True:
             
-            key_event = keyboard.read_event()
+            key_event = msvcrt.getch()
+                
+            if key_event == b"\t":
+                
+                current_step, arguments, success, user_input = self.cicle_through_commands(self.root_commands, shlex.split(user_input), user_input, True)
+                cursor_pos = len(user_input)
+                sys.stdout.write("\r")
+                sys.stdout.write(f"{prompt}>{user_input[:cursor_pos] + "|" + user_input[cursor_pos:]}")
+                sys.stdout.write("\033[K")
+                sys.stdout.flush()
+                continue  # Keep waiting for user input
+            
+            elif key_event == b'\x48':  # Up arrow
+                
+                if prev_com_index < len(self.previous_commands) - 1:
+                    
+                    prev_com_index += 1
 
-            if key_event.event_type == "down":  # Only capture key presses (not releases)
-                
-                if key_event.name == "tab":
+                if len(self.previous_commands) != 0:
                     
-                    current_step, arguments, success, user_input = self.cicle_through_commands(self.root_commands, shlex.split(user_input), user_input, True)
-                    sys.stdout.write("\r")
-                    sys.stdout.write(f"{prompt}>{user_input}")
-                    sys.stdout.write("\033[K")
-                    sys.stdout.flush()
-                    continue  # Keep waiting for user input
+                    user_input = self.previous_commands[prev_com_index]
                 
-                elif key_event.name == "enter":
-                    
-                    print("\n", flush=True)
-                    break  # Stop input
+                cursor_pos = len(user_input)
+                sys.stdout.write("\r")
+                sys.stdout.write(f"{prompt}>{user_input[:cursor_pos] + "|" + user_input[cursor_pos:]}")
+                sys.stdout.write("\033[K")
+                sys.stdout.flush()
                 
-                elif key_event.name == "backspace":
-                    
-                    user_input = user_input[:-1]  # Remove last character
-                    sys.stdout.write("\r")
-                    sys.stdout.write(f"{prompt}>{user_input}")
-                    sys.stdout.write("\033[K")
-                    sys.stdout.flush()
-                    continue
+            elif key_event == b'\x50':  # Down arrow
                 
-                elif key_event.name == "space":
+                if prev_com_index > 0:
                     
-                    user_input += " "
-                    sys.stdout.write("\r")
-                    sys.stdout.write(f"{prompt}>{user_input}")
-                    sys.stdout.write("\033[K")
-                    sys.stdout.flush()
-                    continue
+                    prev_com_index -= 1
+ 
+                if len(self.previous_commands) != 0:
+                    
+                    user_input = self.previous_commands[prev_com_index]
                 
-                elif len(key_event.name) == 1:  # Normal character input
+                cursor_pos = len(user_input)
+                sys.stdout.write("\r")
+                sys.stdout.write(f"{prompt}>{user_input[:cursor_pos] + "|" + user_input[cursor_pos:]}")
+                sys.stdout.write("\033[K")
+                sys.stdout.flush()
+                
+            elif key_event == b'\x4b':  # Left arrow
+                
+                if cursor_pos > 0:
+                    cursor_pos -= 1
                     
-                    user_input += key_event.name
-                    sys.stdout.write("\r")
-                    sys.stdout.write(f"{prompt}>{user_input}")
-                    sys.stdout.write("\033[K")
-                    sys.stdout.flush()
-                    continue
+                print(cursor_pos)
+                
+                sys.stdout.write("\r")
+                sys.stdout.write(f"{prompt}>{user_input[:cursor_pos] + "|" + user_input[cursor_pos:]}")
+                sys.stdout.write("\033[K")
+                sys.stdout.flush()
+                continue
+                
+            elif key_event == b'\x4d':  # Right arrow
+                
+                if cursor_pos < len(user_input):
+                    cursor_pos += 1
+                
+                print(len(user_input), user_input)
+                print(cursor_pos)
+                    
+                sys.stdout.write("\r")
+                sys.stdout.write(f"{prompt}>{user_input[:cursor_pos] + "|" + user_input[cursor_pos:]}")
+                sys.stdout.write("\033[K")
+                sys.stdout.flush()
+            
+            elif key_event == b"\r":
+                
+                print()
+                if "\x00" in user_input:
+                    
+                    user_input = user_input.replace("\x00", "")
+                self.previous_commands.insert(0, user_input)
+                break  # Stop input
+            
+            elif key_event == b"\x08":
+                if cursor_pos > 0:
+                    user_input = user_input[:cursor_pos-1] + user_input[cursor_pos:]
+                    cursor_pos -= 1
+                sys.stdout.write("\r")
+                sys.stdout.write(f"{prompt}>{user_input[:cursor_pos] + "|" + user_input[cursor_pos:]}")
+                sys.stdout.write("\033[K")
+                sys.stdout.flush()
+                continue
+            
+            elif key_event == b" ":
+                
+                user_input += " "
+                cursor_pos += 1
+                sys.stdout.write("\r")
+                sys.stdout.write(f"{prompt}>{user_input[:cursor_pos] + "|" + user_input[cursor_pos:]}")
+                sys.stdout.write("\033[K")
+                sys.stdout.flush()
+                continue
+            
+            else:
+                
+                user_input = user_input[:cursor_pos] + key_event.decode('utf-8') + user_input[cursor_pos:]
+                cursor_pos += 1
+                sys.stdout.write("\r")
+                sys.stdout.write(f"{prompt}>{user_input[:cursor_pos] + "|" + user_input[cursor_pos:]}")
+                sys.stdout.write("\033[K")
+                sys.stdout.flush()
+                continue
         
         self.convert_input(user_input.lower())
 
@@ -387,10 +456,9 @@ class CLI_Interpreter:
                 
     
     def exit(self):
-
         print("Bye Bye")
-        sys.stdout.write()
-        sys.exit()
+        sys.stdout.flush()  # Flush output buffer
+        sys.exit()  # Terminate the program
 
     def cicle_through_commands(self, command_dict, shlashed_command, original_command, tab):
 
@@ -431,7 +499,7 @@ class CLI_Interpreter:
                                     
                                 current_step += coms + "\n"
                                 
-                    return current_step, "", True, ""
+                    return current_step, "", True, f"{original_command[:-2]}"
                 
                 if item == "non_args" or item == "?value":
                     
@@ -465,8 +533,6 @@ class CLI_Interpreter:
                             finished = finished[len(item):]
 
                             original_command += finished
-                            
-                            print(original_command)
                             
                             return f"Did you mean {keys}?", "", False, original_command
                         
