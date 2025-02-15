@@ -239,7 +239,7 @@ class CLI_Interpreter:
             
             elif key_event == b" ":
                 
-                user_input += " "
+                user_input = user_input[:cursor_pos] + " " + user_input[cursor_pos:]
                 cursor_pos += 1
                 sys.stdout.write("\r")
                 sys.stdout.write(f"{prompt}>{user_input[:cursor_pos]}|{user_input[cursor_pos:]}")
