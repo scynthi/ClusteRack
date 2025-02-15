@@ -3,11 +3,10 @@ from modules.cluster import Cluster
 from modules.root import Root
 from modules.interpreter import CLI_Interpreter
 
-root : Root = Root(r"./Test folder")
+root : Root = Root(r"./Thing")
 # cluster : Cluster = root.clusters.get("test_cluster")
 
-root.relocate_process("MAN", "test_cluster1", "test_cluster")
-
+root.rename_cluster("cluster4", "cluster0")
 # cluster1.start_process("jani", False, 100,100,2)
 # cluster1.kill_process("jani")
 

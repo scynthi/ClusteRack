@@ -84,7 +84,6 @@ class Computer:
                 process_list[process] = self.get_process_info(process)
             except:
                 self.print(f"{Fore.BLACK}{Back.RED}CRITICAL ERROR DETECTED: process ({process}) is incorrect.")
-    
 
         return process_list
 
