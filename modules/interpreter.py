@@ -34,7 +34,7 @@ class CLI_Interpreter:
             "select" : {
                 "root" : {"?algo" : (self.select_root, )},
                 "cluster" : {},
-                "computer" : {"non_args" : 1}
+                "computer" : {"?non_args" : 1}
             },
             "exit" : {"?algo" : (self.exit, )},
             "create_cluster" : {"<cluster name" : {"?algo" : (self.current_root.create_cluster, )}},
@@ -50,7 +50,7 @@ class CLI_Interpreter:
             "select" : {
                 "root" : {"?algo" : (self.select_root, )},
                 "cluster" : {},
-                "computer" : {"non_args" : 1}
+                "computer" : {"?non_args" : 1}
             },
             "exit" : {"?algo" : (self.exit, )},
             # "set_default_rebalance_algo" : {"load_balance" : {"?algo" : (self.current_cluster.set_default_rebalance_algo, )}, "best_fit" : {"?algo" : (self.current_cluster.set_default_rebalance_algo, )}, "fast" : {"?algo" : (self.current_cluster.set_default_rebalance_algo, )}},
@@ -71,7 +71,7 @@ class CLI_Interpreter:
             "select" : {
                 "root" : {"?algo" : (self.select_root, )},
                 "cluster" : {},
-                "computer" : {"non_args" : 1}
+                "computer" : {"?non_args" : 1}
             },
             "exit" : {"?algo" : (self.exit, )},
             "run" : {"<file name" : {"?algo" : (self.read_file, )}},
@@ -83,7 +83,7 @@ class CLI_Interpreter:
             "select" : {
                 "root" : {"?algo" : (self.select_root, )},
                 "cluster" : {},
-                "computer" : {"non_args" : 1}
+                "computer" : {"?non_args" : 1}
             },
             "exit" : {"?algo" : (self.exit, )},
             "run" : {"<file name" : {"?algo" : (self.read_file, )}}
@@ -195,7 +195,7 @@ class CLI_Interpreter:
                     sys.stdout.write(f"{prompt}>{user_input[:cursor_pos]}|{user_input[cursor_pos:]}")
                     sys.stdout.write("\033[K")
                     sys.stdout.flush()
-                    
+
                 elif ch2 == b'\x50':  # Down arrow
                     
                     if prev_com_index > 0:
@@ -512,9 +512,9 @@ class CLI_Interpreter:
         try:
             for item in shlashed_command:
                 
-                if "non_args" in current_step.keys():
+                if "?non_args" in current_step.keys():
                 
-                    skips = current_step["non_args"]
+                    skips = current_step["?non_args"]
                 
                 temp = False
                 
@@ -530,7 +530,7 @@ class CLI_Interpreter:
                          
                     for coms in keys:
                         
-                        if coms != "non_args" and coms != "?value":
+                        if coms != "?non_args" and coms != "?value":
                         
                             if "<" in coms:
                                 
@@ -542,7 +542,7 @@ class CLI_Interpreter:
                                 
                     return current_step, "", True, f"{original_command[:-2]}"
                 
-                if item == "non_args" or item == "?value":
+                if item == "?non_args" or item == "?value":
                     
                     return "Can't type that bruw", "", False, original_command
 
@@ -577,7 +577,7 @@ class CLI_Interpreter:
                             
                             return f"Did you mean {keys}?", "", False, original_command
                         
-                        return f"Command not found", "", False, original_command
+                        return f"Keyerror: {item}", "", False, original_command
                 
                 if type(current_step[temp_item]) != tuple:
                     
