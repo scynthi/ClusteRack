@@ -270,7 +270,7 @@ class ComputerBoard:
         UI.Label(self.resources_frame, text=f"Memory: {self.computer.memory} MB").grid(row=1, column=0, sticky="w", padx=10)
         UI.Label(self.resources_frame, text=f"Free cores: {self.computer.free_cores} millicores").grid(row=2, column=0, sticky="w", padx=10)
         UI.Label(self.resources_frame, text=f"Free memory: {self.computer.free_memory} MB").grid(row=3, column=0, sticky="w", padx=10)
-        UI.Label(self.resources_frame, text=f"Processes: {len(self.computer.get_processes().keys())}").grid(row=4, column=0, sticky="w", padx=10)
+        UI.Label(self.resources_frame, text=f"Processes: {len(self.computer.get_prog_instances().keys())}").grid(row=4, column=0, sticky="w", padx=10)
     
         self.processes_frame : UI.Frame = UI.Frame(self.frame)
         self.processes_frame.grid(row=2, column=0, columnspan=2, sticky="nsew")
@@ -283,8 +283,8 @@ class ComputerBoard:
 
         UI.Label(self.processes_scrollbar_frame, "Process list", font=extra_large_font).grid(row=0, column=0)
 
-        for i, process in enumerate(self.computer.get_processes()):
-            process_info : dict = self.computer.get_process_info(process)
+        for i, process in enumerate(self.computer.get_prog_instances()):
+            process_info : dict = self.computer.get_prog_instance_info(process)
 
             process_help_frame : UI.Frame = UI.Frame(self.processes_scrollbar_frame)
             process_help_frame.grid(row=i+1, column=0, pady=5, sticky="EW")
