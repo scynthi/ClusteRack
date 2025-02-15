@@ -38,7 +38,6 @@ class Computer:
 
 
     def validate_computer(self) -> bool:
-        # self.cleanup()
         usage: dict = self.calculate_resource_usage()
 
         if usage["memory_usage_percent"] > 100:
@@ -59,7 +58,7 @@ class Computer:
         cpu_usage: int = 0
 
         for _, info in prog_instances.items():
-            if info["status"]:
+            if info["status"] == "AKTÍV":
                 memory_usage += int(info["memory"])
                 cpu_usage += int(info["cores"])
 
@@ -75,21 +74,21 @@ class Computer:
         Ok cro pussoltam es itt volt egy merge conflict ahelyett hogy kitalalom hogy itt mi a jo (gondolom a get processes mar nem kell), rad hagyom balls
     """
 
-    def get_processes(self) -> dict:
-        """Gives back all the running processes on the computer"""
-        files: list = os.listdir(self.path)
-        process_list: dict = {}
+    # def get_processes(self) -> dict:
+    #     """Gives back all the running processes on the computer"""
+    #     files: list = os.listdir(self.path)
+    #     process_list: dict = {}
 
-        if ".szamitogep_config" in files:
-            files.remove(".szamitogep_config")
+    #     if ".szamitogep_config" in files:
+    #         files.remove(".szamitogep_config")
 
-        for process in files:
-            try:
-                process_list[process] = self.get_process_info(process)
-            except:
-                self.print(f"{Fore.BLACK}{Back.RED}CRITICAL ERROR DETECTED: process ({process}) is incorrect.")
+    #     for process in files:
+    #         try:
+    #             process_list[process] = self.get_process_info(process)
+    #         except:
+    #             self.print(f"{Fore.BLACK}{Back.RED}CRITICAL ERROR DETECTED: process ({process}) is incorrect.")
 
-        return process_list
+    #     return process_list
     
     def get_prog_instances(self) -> dict:
         """Return only valid instances"""
@@ -112,13 +111,15 @@ class Computer:
                 return None
                 
             name_part, instance_id = filename.split("-")
-            with open(Path.join(self.path, filename), "r") as f:
+            with open(Path.join(self.path, filename), "r", encoding="utf8") as f:
                 lines = [line.strip() for line in f.readlines()]
                 
+            status = True if lines[1] == "AKTÍV" else False
+
             return {
                 "name": name_part,
                 "id": instance_id,
-                "status": lines[1] == "AKTÍV",
+                "status": status,
                 "cores": int(lines[2]),
                 "memory": int(lines[3]),
                 "date_started": lines[0]
@@ -146,9 +147,9 @@ class Computer:
         except:
             return False
 
-    def edit_instance(self, instance_id: str, property_name: str, new_value: str) -> bool:
+    def edit_instance(self, instance_name: str, property_name: str, new_value: str) -> bool:
         """Edit an existing instance file"""
-        instance_path = Path.join(self.path, instance_id)
+        instance_path = Path.join(self.path, instance_name)
         
         if not self.is_prog_instance_file(instance_path):
             return False
@@ -178,8 +179,57 @@ class Computer:
             
             return True
         except Exception as e:
-            self.print(f"Failed to edit instance {instance_id}: {str(e)}")
+            self.print(f"Failed to edit instance {instance_name}: {str(e)}")
             return False
+
+    def add_instance(self, instance: dict) -> bool:
+        """Adds an instance file to the computer."""
+        instance_filename = f"{instance['program']}-{instance['id']}"
+        instance_path = Path.join(self.path, instance_filename)
+
+        # Ensure there's enough resources
+        if not self.can_fit_instance(instance):
+            self.print(f"{Fore.RED}Not enough resources to place instance {instance_filename}.")
+            return False
+
+        try:
+            with open(instance_path, "w", encoding="utf8") as f:
+                f.write(f"{instance['date_started']}\n")
+                f.write(f"{"AKTÍV" if instance['status'] == True else "INAKTÍV"}\n")
+                f.write(f"{instance['cores']}\n")
+                f.write(f"{instance['memory']}\n")
+
+            # Update resource usage
+            self.calculate_resource_usage()
+            return True
+        except Exception as e:
+            self.print(f"{Fore.RED}Failed to add instance {instance_filename}: {str(e)}")
+            return False
+
+
+    def remove_instance(self, instance_id: str) -> bool:
+        """Removes an instance file from the computer."""
+        instance_path = Path.join(self.path, instance_id)
+        
+        if not Path.exists(instance_path):
+            self.print(f"{Fore.YELLOW}Instance {instance_id} not found on this computer.")
+            return False
+
+        try:
+            os.remove(instance_path)
+            self.calculate_resource_usage()
+            return True
+        except Exception as e:
+            self.print(f"{Fore.RED}Failed to remove instance {instance_id}: {str(e)}")
+            return False
+
+
+    def can_fit_instance(self, instance: dict) -> bool:
+        """Checks if the computer has enough free resources for an instance."""
+        return (
+            self.free_cores >= instance["cores"] and
+            self.free_memory >= instance["memory"]
+        )
 
 #MISC.
     def cleanup(self) -> bool:

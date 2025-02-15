@@ -373,6 +373,8 @@ class CLI_Interpreter:
         elif current_step:
                     
             print(current_step)
+        
+        self.update_dicts()
             
         if not self.run:
 
