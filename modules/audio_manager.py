@@ -38,14 +38,19 @@ class AudioManager:
         self.close_program_sound: mixer.Sound = mixer.Sound(r"Assets\Sounds\close_program.wav")
         self.error_sound: mixer.Sound = mixer.Sound(r"Assets\Sounds\error.wav")
         self.notification_sound: mixer.Sound = mixer.Sound(r"Assets\Sounds\notification.wav")
+        self.accept_sound: mixer.Sound = mixer.Sound(r"Assets\Sounds\accept.wav")
 
         self.last_click_sound: mixer.Sound | None = None
-    
 
     def play_startup(self) -> None:
         if not self.initialized: return
 
         self.startup_channel.play(self.startup_sound)
+
+    def play_accept(self) -> None:
+        if not self.initialized: return
+
+        self.misc_channel.play(self.accept_sound)
     
     def play_close_computer(self) -> None:
         if not self.initialized: return

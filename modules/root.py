@@ -193,7 +193,7 @@ class Root:
 
         if Path.exists(path):
             self.print(f"{Fore.RED}Cluster ({cluster_name}) already exists and will NOT be created.")
-            return self.clusters[cluster_name]
+            return False
         
         try:
             os.mkdir(path)
@@ -207,7 +207,7 @@ class Root:
             return self.clusters.get(cluster_name)
         except:
             self.print(f"{Fore.RED}Error while creating cluster '{cluster_name}'.")
-            return
+            return False
 
 
     def delete_cluster(self, cluster_name : str, mode : str = "try") -> bool:

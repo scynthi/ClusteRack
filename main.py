@@ -2,10 +2,11 @@ from customtkinter import *
 from tkinter import *
 from PIL import Image
 from os import path as Path
-from modules.ui import UI, AppWindow, DGRAY, LGRAY, DBLUE, LBLUE, large_font, small_font, extra_large_font
+from modules.ui import UI, AppWindow, DGRAY, LGRAY, DBLUE, LBLUE, large_font, small_font, extra_large_font, bold_large_font
 from modules.root import Root
 from modules.cluster import Cluster
 from modules.computer import Computer
+from modules.subwindow import SubWindow, ClusterCreateSubWindow
 
 app : AppWindow = AppWindow("1000x600")
 content : Frame = app.content
@@ -93,7 +94,7 @@ class ClusterView:
                     label.grid(row=0, column=x, padx=5)
             else:
                 image_frame.grid_rowconfigure(0, weight=1)
-                UI.Label(image_frame, text="0 computers have been detected").grid(row=0, column=0)
+                UI.Label(image_frame, text="0 computers have been detected").grid(row=0, column=0, padx=5)
 
         add_cluster_frame : UI.Frame = UI.Frame(self.clusters_frame)
         add_cluster_frame.grid_rowconfigure(1, weight=1)
@@ -105,7 +106,7 @@ class ClusterView:
         image_frame.grid_rowconfigure(0, weight=1)
 
         UI.Label(add_cluster_frame, text="New cluster", font=large_font).grid(row=0, column=0)
-        UI.Button(image_frame, text="Create new cluster", command=UI.SubWindow).grid(row=0, column=0)
+        UI.Button(image_frame, text="Create new cluster", command=lambda: ClusterCreateSubWindow(root, self)).grid(row=0, column=0)
 
 
     def open_cluster_tab(self, cluster : Cluster) -> None:
@@ -118,6 +119,9 @@ class ClusterView:
 
     def reload(self) -> None:
         self.clusters_frame.destroy()
+        try:
+            self.cluster_tab.destroy()
+        except: pass
         self.__init__()
 
 
@@ -142,56 +146,51 @@ class ClusterBoard:
         self.button_frame.grid(row=0, column=0, sticky="EWNS")
         self.button_frame.grid_columnconfigure(0, weight=1)
 
-        UI.Label(self.button_frame, text=f"Cluster", font=extra_large_font).grid(row=0, column=0, pady=5, padx=10, sticky="we")
-        UI.Button(self.button_frame, text=f"Rename cluster", command=UI.SubWindow).grid(row=1, column=0, pady=5, padx=10, sticky="we")
-        UI.Button(self.button_frame, text=f"Rename computer", command=UI.SubWindow).grid(row=2, column=0, pady=5, padx=10, sticky="we")
-        UI.Button(self.button_frame, text=f"Move computer", command=UI.SubWindow).grid(row=3, column=0, pady=5, padx=10, sticky="we")
-        UI.Button(self.button_frame, text=f"Create computer", command=UI.SubWindow).grid(row=4, column=0, pady=5, padx=10, sticky="we")
-        UI.Button(self.button_frame, text=f"Edit computer", command=UI.SubWindow).grid(row=5, column=0, pady=5, padx=10, sticky="we")
-        UI.Button(self.button_frame, text=f"Delete computer", command=UI.SubWindow).grid(row=6, column=0, pady=5, padx=10, sticky="we")
+        UI.Label(self.frame, text="Commands", font=extra_large_font, text_color=DBLUE).grid(row=0, column=0, pady=12)
+
+        UI.Button(self.button_frame, text=f"Create computer", command=SubWindow).grid(row=0, column=0, pady=5, padx=10, sticky="we")
+        UI.Button(self.button_frame, text=f"Start program", command=SubWindow).grid(row=1, column=0, pady=5, padx=10, sticky="we")
+        UI.Button(self.button_frame, text=f"Algorithm settings", command=SubWindow).grid(row=2, column=0, pady=5, padx=10, sticky="we")
+        UI.Button(self.button_frame, text=f"Move program", command=SubWindow).grid(row=3, column=0, pady=5, padx=10, sticky="we")
+        UI.Button(self.button_frame, text=f"Edit cluster name", command=SubWindow).grid(row=4, column=0, pady=5, padx=10, sticky="we")
+        UI.Button(self.button_frame, text=f"Delete cluster", command=SubWindow).grid(row=5, column=0, pady=5, padx=10, sticky="we")
 
 
-        UI.Button(self.button_frame, text=f"Algorithm settings", command=UI.SubWindow).grid(row=7, column=0, pady=5, padx=10, sticky="we")
-        UI.Button(self.button_frame, text=f"Start process", command=UI.SubWindow).grid(row=8, column=0, pady=5, padx=10, sticky="we")
-        UI.Button(self.button_frame, text=f"Relocate process", command=UI.SubWindow).grid(row=9, column=0, pady=5, padx=10, sticky="we")
-        UI.Button(self.button_frame, text=f"Kill process", command=UI.SubWindow).grid(row=10, column=0, pady=5, padx=10, sticky="we")
-        UI.Button(self.button_frame, text=f"Edit process", command=UI.SubWindow).grid(row=11, column=0, pady=5, padx=10, sticky="we")
-        UI.Button(self.button_frame, text=f"Rename process", command=UI.SubWindow).grid(row=12, column=0, pady=5, padx=10, sticky="we")
+        program_help_frame : UI.Frame = UI.Frame(self.frame)
+        program_help_frame.grid(row=2, column=1, sticky="EWNS")
+        program_help_frame.grid_rowconfigure(0, weight=1)
+        program_help_frame.grid_columnconfigure(0, weight=1)
 
-        process_help_frame : UI.Frame = UI.Frame(self.frame)
-        process_help_frame.grid(row=2, column=1, sticky="EWNS")
-        process_help_frame.grid_rowconfigure(0, weight=1)
-        process_help_frame.grid_columnconfigure(0, weight=1)
+        self.program_frame : CTkScrollableFrame = CTkScrollableFrame(program_help_frame, orientation="vertical")
+        self.program_frame.grid(row=0, column=0, sticky="EWNS")
+        self.program_frame.grid_columnconfigure(0, weight=1)
 
-        self.processes_frame : CTkScrollableFrame = CTkScrollableFrame(process_help_frame, orientation="vertical")
-        self.processes_frame.grid(row=0, column=0, sticky="EWNS")
-        self.processes_frame.grid_columnconfigure(0, weight=1)
+        UI.Label(self.program_frame, text="Program list", font=extra_large_font).grid(row=0, column=0)
 
-        UI.Label(self.processes_frame, text="Program list", font=extra_large_font).grid(row=0, column=0)
-        UI.Label(self.processes_frame, text="Active", font=extra_large_font).grid(row=1, column=0)
-        # for i, process in enumerate(cluster.active_processes.keys()):
-        #     temp_proc_frame : UI.Frame = UI.Frame(self.processes_frame)
-        #     temp_proc_frame.grid(row=i+2, column=0, sticky="EW", pady=5)
+        for i, program in enumerate(cluster.programs):
+            temp_program_frame : UI.Frame = UI.Frame(self.program_frame)
+            temp_program_frame.grid(row=i+1, column=0, sticky="EW", pady=5)
+        
+            UI.Button(temp_program_frame, text=f"{program}".upper(), font=bold_large_font).grid(row=0, column=0, sticky="ew")
+            UI.Label(temp_program_frame, text=f"Required instances: {cluster.programs[program]["required_count"]}").grid(row=1, column=0, pady=10, sticky="w")
+            
+            temp_program_frame.grid_columnconfigure(0, weight=1)
+            help_button_frame : UI.Frame = UI.Frame(temp_program_frame)
+            help_button_frame.grid(row=2, column=0, sticky="ew")
+            help_button_frame.grid_columnconfigure([0,1,2], weight=1)
+            UI.Button(help_button_frame, text="Pause").grid(row=2, column=0, sticky="ew")
+            UI.Button(help_button_frame, text="Start").grid(row=2, column=1, sticky="ew")
+            UI.Button(help_button_frame, text="Kill").grid(row=2, column=2, sticky="ew")
+            UI.Button(help_button_frame, text="Edit").grid(row=3, column=0, columnspan=3, sticky="ew")
 
-        #     UI.Button(temp_proc_frame, text=process).grid(row=0, column=0, sticky="w")
-        #     UI.Label(temp_proc_frame, text=f"Instaces: {cluster.active_processes[process]["instance_count"]}").grid(row=1, column=0)
 
-
-        # UI.Label(self.processes_frame, text="Inactive", font=extra_large_font).grid(row=len(cluster.active_processes.keys())+2, column=0)
-        # for i, process in enumerate(cluster.inactive_processes.keys()):
-        #     temp_proc_frame : UI.Frame = UI.Frame(self.processes_frame)
-        #     temp_proc_frame.grid(row=len(cluster.inactive_processes.keys())+i+5, column=0, sticky="EW", pady=5)
-
-        #     UI.Button(temp_proc_frame, text=process).grid(row=0, column=0, sticky="w")
-        #     UI.Label(temp_proc_frame, text=f"Instaces: {cluster.inactive_processes[process]["instance_count"]}").grid(row=1, column=0)
-
-        UI.Label(self.frame, text=cluster.name, font=extra_large_font).grid(row=0, column=1)
+        UI.Label(self.frame, text=cluster.name, font=extra_large_font, text_color=DBLUE).grid(row=0, column=1)
 
         cluster_frame : UI.Frame = UI.Frame(self.frame)
         cluster_frame.grid(row=1, column=1, sticky="new")
         self.rack_model = UI.EmbedRenderer(cluster_frame, "rack_8", 12, app).get_renderer()
 
-        UI.Label(self.frame, text="Information", font=extra_large_font).grid(row=0, column=2)
+        UI.Label(self.frame, text="Information", font=extra_large_font, text_color=DBLUE).grid(row=0, column=2)
         self.info_frame : UI.Frame = UI.Frame(self.frame)
         self.info_frame.grid(column=2, row=1, sticky="EWN")
         
@@ -206,12 +205,17 @@ class ClusterBoard:
             memory += computer.memory
             free_memory += computer.free_memory
 
+        instance_count = 0
+        for program in cluster.instances.keys():
+            for _ in cluster.instances[program].keys():
+                instance_count += 1
+
         UI.Label(self.info_frame, text=f"Cores: {cores} millicores").grid(row=0, column=0, sticky="w", padx=10)
         UI.Label(self.info_frame, text=f"Memory: {memory} MB").grid(row=1, column=0, sticky="w", padx=10)
         UI.Label(self.info_frame, text=f"Free cores: {free_cores} millicores").grid(row=2, column=0, sticky="w", padx=10)
         UI.Label(self.info_frame, text=f"Free memory: {free_memory} MB").grid(row=3, column=0, sticky="w", padx=10)
-        UI.Label(self.info_frame, text=f"Running processes: {len(cluster.active_processes.keys())}").grid(row=4, column=0, sticky="w", padx=10)
-        UI.Label(self.info_frame, text=f"Stopped processes: {len(cluster.inactive_processes.keys())}").grid(row=5, column=0, sticky="w", padx=10)
+        UI.Label(self.info_frame, text=f"Programs: {len(cluster.programs)}").grid(row=4, column=0, sticky="w", padx=10)
+        UI.Label(self.info_frame, text=f"Instance count: {instance_count}").grid(row=5, column=0, sticky="w", padx=10)
         UI.Label(self.info_frame, text=f"Computers: {len(cluster.computers.keys())}").grid(row=6, column=0, sticky="w", padx=10)        
 
 
@@ -258,19 +262,28 @@ class ComputerBoard:
         self.frame.grid(row=0, column=1, sticky="nsew")
 
         UI.Label(self.frame, computer.name, font=extra_large_font).grid(row=0, column=0)
-        computer_frame : UI.Frame = UI.Frame(self.frame)
-        computer_frame.grid(row=1, column=0, sticky="nesw")
-        self.computer_model = UI.EmbedRenderer(computer_frame, "computer", 10, app).get_renderer()
+        self.computer_frame : UI.Frame = UI.Frame(self.frame)
+        self.computer_frame.grid(row=1, column=0, sticky="nesw")
+        self.computer_frame.grid_rowconfigure(2, weight=1)
+
+        self.computer_model = UI.EmbedRenderer(self.computer_frame, "computer", 10, app).get_renderer()
+        UI.Button(self.computer_frame, text="Delete computer").grid(row=2, column=0, sticky="sew", padx=10)
+        UI.Button(self.computer_frame, text="Move computer").grid(row=3, column=0, sticky="sew", padx=10)
+
 
         UI.Label(self.frame, "Resources", font=extra_large_font).grid(row=0, column=1)
         self.resources_frame : UI.Frame = UI.Frame(self.frame)
         self.resources_frame.grid(row=1, column=1, sticky="NS")
+        self.resources_frame.grid_rowconfigure(5, weight=1)
+
 
         UI.Label(self.resources_frame, text=f"Cores: {self.computer.cores} millicores").grid(row=0, column=0, sticky="w", padx=10)
         UI.Label(self.resources_frame, text=f"Memory: {self.computer.memory} MB").grid(row=1, column=0, sticky="w", padx=10)
         UI.Label(self.resources_frame, text=f"Free cores: {self.computer.free_cores} millicores").grid(row=2, column=0, sticky="w", padx=10)
         UI.Label(self.resources_frame, text=f"Free memory: {self.computer.free_memory} MB").grid(row=3, column=0, sticky="w", padx=10)
         UI.Label(self.resources_frame, text=f"Processes: {len(self.computer.get_prog_instances().keys())}").grid(row=4, column=0, sticky="w", padx=10)
+        UI.Button(self.resources_frame, text="Edit Resources").grid(row=5, column=0, sticky="sew", padx=10)
+        UI.Button(self.resources_frame, text="Change name").grid(row=6, column=0, sticky="sew", padx=10)
     
         self.processes_frame : UI.Frame = UI.Frame(self.frame)
         self.processes_frame.grid(row=2, column=0, columnspan=2, sticky="nsew")
