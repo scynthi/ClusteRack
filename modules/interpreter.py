@@ -152,7 +152,7 @@ class CLI_Interpreter:
                 
             if key_event == b"\t":
                 
-                current_step, arguments, success, user_input = self.cicle_through_commands(self.root_commands, shlex.split(user_input), user_input, True)
+                current_step, arguments, success, user_input = self.cicle_through_commands(self.root_commands, shlex.split(user_input), user_input, True, cursor_pos)
                 cursor_pos = len(user_input)
                 sys.stdout.write("\r")
                 sys.stdout.write(f"{prompt}>{user_input[:cursor_pos]}|{user_input[cursor_pos:]}")
@@ -322,13 +322,13 @@ class CLI_Interpreter:
             
             case "root":
                 
-                current_step, arguments, success, default_text = self.cicle_through_commands(self.root_commands, shlashed_command, command, False)
+                current_step, arguments, success, default_text = self.cicle_through_commands(self.root_commands, shlashed_command, command, False, 0)
                     
             case "cluster":
                 
                 try:
 
-                    current_step, arguments, success, default_text = self.cicle_through_commands(self.cluster_commands, shlashed_command, command, False)
+                    current_step, arguments, success, default_text = self.cicle_through_commands(self.cluster_commands, shlashed_command, command, False, 0)
 
                 except Exception as e:
 
@@ -339,7 +339,7 @@ class CLI_Interpreter:
                 
                 try:
 
-                    current_step, arguments, success, default_text = self.cicle_through_commands(self.noMode_commands, shlashed_command, command, False)
+                    current_step, arguments, success, default_text = self.cicle_through_commands(self.noMode_commands, shlashed_command, command, False, 0)
 
                 except Exception as e:
 
@@ -350,7 +350,7 @@ class CLI_Interpreter:
                 
                 try:
 
-                    current_step, arguments, success, default_text = self.cicle_through_commands(self.noMode_commands, shlashed_command, command, False)
+                    current_step, arguments, success, default_text = self.cicle_through_commands(self.noMode_commands, shlashed_command, command, False, 0)
 
                 except Exception as e:
 
@@ -503,7 +503,7 @@ class CLI_Interpreter:
         sys.stdout.flush()  # Flush output buffer
         sys.exit()  # Terminate the program
 
-    def cicle_through_commands(self, command_dict, shlashed_command, original_command, tab):
+    def cicle_through_commands(self, command_dict, shlashed_command : list, original_command : str, tab, cursor_pos):
 
         current_step : dict = command_dict
 
@@ -574,8 +574,10 @@ class CLI_Interpreter:
                         if items == 1 and tab:
 
                             finished = finished[len(item):]
+                            
+                            if original_command.index(item)+len(item) == cursor_pos:
 
-                            original_command += finished
+                                original_command += finished
                             
                             return f"Did you mean {keys}?", "", False, original_command
                         
