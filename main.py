@@ -169,21 +169,21 @@ class ClusterBoard:
 
         UI.Label(self.processes_frame, text="Program list", font=extra_large_font).grid(row=0, column=0)
         UI.Label(self.processes_frame, text="Active", font=extra_large_font).grid(row=1, column=0)
-        for i, process in enumerate(cluster.active_processes.keys()):
-            temp_proc_frame : UI.Frame = UI.Frame(self.processes_frame)
-            temp_proc_frame.grid(row=i+2, column=0, sticky="EW", pady=5)
+        # for i, process in enumerate(cluster.active_processes.keys()):
+        #     temp_proc_frame : UI.Frame = UI.Frame(self.processes_frame)
+        #     temp_proc_frame.grid(row=i+2, column=0, sticky="EW", pady=5)
 
-            UI.Button(temp_proc_frame, text=process).grid(row=0, column=0, sticky="w")
-            UI.Label(temp_proc_frame, text=f"Instaces: {cluster.active_processes[process]["instance_count"]}").grid(row=1, column=0)
+        #     UI.Button(temp_proc_frame, text=process).grid(row=0, column=0, sticky="w")
+        #     UI.Label(temp_proc_frame, text=f"Instaces: {cluster.active_processes[process]["instance_count"]}").grid(row=1, column=0)
 
 
-        UI.Label(self.processes_frame, text="Inactive", font=extra_large_font).grid(row=len(cluster.active_processes.keys())+2, column=0)
-        for i, process in enumerate(cluster.inactive_processes.keys()):
-            temp_proc_frame : UI.Frame = UI.Frame(self.processes_frame)
-            temp_proc_frame.grid(row=len(cluster.inactive_processes.keys())+i+5, column=0, sticky="EW", pady=5)
+        # UI.Label(self.processes_frame, text="Inactive", font=extra_large_font).grid(row=len(cluster.active_processes.keys())+2, column=0)
+        # for i, process in enumerate(cluster.inactive_processes.keys()):
+        #     temp_proc_frame : UI.Frame = UI.Frame(self.processes_frame)
+        #     temp_proc_frame.grid(row=len(cluster.inactive_processes.keys())+i+5, column=0, sticky="EW", pady=5)
 
-            UI.Button(temp_proc_frame, text=process).grid(row=0, column=0, sticky="w")
-            UI.Label(temp_proc_frame, text=f"Instaces: {cluster.inactive_processes[process]["instance_count"]}").grid(row=1, column=0)
+        #     UI.Button(temp_proc_frame, text=process).grid(row=0, column=0, sticky="w")
+        #     UI.Label(temp_proc_frame, text=f"Instaces: {cluster.inactive_processes[process]["instance_count"]}").grid(row=1, column=0)
 
         UI.Label(self.frame, text=cluster.name, font=extra_large_font).grid(row=0, column=1)
 

@@ -31,7 +31,8 @@ class Root:
     def _load_clusters(self):
         """Update the cluster references"""
         files : list = os.listdir(self.path)
-        
+        self.clusters = {}
+
         for file in files:
             full_path : str = Path.normpath(Path.join(self.path, file))
             
@@ -201,9 +202,9 @@ class Root:
 
             self.print(f"{Fore.GREEN}Cluster ({cluster_name}) created successfully.")
 
-            self.clusters[cluster_name] = Cluster(path, self)
+            self._load_clusters()
 
-            return Cluster(path, self)
+            return self.clusters.get(cluster_name)
         except:
             self.print(f"{Fore.RED}Error while creating cluster '{cluster_name}'.")
             return
@@ -211,13 +212,13 @@ class Root:
 
     def delete_cluster(self, cluster_name : str, mode : str = "try") -> bool:
         """Deletes clusters either with soft mode('try') or force mode('f')"""
-
+        
         full_path: str = Path.join(self.path, cluster_name)
         if not Path.exists(full_path):
             self.print(f"{Fore.RED}Cluster ({cluster_name}) does not exist! Check the name and retry.")
             return False
         
-        
+        cluster : Cluster = self.clusters.get(cluster_name)
            
         if mode == "f":
             try:
@@ -233,17 +234,11 @@ class Root:
                 return False
 
         elif mode == "try":
+            if not len(cluster.computers.keys()) == 0:
+                self.print(f"{Fore.RED}Unable to delete cluster '{cluster_name}'. It has computers, try using delete_cluster(cluster_name, 'f').")
+                return False
+            
             try:
-                cluster : Cluster = self.clusters[cluster_name]
-
-                if cluster.computers:
-                    self.print(f"{Fore.RED}Unable to delete cluster '{cluster_name}'. It has computers, try using delete_cluster(cluster_name, 'f').")
-                    return False
-                
-                if Path.exists(Path.join(cluster.path, ".klaszter")):
-                    os.remove(Path.join(cluster.path, ".klaszter"))
-  
-
                 shutil.rmtree(full_path, ignore_errors=True)
 
                 self.print(f"{Fore.GREEN}Cluster '{cluster_name}' deleted successfully.")

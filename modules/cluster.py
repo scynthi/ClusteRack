@@ -53,17 +53,14 @@ class Cluster:
 
     def _load_computers(self):
         """Update the computer references"""
+        self.computers = {}
         files: list = os.listdir(self.path)
 
         if ".klaszter" in files:
             files.remove(".klaszter")
 
-        computer_dict: dict = {}
-
-        self.computers = {
-            file: Computer(Path.join(self.path, file), self)
-            for file in files
-        }
+        for file in files:
+            self.computers[file] = Computer(Path.join(self.path, file), self)
 
         self._check_duplicate_computer_names()
 
@@ -280,11 +277,11 @@ class Cluster:
         self._check_duplicate_instance_ids()
         self._update_distributable_instances()
 
-        self.print("================================")
-        self.print(self.programs)
-        self.print(self.instances)
-        self.print(self.distributable_instances)
-        self.print("================================")
+        # self.print("================================")
+        # self.print(self.programs)
+        # self.print(self.instances)
+        # self.print(self.distributable_instances)
+        # self.print("================================")
 # |
 
 # |
@@ -525,14 +522,13 @@ class Cluster:
         
         try:
             os.mkdir(full_path)
-            config_file = open(Path.join(full_path, ".szamitogep_config"), "w", encoding="utf8")
-            config_file.write(f"{cores}\n{memory}")
-            config_file.close()
+            with open(Path.join(full_path, ".szamitogep_config"), "w", encoding="utf8") as config_file:
+                config_file.write(f"{cores}\n{memory}")
 
             self.print(f"{Fore.GREEN}Computer ({computer_name}) created successfully.")
             
             self._load_computers()
-            return Computer(full_path, self)
+            return self.computers.get(computer_name)
         except:
             self.print(f"{Fore.RED}Error while creating computer '{computer_name}'.")
             return
