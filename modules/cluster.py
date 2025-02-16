@@ -44,12 +44,6 @@ class Cluster:
         self.print(f"{Fore.BLACK}{Back.GREEN}Cluster ({self.name}) initialized succesfully with {len(self.computers)} computer(s) and {len(self.programs)} program(s).{Back.RESET+Fore.RESET}\n")
         self.initialized = True
 
-        #Debug
-        # self.print("================================")
-        # self.print(self.programs)
-        # self.print(self.instances)
-        # self.print(self.distributable_instances)
-        # self.print("================================")
 
     def _load_computers(self):
         """Update the computer references"""
@@ -65,7 +59,7 @@ class Cluster:
         self._check_duplicate_computer_names()
 
     def _load_programs(self):
-        """Load programs with accurate state tracking"""
+        """Load programs from cluster config file and from instance list"""
 
         with open(Path.join(self.path, ".klaszter"), "r", encoding="utf8") as file:
             lines = file.readlines()  # Read first
@@ -264,10 +258,8 @@ class Cluster:
 
                         self.print(f"{Style.BRIGHT + Fore.RED}Please input a valid choice!")
 
-                
-
-            
-
+                print(active_valid_instances)
+                print(inactive_valid_instances)
 
             except (IndexError, ValueError) as e:
                 self.print(f"{Fore.RED}Error loading program: {str(e)}")
@@ -282,9 +274,8 @@ class Cluster:
         # self.print(self.instances)
         # self.print(self.distributable_instances)
         # self.print("================================")
-# |
 
-# |
+
     def _get_all_program_instances(self, program_name):
         """Get all instances of a program regardless of specs"""
         instances = []
@@ -383,7 +374,6 @@ class Cluster:
         # If we couldn't place all instances, return False
         return False  
 
-
     def _generate_instance_id(self) -> str:
         """Generates a unique 6-character instance ID that does not exist anywhere in the cluster."""
         existing_ids = set()
@@ -478,7 +468,6 @@ class Cluster:
                 else:
                     print("Invalid choice. Please enter 1 or 2.")
 
-
     def _update_distributable_instances(self):
         """Include ALL instances for redistribution"""
         self.distributable_instances = []
@@ -497,7 +486,9 @@ class Cluster:
                     }
                 )
 
-#================
+
+#========Public========
+# Cluster
     def reload_cluster(self):
         self._load_computers()
         self._load_programs()
@@ -506,6 +497,7 @@ class Cluster:
         self.print(f"{Back.BLUE + Fore.WHITE}Successfully reloaded cluster")
 
 
+# Rebalancer
     def set_rebalance_algo(self, new_algo_id: int = 0):
         self.rebalancer.default_rebalance_algo = rebalancing_algos[new_algo_id]
 
@@ -513,6 +505,7 @@ class Cluster:
         self.rebalancer.run_default_rebalance_algo()
 
 
+# Computers
     def create_computer(self, computer_name: str, cores: int, memory: int) -> Computer:
         full_path: str = Path.join(self.path, computer_name)
 
@@ -658,16 +651,7 @@ class Cluster:
         return True
 
 
-    def get_instance_by_id(self, id : str) -> tuple:
-        for program in self.instances:
-            target_program = program
-            program : dict = self.instances[program]
-
-            for instance in program:
-                if instance == id:
-                    return (target_program, program[id])
-
-
+# Programs
     def add_program(self, program_name: str, instance_count : int, cores: int, memory: int):
         """Adds programs to the cluster config file and reloads the cluster."""
 
@@ -684,7 +668,6 @@ class Cluster:
         self._load_programs()
         self.run_rebalancer()
         return True
-
 
     def kill_program(self, program_name : str):
         """Kills programs by removing all of its instances then deleting itself from the programs and from the config file."""
@@ -735,21 +718,65 @@ class Cluster:
         self.run_rebalancer()
         return True
 
-
     def edit_program_resources(self, program_name: str, property_to_edit:str, new_value):
+        """Can edit the instance count, the cores and the memory required"""
         # Check if the modification can be made eg. we have enough space on the cluster to do it(applies to all 3 properties)
         # We will need to take the and program change its property in the .klaszter file
         # reload the programs
+
+        
+
+
         pass
 
     def rename_program(self, program_name : str, new_program_name: str):
-        # Check if we dont already have a program by that name
-        # go into the .klaszter file and change the old program name to the new one
-        # change it in the self.instances and self.programs as well 
-        # reload the programs
-        pass
+        """Edit the name of a program without effecting the state of its instances"""
+
+        if program_name not in self.programs:
+            self.print(f"{Fore.RED}There is no a program named {program_name} in the cluster. Check name and try again!")
+            return False
+        
+        if new_program_name in self.programs:
+            self.print(f"{Fore.RED}There is already a program named {new_program_name} in the cluster. Check name and try again!")
+            return False
+        
+        # Remove old instnace files from file system
+        target_instance_ids = []
+        for instance_id in self.instances[program_name]:
+            target_instance_ids.append(instance_id)
+        
+        for instance_id in target_instance_ids:
+            full_name = f"{program_name}-{instance_id}"
+
+            for computer in self.computers:
+                comp : Computer = self.computers[computer]
+                for file in os.listdir(comp.path):
+                    if file == full_name:
+                        full_path = Path.join(comp.path, file)
+                        os.remove(full_path)
+                    
+        # Rename in self.programs and self.instances
+        self.programs[new_program_name] = self.programs.pop(program_name)
+        self.instances[new_program_name] = self.instances.pop(program_name)
+        
+        # Update name in config file
+        data = f""
+        with open(self.config_path, "w+", encoding="utf8") as file:
+            lines = file.readlines()
+            lines = [line.strip() for line in lines]
+
+            for prog_name, details in self.programs.items():
+                data += f"{prog_name}\n{details["required_count"]}\n{details["cores"]}\n{details["memory"]}\n"
+            
+            file.write("")
+            file.write(data)
+
+        self._load_programs()
+        self.run_rebalancer()
+        return True
 
 
+#Instances
     def add_instance(self, program_name : str, instance_id : str):
         # Check if the cluster has enough space for it
         # If it oversteps the instance count the of the program we need to ask the user
@@ -764,11 +791,6 @@ class Cluster:
 
     def edit_instance_status(self, instance_id: str, new_status: str, reload : bool = True) -> bool:
         """Edit instance status to true or false"""
-
-        # This function should take in a id of an instance
-        # then we can change the status of the instance from True to False and the other way around
-        # save the change to the self.instances dict
-        # then we reload the programs
         
         target_program, instance_to_stop = self.get_instance_by_id(instance_id)
 
@@ -786,7 +808,8 @@ class Cluster:
         return True
 
     def kill_instance(self, instance_id : str, reload : bool = True):
-        """Kills and instance and removes references, can be used for batch removal is reload is turned off."""
+        """Kills an instance and removes references, can be used for batch removal is reload is turned off."""
+
         target_program = ""
         target_computer = ""
         
@@ -824,14 +847,23 @@ class Cluster:
         # Then it should reload the programs
         pass
 
-
     def change_instance_id(self, instance_id : str, new_instnace_id : str):
         #This function should take in the instance id  and then change the id of the instance from the old id to the new one
         # It should also save itself to the self.instances dict to keep it 
         # We should reload the programs
         pass
 
+
 #UTILS
+    def get_instance_by_id(self, id : str) -> tuple:
+        for program in self.instances:
+            target_program = program
+            program : dict = self.instances[program]
+
+            for instance in program:
+                if instance == id:
+                    return (target_program, program[id])
+
     def user_input(self, input_question : str) -> str:
         if self.root.ui == None:
             user_input = input(input_question)

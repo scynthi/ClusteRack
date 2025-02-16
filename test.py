@@ -3,52 +3,8 @@ from modules.cluster import Cluster
 from modules.root import Root
 from modules.interpreter import CLI_Interpreter
 
-# root : Root = Root(r"./Thing")
-# cluster : Cluster = root.clusters.get("test_cluster")
-
-# root.rename_cluster("cluster4", "cluster0")
-# cluster1.start_process("jani", False, 100,100,2)
-# cluster1.kill_process("jani")
-
-# root.move_computer("test_computer", "test_cluster", "test_cluster1")
-
-# cluster1.rename_process("jani", "internet")
-# cluster1.edit_process_resources("internet", "running", True)
-
-# root.relocate_process("internet", "test_cluster1", "test_cluster")s
-
 root : Root = Root(r".\Test folder")
 cluster : Cluster = root.clusters["cluster0"]
-
-print("-----------------------------------------------1111111111")
-test_cluster = root.create_cluster("test_cluster")
-test_cluster.create_computer("test_comp", 1000, 1000)
-# test_cluster.delete_computer("test_comp", "f")
-
-print(test_cluster.computers)
-
-print("-----------------------------------------------22222222222222")
-root.delete_cluster("test_cluster")
-print("-----------------------------------------------3333333333333")
-
-# cluster._load_programs()
-
-# cluster.edit_instance("internet-")
-# cluster.edit_computer_resources("computer2", 4000,8000)
-
-
-
-# cluster.create_computer("computer1", 2000, 8000)
-# cluster.create_computer("computer2", 2000, 8000)
-
-# cluster.reload_cluster()
-# cluster.delete_computer("computer2", "f")
-
-# cluster.rename_computer("test_computer", "computer2")
-
-# cluster.edit_computer_resources("computer2", 4000, 4000)
-
-# cluster.run_rebalancer()
 
 """
 Root
@@ -60,7 +16,7 @@ Move program between clusters
 Cleanup root
 
 Cluster
-Create computer D
+Create computer            D
 Del computer (try, force)  D
 Edit computer resources    D
 Rename computer            D
@@ -73,11 +29,12 @@ Cleanup cluster
      Stop program              D
      Kill program              D 
      Edit program
-     Restart program
+     Rename program            D
+
      >>(Program instancek)
          Add prog. instance    
          Edit prog. instance status   D
-         Kill prog. instance   D
+         Kill prog. instance          D
          Move prog. instance 
 
 Computer:
