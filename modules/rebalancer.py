@@ -19,6 +19,7 @@ class Rebalancer:
 
 
     def run_default_rebalance_algo(self):
+
         """Runs the currently selected algorithm."""
         if self.default_rebalance_algo == "load_balance":
             self.rebalance_load_balance()

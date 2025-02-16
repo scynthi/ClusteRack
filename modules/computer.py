@@ -6,10 +6,11 @@ from datetime import datetime
 from colorama import Fore, Style, Back
 
 class Computer:
-    def __init__(self, path: str):
+    def __init__(self, path: str, parent):
         path: str = Path.normpath(fr"{path}")
         computer_name: str = path.split(os.sep)[-1]
         self.name: str = computer_name
+        self.cluster = parent
 
         if Path.exists(Path.join(path, ".szamitogep_config")):
             config_file = open(Path.join(path, ".szamitogep_config"), "r", encoding="utf8")
@@ -58,7 +59,7 @@ class Computer:
         cpu_usage: int = 0
 
         for _, info in prog_instances.items():
-            if info["status"] == "AKTÍV":
+            if info["status"]:
                 memory_usage += int(info["memory"])
                 cpu_usage += int(info["cores"])
 
@@ -69,27 +70,8 @@ class Computer:
         cpu_usage_percentage: float = round(cpu_usage / self.cores * 100, 1)
 
         return {"memory_usage_percent": memory_usage_percentage, "core_usage_percent": cpu_usage_percentage}
-
-    """
-        Ok cro pussoltam es itt volt egy merge conflict ahelyett hogy kitalalom hogy itt mi a jo (gondolom a get processes mar nem kell), rad hagyom balls
-    """
-
-    # def get_processes(self) -> dict:
-    #     """Gives back all the running processes on the computer"""
-    #     files: list = os.listdir(self.path)
-    #     process_list: dict = {}
-
-    #     if ".szamitogep_config" in files:
-    #         files.remove(".szamitogep_config")
-
-    #     for process in files:
-    #         try:
-    #             process_list[process] = self.get_process_info(process)
-    #         except:
-    #             self.print(f"{Fore.BLACK}{Back.RED}CRITICAL ERROR DETECTED: process ({process}) is incorrect.")
-
-    #     return process_list
     
+
     def get_prog_instances(self) -> dict:
         """Return only valid instances"""
         files = os.listdir(self.path)
@@ -127,25 +109,7 @@ class Computer:
         except:
             return None
 
-    def is_prog_instance_file(self, path: str) -> bool:
-        filename = Path.basename(path)
-        
-        # Check filename format: programname-id (id must be 6 chars)
-        if not re.match(r"^[a-zA-Z0-9]+-[a-zA-Z0-9]{6}$", filename):
-            return False
-        
-        # Check file contents structure
-        try:
-            with open(path, "r", encoding="utf8") as file:
-                lines = [line.strip() for line in file.readlines()]
-            
-            return (len(lines) == 4 and
-                    re.match(r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$", lines[0]) and
-                    lines[1] in {"AKTÍV", "INAKTÍV"} and
-                    lines[2].isdigit() and 
-                    lines[3].isdigit())
-        except:
-            return False
+
 
     def edit_instance(self, instance_name: str, property_name: str, new_value: str) -> bool:
         """Edit an existing instance file"""
@@ -232,6 +196,26 @@ class Computer:
         )
 
 #MISC.
+    def is_prog_instance_file(self, path: str) -> bool:
+        filename = Path.basename(path)
+        
+        # Check filename format: programname-id (id must be 6 chars)
+        if not re.match(r"^[a-zA-Z0-9]+-[a-zA-Z0-9]{6}$", filename):
+            return False
+        
+        # Check file contents structure
+        try:
+            with open(path, "r", encoding="utf8") as file:
+                lines = [line.strip() for line in file.readlines()]
+            
+            return (len(lines) == 4 and
+                    re.match(r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$", lines[0]) and
+                    lines[1] in {"AKTÍV", "INAKTÍV"} and
+                    lines[2].isdigit() and 
+                    lines[3].isdigit())
+        except:
+            return False
+
     def cleanup(self) -> bool:
         """Removes unnecessary files and directories from the computer"""
         
@@ -251,7 +235,7 @@ class Computer:
 
             while True:
                 try:
-                    user_input = input(
+                    user_input = self.user_input(
                         f"Unidentified file detected in {self.name}: {file}\n"
                         "1: Delete\n"
                         "2: Keep (Warning: Might make the computer unstable)\n"
@@ -284,6 +268,13 @@ class Computer:
         return True
 
     
+    def user_input(self, input_question : str) -> str:
+        if self.cluster.root.ui == None:
+            user_input = input(input_question)
+            return user_input
+        else:
+            pass
+
     def print(self, text: str):
         """DEBUGGING TOOL: A print for the terminal"""
         print(f"{Style.BRIGHT}{Fore.CYAN}[{Fore.WHITE}{self.name}{Fore.CYAN}]: {Fore.RESET+Back.RESET+Style.RESET_ALL}" + text + Fore.RESET+Back.RESET+Style.RESET_ALL)

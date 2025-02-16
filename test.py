@@ -17,8 +17,24 @@ from modules.interpreter import CLI_Interpreter
 
 # root.relocate_process("internet", "test_cluster1", "test_cluster")s
 
+root : Root = Root(r".\Test folder")
+cluster : Cluster = root.clusters["cluster0"]
 
-cluster = Cluster(r".\Test folder\cluster0")
+print("-----------------------------------------------1111111111")
+test_cluster = root.create_cluster("test_cluster")
+test_cluster.create_computer("test_comp", 1000, 1000)
+# test_cluster.delete_computer("test_comp", "f")
+
+print(test_cluster.computers)
+
+print("-----------------------------------------------22222222222222")
+root.delete_cluster("test_cluster")
+print("-----------------------------------------------3333333333333")
+
+# cluster._load_programs()
+
+# cluster.edit_instance("internet-")
+# cluster.edit_computer_resources("computer2", 4000,8000)
 
 
 
@@ -28,16 +44,16 @@ cluster = Cluster(r".\Test folder\cluster0")
 # cluster.reload_cluster()
 # cluster.delete_computer("computer2", "f")
 
-cluster.rename_computer("test_computer", "computer2")
+# cluster.rename_computer("test_computer", "computer2")
 
-cluster.edit_computer_resources("computer2", 4000, 4000)
+# cluster.edit_computer_resources("computer2", 4000, 4000)
 
 # cluster.run_rebalancer()
 
 """
 Root
-Create cluster
-Delete cluster (try, force)
+Create cluster                 D
+Delete cluster (try, force)    
 Edit cluster name
 Move computer between clusters
 Move program between clusters
@@ -45,30 +61,32 @@ Cleanup root
 
 Cluster
 Create computer D
-Del computer (try, force) D
-Edit computer resources D
-Rename computer D
+Del computer (try, force)  D
+Edit computer resources    D
+Rename computer            D
 Set default rebalance algo D
-Run rebalance D
+Run rebalance              D
 Cleanup cluster 
 
 >>(Programok)
-     Start program
-     Stop program
-     Kill program
+     Start program             D
+     Stop program              D
+     Kill program              D 
      Edit program
      Restart program
      >>(Program instancek)
-         Start prog. instance
-         Stop prog. instance
-         Kill prog. instance
-         Move prog. instance
+         Add prog. instance    
+         Edit prog. instance status   D
+         Kill prog. instance   D
+         Move prog. instance 
 
 Computer:
 Cleanup computer D
 
 """
-
+"""
+TODO: Bugs - if we start the cluster with a computer that has 1,1 resources and we try to rebalance to it the instance adding fails but we never put the instance else where -> Update the whole rebalancing algorythm
+"""
 
 
 
