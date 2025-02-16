@@ -9,8 +9,8 @@ cluster : Cluster = root.clusters["cluster0"]
 """
 Root
 Create cluster                 D
-Delete cluster (try, force)    
-Edit cluster name
+Delete cluster (try, force)    D
+Edit cluster name              D
 Move computer between clusters
 Move program between clusters
 Cleanup root
@@ -28,33 +28,19 @@ Cleanup cluster
      Start program             D
      Stop program              D
      Kill program              D 
-     Edit program
+     Edit program              D
      Rename program            D
 
      >>(Program instancek)
-         Add prog. instance    
+         Add prog. instance           TODO: Implamented temporary way of working but it is not permanent
          Edit prog. instance status   D
          Kill prog. instance          D
-         Move prog. instance 
+         Change prog. instance id
 
 Computer:
 Cleanup computer D
 
 """
-"""
-TODO: Bugs - if we start the cluster with a computer that has 1,1 resources and we try to rebalance to it the instance adding fails but we never put the instance else where -> Update the whole rebalancing algorythm
-"""
-
-
-
-
-
-
-
-
-
-
-
 
 """
 CLI Commands

@@ -255,28 +255,24 @@ class Root:
 
     def rename_cluster(self, target_cluster : str, new_name : str) -> bool:
         if not target_cluster in self.clusters:
-            self.print(f"{Fore.RED}Target cluster ({new_name}) could not be found. Perhapse you misstyped the name?")
+            self.print(f"{Fore.RED}Target cluster ({new_name}) could not be found. Check the name and retry.")
             return False
         
+        if new_name in self.clusters:
+            self.print(f"{Fore.RED}Renaming failed. There is already a cluster called {new_name}.")
+            return False
+
         try:
-            old_cluster: Cluster = self.clusters[target_cluster]
-            old_path: str = old_cluster.path
+            old_path: str = self.clusters[target_cluster].path
             parent_dir: str = Path.dirname(old_path)
             new_path: str = Path.join(parent_dir, new_name)
 
-            if Path.exists(new_path):
-                self.print(f"{Fore.RED}Renaming failed. There is already a cluster called {new_name}.")
-                return False
-
             # Rename the cluster folder
             os.rename(old_path, new_path)
-
-            # Reinitialize the cluster object with the new path
-            new_cluster = Cluster(new_path, self)
-
-            # Update the clusters dictionary
-            del self.clusters[target_cluster]
-            self.clusters[new_name] = new_cluster
+            self.clusters[new_name] = self.clusters.pop(target_cluster)
+            self.clusters[new_name].path = new_path
+            self.clusters[new_name].name = new_name
+            self.clusters[new_name].config_path = Path.join(new_path, ".klaszter")
 
             self.print(f"{Fore.GREEN}Cluster ({target_cluster}) successfully renamed to ({new_name}).")
 

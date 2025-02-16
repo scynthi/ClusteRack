@@ -1,8 +1,8 @@
 import os
+import re
 import shutil
 import random
 import string
-import time
 from os import path as Path
 from datetime import datetime
 from modules.computer import Computer
@@ -88,7 +88,7 @@ class Cluster:
                 }
 
                 skip_program = False
-                if not self._validate_instance_placement(program_name, required_count):
+                if not self._validate_instance_placement(program_name, self.programs[program_name]['required_count']):
                     while True:
                         user_input = self.user_input(
                             f"Not enough resources to fit {required_count} '{program_name}' instances! \n"
@@ -106,6 +106,7 @@ class Cluster:
                                 break
 
                         print("Invalid input. Enter a valid number.")
+                        print(user_input)
 
                 if skip_program: continue
 
@@ -228,7 +229,7 @@ class Cluster:
                         user_input = self.user_input(
                             f"{Style.BRIGHT}Do you want to\n"
                             f"(1) Deactivate extra instances\n"
-                            f"(2) Delete them? (1/2): "
+                            f"(2) Delete them? (1/2): {Style.RESET_ALL}"
                         ).strip()
                         
                         if user_input == '1':
@@ -257,9 +258,6 @@ class Cluster:
                             break
 
                         self.print(f"{Style.BRIGHT + Fore.RED}Please input a valid choice!")
-
-                print(active_valid_instances)
-                print(inactive_valid_instances)
 
             except (IndexError, ValueError) as e:
                 self.print(f"{Fore.RED}Error loading program: {str(e)}")
@@ -292,7 +290,7 @@ class Cluster:
                         "memory": details["memory"]
                         })
         return instances
-                 
+
     def _validate_and_update_instances(self, program_name, req_cores, req_mem, instances):
         """Update instances to match program specs"""
         valid = []
@@ -304,7 +302,8 @@ class Cluster:
             # Update specs if needed
             needs_update = False
             if instance["cores"] != req_cores:
-                self.edit_instance(
+                self.update_instance_cores_memory(
+                    computer,
                     f"{program_name}-{instance['id']}",
                     "cores",
                     req_cores
@@ -312,7 +311,8 @@ class Cluster:
                 needs_update = True
                 
             if instance["memory"] != req_mem:
-                self.edit_instance(
+                self.update_instance_cores_memory(
+                    computer,
                     f"{program_name}-{instance['id']}",
                     "memory",
                     req_mem
@@ -336,43 +336,87 @@ class Cluster:
             else:
                 valid.append(instance)
         return valid
+    # |
+    def update_instance_cores_memory(self, computer,instance_id: str, property_name: str, new_value: str) -> bool:
+        """Makes sure that all instances have the same requirements as described in the cluster config file"""
+
+        instance_path = Path.join(computer.path, instance_id)
+        
+        if not self.is_prog_instance_file(instance_path):
+            return False
+
+        # Validate property
+        valid_props = ["cores", "memory"]
+        if property_name not in valid_props:
+            self.print(f"{Fore.RED}Invalid property: {property_name}")
+            return False
+        
+        new_value = int(new_value)
+
+        # Perform edit
+        try:
+            with open(instance_path, "r+", encoding="utf8") as f:
+                lines = [line.strip() for line in f.readlines()]
+                
+                # Map properties to line numbers
+                property_map = {
+                    "cores": 2,
+                    "memory": 3
+                }
+                
+                # Update the value
+                line_idx = property_map[property_name]
+                lines[line_idx] = str(new_value)
+                
+                # Write back changes
+                f.seek(0)
+                f.truncate()
+                f.write("\n".join(lines))
+        
+        except Exception as e:
+            self.print(f"Failed to update instance {instance_id}: {str(e)}")
+            return False
+
+        return True
+
 
     def _validate_instance_placement(self, program_name, required_count):
-        """Check if the cluster has enough space to fit the required amount of a program"""
-        # 1️ Get available resources from all computers
-        total_free_cores = sum(comp.free_cores for comp in self.computers.values())
-        total_free_memory = sum(comp.free_memory for comp in self.computers.values())
+        """Check if we can fit all instances assuming a fresh start."""
 
-        # Get individual computer resource availability
-        available_computers = sorted(
-            self.computers.values(),
-            key=lambda c: (-c.free_cores, -c.free_memory)  # Sort by max resources
-        )
+        # Get total available resources across all computers
+        total_free_cores = sum(comp.cores for comp in self.computers.values())  # Ignore current usage
+        total_free_memory = sum(comp.memory for comp in self.computers.values())
 
         # Get program requirements
         req_cores = self.programs[program_name]["cores"]
         req_memory = self.programs[program_name]["memory"]
 
-        # Check if we even have enough total cluster resources
+        # Quick Check: If total cluster resources aren't enough, fail immediately
         if required_count * req_cores > total_free_cores or required_count * req_memory > total_free_memory:
-            return False  # Not enough resources overall
+            return False
 
-        # Try placing instances one by one
-        instance_count = 0
-        for computer in available_computers:
-            while (computer.free_cores >= req_cores and computer.free_memory >= req_memory
-                    and instance_count < required_count):
-                # Place an instance on this computer
-                computer.free_cores -= req_cores
-                computer.free_memory -= req_memory
-                instance_count += 1
+        # Sort computers by total available resources (largest first)
+        sorted_computers = sorted(
+            self.computers.values(),
+            key=lambda c: (-c.cores, -c.memory)  # Sort by max resources (ignoring usage)
+        )
 
-            # Stop once all instances are placed
-            if instance_count == required_count:
+        # Try placing instances using Best-Fit Decreasing
+        remaining_instances = required_count
+        for computer in sorted_computers:
+            # Max instances this computer can fit
+            max_fit = min(computer.cores // req_cores, computer.memory // req_memory)
+
+            # Assign as many as possible without exceeding required_count
+            to_place = min(max_fit, remaining_instances)
+            remaining_instances -= to_place
+
+            # If we placed all instances, we're done!
+            if remaining_instances == 0:
                 return True
 
-        # If we couldn't place all instances, return False
-        return False  
+        return False  # If there are leftover instances, we failed to fit them
+
 
     def _generate_instance_id(self) -> str:
         """Generates a unique 6-character instance ID that does not exist anywhere in the cluster."""
@@ -720,15 +764,48 @@ class Cluster:
 
     def edit_program_resources(self, program_name: str, property_to_edit:str, new_value):
         """Can edit the instance count, the cores and the memory required"""
-        # Check if the modification can be made eg. we have enough space on the cluster to do it(applies to all 3 properties)
-        # We will need to take the and program change its property in the .klaszter file
-        # reload the programs
 
+        if program_name not in self.programs:
+            self.print(f"{Fore.RED}Program {program_name} does not exist! Check the name and try again.")
+            return False
         
+        allowed_properties = ["required_count", "cores", "memory"]
+            
+        if property_to_edit not in allowed_properties:
+            self.print(f"{Fore.RED}Invalid property. Allowed: {allowed_properties}")
+            return False
+        
+        # Convert new_value to correct type
+        new_value = int(new_value)
 
+        # Check if we can fit it on the cluster
+        old_value = self.programs[program_name][property_to_edit]
+        
+        if new_value == old_value:
+            return True
+        
+        self.programs[program_name][property_to_edit] = new_value
 
-        pass
+        if not self._validate_instance_placement(program_name, self.programs[program_name]["required_count"]):
+            self.programs[program_name][property_to_edit] = old_value
+            self.print(f"{Fore.RED}The edited program would not fit on the cluster. Abendonding editing process.")
+            return False
+        
+        data = f""
+        with open(self.config_path, "w+", encoding="utf8") as file:
+            lines = file.readlines()
+            lines = [line.strip() for line in lines]
 
+            for prog_name, details in self.programs.items():
+                data += f"{prog_name}\n{details["required_count"]}\n{details["cores"]}\n{details["memory"]}\n"
+            
+            file.write("")
+            file.write(data)
+        
+        self._load_programs()
+        self.run_rebalancer()
+        return True
+        
     def rename_program(self, program_name : str, new_program_name: str):
         """Edit the name of a program without effecting the state of its instances"""
 
@@ -777,17 +854,41 @@ class Cluster:
 
 
 #Instances
-    def add_instance(self, program_name : str, instance_id : str):
-        # Check if the cluster has enough space for it
-        # If it oversteps the instance count the of the program we need to ask the user
-        # 1 We add the one to the instance count that and then put the instance on
-            # here we need to use a function that is not yet created which will be the edit program function with it we can change the name instance count and resources of a program and then reload the programs
+    # def add_instance(self, program_name : str, instance_id : str):
+    #     # Check if the cluster has enough space for it
+    #     # If it oversteps the instance count the of the program we need to ask the user
+    #     # 1 We add the one to the instance count that and then put the instance on
+    #         # here we need to use a function that is not yet created which will be the edit program function with it we can change the name instance count and resources of a program and then reload the programs
         
-        # 2 We add the instance as an inactive instance 
-        # 3 the user should be able to abort the process
-        # then save it to the self.instances dict 
-        # reload the programs
-        pass
+    #     # 2 We add the instance as an inactive instance 
+    #     # 3 the user should be able to abort the process
+    #     # then save it to the self.instances dict 
+    #     # reload the programs
+    #     pass
+
+    def add_instance(self, target_computer : Computer, instance: dict) -> bool:
+        """Adds an instance file to the computer."""
+        instance_filename = f"{instance['program']}-{instance['id']}"
+        instance_path = Path.join(target_computer.path, instance_filename)
+
+        # Ensure there's enough resources
+        if not target_computer.can_fit_instance(instance):
+            self.print(f"{Fore.RED}Not enough resources to place instance {instance_filename}.")
+            return False
+
+        try:
+            with open(instance_path, "w", encoding="utf8") as f:
+                f.write(f"{instance['date_started']}\n")
+                f.write(f"{"AKTÍV" if instance['status'] == True else "INAKTÍV"}\n")
+                f.write(f"{instance['cores']}\n")
+                f.write(f"{instance['memory']}\n")
+
+            # Update resource usage
+            target_computer.calculate_resource_usage()
+            return True
+        except Exception as e:
+            self.print(f"{Fore.RED}Failed to add instance {instance_filename}: {str(e)}")
+            return False
 
     def edit_instance_status(self, instance_id: str, new_status: str, reload : bool = True) -> bool:
         """Edit instance status to true or false"""
@@ -855,7 +956,29 @@ class Cluster:
 
 
 #UTILS
+    def is_prog_instance_file(self, path: str) -> bool:
+        """Runs a check to see wether the file under the given path is an instance or not using a pattern."""
+        filename = Path.basename(path)
+        
+        # Check filename format: programname-id (id must be 6 chars)
+        if not re.match(r"^[a-zA-Z0-9]+-[a-zA-Z0-9]{6}$", filename):
+            return False
+        
+        # Check file contents structure
+        try:
+            with open(path, "r", encoding="utf8") as file:
+                lines = [line.strip() for line in file.readlines()]
+            
+            return (len(lines) == 4 and
+                    re.match(r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$", lines[0]) and
+                    lines[1] in {"AKTÍV", "INAKTÍV"} and
+                    lines[2].isdigit() and 
+                    lines[3].isdigit())
+        except:
+            return False
+
     def get_instance_by_id(self, id : str) -> tuple:
+        """Returns a tuple with the program of the instance being the first value and the instance the second"""
         for program in self.instances:
             target_program = program
             program : dict = self.instances[program]
@@ -865,6 +988,7 @@ class Cluster:
                     return (target_program, program[id])
 
     def user_input(self, input_question : str) -> str:
+        """Splits input so we can use input from the ui."""
         if self.root.ui == None:
             user_input = input(input_question)
             return user_input

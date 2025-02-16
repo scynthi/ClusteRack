@@ -1,8 +1,4 @@
 import os
-import time
-import random
-import string
-from datetime import datetime
 from os import path as Path
 from colorama import Fore, Style, Back
 from modules.computer import Computer
@@ -69,7 +65,7 @@ class Rebalancer:
 
         for idx, instance in enumerate(self.cluster.distributable_instances):
             target_computer = available_computers[idx % len(available_computers)]
-            target_computer.add_instance(instance)
+            self.cluster.add_instance(target_computer, instance)
 
         print(f"{Fore.GREEN}Load balancing complete!{Fore.RESET}")
 
@@ -84,7 +80,7 @@ class Rebalancer:
         for instance in self.cluster.distributable_instances:
             for computer in self.sorted_computer_list:
                 if computer[1].can_fit_instance(instance):
-                    computer[1].add_instance(instance)
+                    self.cluster.add_instance(computer[1], instance)
                     break
 
         print(f"{Fore.GREEN}Best Fit packing complete!{Fore.RESET}")
@@ -99,7 +95,7 @@ class Rebalancer:
         for instance in self.cluster.distributable_instances:
             for computer in self.cluster.computers.values():
                 if computer.can_fit_instance(instance):
-                    computer.add_instance(instance)
+                    self.cluster.add_instance(computer, instance)
                     break
 
 

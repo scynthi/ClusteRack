@@ -1,8 +1,6 @@
 import shutil
-import re
 import os
 from os import path as Path
-from datetime import datetime
 from colorama import Fore, Style, Back
 
 class Computer:
@@ -51,7 +49,6 @@ class Computer:
         
         return True
 
-
     def calculate_resource_usage(self) -> dict:
         prog_instances: dict = self.get_prog_instances()
 
@@ -71,7 +68,6 @@ class Computer:
 
         return {"memory_usage_percent": memory_usage_percentage, "core_usage_percent": cpu_usage_percentage}
     
-
     def get_prog_instances(self) -> dict:
         """Return only valid instances"""
         files = os.listdir(self.path)
@@ -79,17 +75,16 @@ class Computer:
         
         for f in files:
             full_path = Path.join(self.path, f)
-            if self.is_prog_instance_file(full_path):
+            if self.cluster.is_prog_instance_file(full_path):
                 details = self.get_prog_instance_info(f)
                 if details:
                     valid_instances[f] = details
         return valid_instances
 
-
     def get_prog_instance_info(self, filename: str) -> dict:
         """Returns None instead of erroring on invalid instances"""
         try:
-            if not self.is_prog_instance_file(Path.join(self.path, filename)):
+            if not self.cluster.is_prog_instance_file(Path.join(self.path, filename)):
                 return None
                 
             name_part, instance_id = filename.split("-")
@@ -109,68 +104,6 @@ class Computer:
         except:
             return None
 
-
-
-    def edit_instance(self, instance_name: str, property_name: str, new_value: str) -> bool:
-        """Edit an existing instance file"""
-        instance_path = Path.join(self.path, instance_name)
-        
-        if not self.is_prog_instance_file(instance_path):
-            return False
-
-        try:
-            with open(instance_path, "r+", encoding="utf8") as f:
-                lines = [line.strip() for line in f.readlines()]
-                
-                # Map properties to line numbers
-                property_map = {
-                    "status": 1,
-                    "cores": 2,
-                    "memory": 3
-                }
-                
-                if property_name not in property_map:
-                    return False
-                
-                # Update the value
-                line_idx = property_map[property_name]
-                lines[line_idx] = str(new_value).upper() if property_name == "status" else str(new_value)
-                
-                # Write back changes
-                f.seek(0)
-                f.truncate()
-                f.write("\n".join(lines))
-            
-            return True
-        except Exception as e:
-            self.print(f"Failed to edit instance {instance_name}: {str(e)}")
-            return False
-
-    def add_instance(self, instance: dict) -> bool:
-        """Adds an instance file to the computer."""
-        instance_filename = f"{instance['program']}-{instance['id']}"
-        instance_path = Path.join(self.path, instance_filename)
-
-        # Ensure there's enough resources
-        if not self.can_fit_instance(instance):
-            self.print(f"{Fore.RED}Not enough resources to place instance {instance_filename}.")
-            return False
-
-        try:
-            with open(instance_path, "w", encoding="utf8") as f:
-                f.write(f"{instance['date_started']}\n")
-                f.write(f"{"AKTÍV" if instance['status'] == True else "INAKTÍV"}\n")
-                f.write(f"{instance['cores']}\n")
-                f.write(f"{instance['memory']}\n")
-
-            # Update resource usage
-            self.calculate_resource_usage()
-            return True
-        except Exception as e:
-            self.print(f"{Fore.RED}Failed to add instance {instance_filename}: {str(e)}")
-            return False
-
-
     def remove_instance(self, instance_id: str) -> bool:
         """Removes an instance file from the computer."""
         instance_path = Path.join(self.path, instance_id)
@@ -188,33 +121,13 @@ class Computer:
             return False
 
 
+#Utils
     def can_fit_instance(self, instance: dict) -> bool:
         """Checks if the computer has enough free resources for an instance."""
         return (
             self.free_cores >= instance["cores"] and
             self.free_memory >= instance["memory"]
         )
-
-#MISC.
-    def is_prog_instance_file(self, path: str) -> bool:
-        filename = Path.basename(path)
-        
-        # Check filename format: programname-id (id must be 6 chars)
-        if not re.match(r"^[a-zA-Z0-9]+-[a-zA-Z0-9]{6}$", filename):
-            return False
-        
-        # Check file contents structure
-        try:
-            with open(path, "r", encoding="utf8") as file:
-                lines = [line.strip() for line in file.readlines()]
-            
-            return (len(lines) == 4 and
-                    re.match(r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$", lines[0]) and
-                    lines[1] in {"AKTÍV", "INAKTÍV"} and
-                    lines[2].isdigit() and 
-                    lines[3].isdigit())
-        except:
-            return False
 
     def cleanup(self) -> bool:
         """Removes unnecessary files and directories from the computer"""
@@ -230,7 +143,7 @@ class Computer:
         for file in files:
             target_path = Path.join(self.path, file)
 
-            if self.is_prog_instance_file(target_path):
+            if self.cluster.is_prog_instance_file(target_path):
                 continue
 
             while True:
@@ -266,8 +179,7 @@ class Computer:
 
         self.print(f"{Fore.GREEN}Cleanup completed. Removed {removed_files} files/folders.")
         return True
-
-    
+   
     def user_input(self, input_question : str) -> str:
         if self.cluster.root.ui == None:
             user_input = input(input_question)
