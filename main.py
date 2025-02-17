@@ -6,7 +6,7 @@ from modules.ui import UI, AppWindow, DGRAY, LGRAY, DBLUE, LBLUE, large_font, sm
 from modules.root import Root
 from modules.cluster import Cluster
 from modules.computer import Computer
-from modules.subwindow import SubWindow, ClusterCreateSubWindow
+from modules.subwindow import *
 
 app : AppWindow = AppWindow("1000x600")
 content : Frame = app.content
@@ -70,14 +70,16 @@ class DashboardUI:
 class ClusterView:
     def __init__(self) -> None:
         frame = app.top_frame
-        self.clusters_frame : CTkScrollableFrame = CTkScrollableFrame(frame, orientation="horizontal", height=300, border_width=4, border_color="gray", corner_radius=0)
-        self.clusters_frame.grid(row=0, column=0, sticky="nwe")
+        self.clusters_frame : CTkScrollableFrame = CTkScrollableFrame(frame, orientation="horizontal", height=310, border_width=4, border_color="gray", corner_radius=0)
+        self.clusters_frame.grid(row=0, column=0, sticky="nwes")
+        self.clusters_frame.grid_columnconfigure(0, weight=1)
+        self.clusters_frame.grid_rowconfigure(0, weight=1)
         self.cluster_tab = None
 
         for i, cluster in enumerate(root.clusters.values()):
             cluster_frame : UI.Frame = UI.Frame(self.clusters_frame)
             cluster_frame.grid_rowconfigure(1, weight=1)
-            cluster_frame.grid(row=0, column=i, padx=20, pady=10, sticky="NS")
+            cluster_frame.grid(row=0, column=i, padx=20, pady=10, sticky="NEWS")
 
             image_frame : UI.Frame= UI.Frame(cluster_frame)
             image_frame.grid(row=1, column=0, sticky="NSEW")
@@ -100,27 +102,23 @@ class ClusterView:
         add_cluster_frame.grid_rowconfigure(1, weight=1)
         add_cluster_frame.grid(row=0, column=len(root.clusters.values())+1, padx=20, pady=10, sticky="NS")
 
-
-        image_frame : UI.Frame= UI.Frame(add_cluster_frame)
-        image_frame.grid(row=1, column=0, sticky="NSEW")
-        image_frame.grid_rowconfigure(0, weight=1)
-
         UI.Label(add_cluster_frame, text="New cluster", font=large_font).grid(row=0, column=0)
-        UI.Button(image_frame, text="Create new cluster", command=lambda: ClusterCreateSubWindow(root, self)).grid(row=0, column=0)
+        UI.Button(add_cluster_frame, text="Create new cluster", command=lambda: ClusterCreateSubWindow(root, self)).grid(row=1, column=0)
 
 
     def open_cluster_tab(self, cluster : Cluster) -> None:
         if self.cluster_tab:
+            self.cluster_tab.reload()
             self.cluster_tab.destroy()
-            self.cluster_tab = ClusterBoard(cluster)
+            self.cluster_tab = ClusterBoard(cluster, self)
         else:
-            self.cluster_tab = ClusterBoard(cluster)
+            self.cluster_tab = ClusterBoard(cluster, self)
         
 
     def reload(self) -> None:
         self.clusters_frame.destroy()
         try:
-            self.cluster_tab.destroy()
+            self.cluster_tab.reload()
         except: pass
         self.__init__()
 
@@ -128,8 +126,9 @@ class ClusterView:
 
                 
 class ClusterBoard:
-    def __init__(self, cluster : Cluster) -> None:
+    def __init__(self, cluster : Cluster, parent_ui : ClusterView) -> None:
         self.cluster : Cluster = cluster
+        self.parent_ui : ClusterView = parent_ui
 
         self.computer_tab = None
 
@@ -148,12 +147,12 @@ class ClusterBoard:
 
         UI.Label(self.frame, text="Commands", font=extra_large_font, text_color=DBLUE).grid(row=0, column=0, pady=12)
 
-        UI.Button(self.button_frame, text=f"Create computer", command=SubWindow).grid(row=0, column=0, pady=5, padx=10, sticky="we")
-        UI.Button(self.button_frame, text=f"Start program", command=SubWindow).grid(row=1, column=0, pady=5, padx=10, sticky="we")
+        UI.Button(self.button_frame, text=f"Create computer", command=lambda: ComputerCreateSubWindow(self.cluster, self)).grid(row=0, column=0, pady=5, padx=10, sticky="we")
+        UI.Button(self.button_frame, text=f"Start program", command=lambda: StartProgramSubWindow(self.cluster, self)).grid(row=1, column=0, pady=5, padx=10, sticky="we")
         UI.Button(self.button_frame, text=f"Algorithm settings", command=SubWindow).grid(row=2, column=0, pady=5, padx=10, sticky="we")
         UI.Button(self.button_frame, text=f"Move program", command=SubWindow).grid(row=3, column=0, pady=5, padx=10, sticky="we")
         UI.Button(self.button_frame, text=f"Edit cluster name", command=SubWindow).grid(row=4, column=0, pady=5, padx=10, sticky="we")
-        UI.Button(self.button_frame, text=f"Delete cluster", command=SubWindow).grid(row=5, column=0, pady=5, padx=10, sticky="we")
+        UI.Button(self.button_frame, text=f"Delete cluster", bg_color="red", command=lambda: delete_cluster_and_reload()).grid(row=5, column=0, pady=5, padx=10, sticky="we")
 
 
         program_help_frame : UI.Frame = UI.Frame(self.frame)
@@ -232,6 +231,11 @@ class ClusterBoard:
             UI.Button(cur_pc_frame, text=f"Open {pc.name}", command=lambda pc = pc: self.open_computer_tab(pc)).grid(row=1, column=0, pady=5)
             cur_pc_frame.grid(row=i, column=0, pady=5)
         
+        def delete_cluster_and_reload():
+            root.delete_cluster(self.cluster.name, "f")
+            parent_ui.reload()
+            self.destroy()
+        
 
 
     def open_computer_tab(self, computer : Computer) -> None:
@@ -249,7 +253,9 @@ class ClusterBoard:
 
     def reload(self) -> None:
         self.destroy()
-        self.__init__(self.cluster)
+        self.__init__(self.cluster, self.parent_ui)
+
+        
 
 
 
@@ -267,8 +273,8 @@ class ComputerBoard:
         self.computer_frame.grid_rowconfigure(2, weight=1)
 
         self.computer_model = UI.EmbedRenderer(self.computer_frame, "computer", 10, app).get_renderer()
-        UI.Button(self.computer_frame, text="Delete computer").grid(row=2, column=0, sticky="sew", padx=10)
-        UI.Button(self.computer_frame, text="Move computer").grid(row=3, column=0, sticky="sew", padx=10)
+        UI.Button(self.computer_frame, text="Delete computer").grid(row=2, column=0, sticky="sew", padx=10, pady=5)
+        UI.Button(self.computer_frame, text="Move computer").grid(row=3, column=0, sticky="sew", padx=10, pady=5)
 
 
         UI.Label(self.frame, "Resources", font=extra_large_font).grid(row=0, column=1)
@@ -282,8 +288,8 @@ class ComputerBoard:
         UI.Label(self.resources_frame, text=f"Free cores: {self.computer.free_cores} millicores").grid(row=2, column=0, sticky="w", padx=10)
         UI.Label(self.resources_frame, text=f"Free memory: {self.computer.free_memory} MB").grid(row=3, column=0, sticky="w", padx=10)
         UI.Label(self.resources_frame, text=f"Processes: {len(self.computer.get_prog_instances().keys())}").grid(row=4, column=0, sticky="w", padx=10)
-        UI.Button(self.resources_frame, text="Edit Resources").grid(row=5, column=0, sticky="sew", padx=10)
-        UI.Button(self.resources_frame, text="Change name").grid(row=6, column=0, sticky="sew", padx=10)
+        UI.Button(self.resources_frame, text="Edit Resources").grid(row=5, column=0, sticky="sew", padx=10, pady=5)
+        UI.Button(self.resources_frame, text="Change name").grid(row=6, column=0, sticky="sew", padx=10, pady=5)
     
         self.processes_frame : UI.Frame = UI.Frame(self.frame)
         self.processes_frame.grid(row=2, column=0, columnspan=2, sticky="nsew")
@@ -327,6 +333,6 @@ class ComputerBoard:
         self.destroy()
         self.__init__(self.computer)
 
-root = Root(r".\Test folder")
+root = Root(r".\Test folder", app)
 DashboardUI()
 app.mainloop()

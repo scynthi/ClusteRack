@@ -3,7 +3,7 @@ from modules.cluster import Cluster
 from modules.root import Root
 from modules.interpreter import CLI_Interpreter
 
-root : Root = Root(r".\Test folder")
+root : Root = Root(r".\Test folder", None)
 cluster : Cluster = root.clusters["cluster0"]
 
 """

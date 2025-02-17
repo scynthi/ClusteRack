@@ -8,6 +8,7 @@ from datetime import datetime
 from modules.computer import Computer
 from colorama import Fore, Style, Back
 from modules.rebalancer import *
+import unicodedata
 
 rebalancing_algos : list = ["load_balance", "best_fit", "fast"]
 
@@ -1072,11 +1073,53 @@ class Cluster:
 
     def user_input(self, input_question : str) -> str:
         """Splits input so we can use input from the ui."""
+        
         if self.root.ui == None:
             user_input = input(input_question)
             return user_input
         else:
-            pass
+            question : str = input_question.splitlines()
+            from modules.subwindow import SubWindow
+            from modules.ui import UI
+
+            popout : SubWindow = SubWindow()
+            popout.geometry("600x300")
+            popout.close_button.grid_forget()
+
+            popout.content.grid_columnconfigure(0, weight=1)
+
+            question_frame : UI.Frame = UI.Frame(popout.content)
+            question_frame.grid(row=0, column=0, sticky="new")
+            question_frame.grid_columnconfigure(0, weight=1)
+
+            for i, line in enumerate(question):
+                line = re.sub(r"\033\[[0-9;]*m", "", line)
+                line = line.replace(">>", "")
+        
+                UI.Label(question_frame, text=line, justify="left").grid(row=i, column=0)
+
+            answer : UI.Entry =  UI.Entry(popout.content)
+            answer.grid(row=1, column=0, pady=10)
+
+            while True:
+                popout.update()
+                if len(answer.get()) == 1:
+                    answer : str = answer.get()
+                    popout.destroy()
+                    return answer
+            
+            
+            
+
+            
+                    
+
+
+            
+        
+            
+
+            
 
     def print(self, text: str):
         """Debugging print method."""

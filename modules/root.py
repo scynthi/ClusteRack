@@ -7,7 +7,7 @@ from colorama import Fore, Style, Back
 
 
 class Root:
-    def __init__(self, path: str):
+    def __init__(self, path: str, ui):
         path : str = Path.normpath(fr"{path}")
         
         if Path.exists(path):
@@ -15,7 +15,7 @@ class Root:
 
             self.print(f"Starting to initialize root with name {root_name}. This may take a few seconds...")
 
-            self.ui = None
+            self.ui = ui
 
             self.path :str = path
             self.name :str = root_name
