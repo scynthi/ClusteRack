@@ -6,6 +6,8 @@ from modules.interpreter import CLI_Interpreter
 root : Root = Root(r".\Test folder", None)
 cluster : Cluster = root.clusters["cluster0"]
 
+cluster.add_instance("superman")
+
 """
 Root
 Create cluster                 D
@@ -32,7 +34,7 @@ Cleanup cluster            D
      Rename program            D
 
      >>(Program instancek)
-         Add prog. instance           TODO: Working on it
+         Add prog. instance           D
          Edit prog. instance status   D
          Kill prog. instance          D
          Change prog. instance id     D

@@ -6,6 +6,7 @@ from colorama import Fore, Style, Back
 class Computer:
     def __init__(self, path: str, parent):
         path: str = Path.normpath(fr"{path}")
+        self.path = path
         computer_name: str = path.split(os.sep)[-1]
         self.name: str = computer_name
         self.cluster = parent
@@ -36,6 +37,41 @@ class Computer:
 
         else:
             self.print(f"{Fore.RED}There's no config file in {path}")
+            try:
+                while True:
+                    user_input = self.user_input(
+                        f"{Fore.WHITE + Style.BRIGHT}Would you like to create one?\n"
+                        f"1 - Yes\n"
+                        f"2 - No >>").strip()
+                    
+                    if user_input == "1":
+                        new_cores = 0
+                        new_memory = 0
+                        while True:
+                            new_cores = self.user_input("Enter core amount >> ")
+                            if new_cores.isdigit() and int(new_cores) > 0: break
+                            self.print(f"{Fore.RED}Please enter a valid positive number.")
+                        while True:
+                            new_memory = self.user_input("Enter memory amount >> ")
+                            if new_memory.isdigit() and int(new_memory) > 0: break
+                            
+                            self.print(f"{Fore.RED}Please enter a valid positive number.")
+
+                        with open(Path.join(self.path, ".szamitogep_config"), "w", encoding="utf8") as config_file:
+                            print("hell")
+                            config_file.write(f"{new_cores}\n{new_memory}")
+                        
+                        self.cluster.computers[self.name] = self
+                        self.__init__(self.path, self.cluster)
+                        return
+
+                    elif user_input == "2":
+                        return
+                    self.print(f"{Fore.RED}Choose a valid option.")
+
+
+            except Exception as e:
+                self.print(f"{Fore.RED}Computer config creation abendoned because of: {e}")
             return
 
 

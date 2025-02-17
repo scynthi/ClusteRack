@@ -619,10 +619,6 @@ class Cluster:
 
     def rename_computer(self, old_name: str, new_name: str) -> bool:
         """Attempts to rename a computer, ensuring the new name is unique."""
-        if not self.initialized:
-            self.print(f"{Fore.RED}Cluster failed to initialize, renaming not possible.")
-            return False
-
         if not new_name.isalnum():
             self.print(f"{Fore.RED}The new computer name must be an alfanumerical value! Correct the name and retry.")
 
@@ -766,7 +762,7 @@ class Cluster:
         self.run_rebalancer()
         return True
 
-    def edit_program_resources(self, program_name: str, property_to_edit:str, new_value):
+    def edit_program_resources(self, program_name: str, property_to_edit:str, new_value, reload : bool = True):
         """Can edit the instance count, the cores and the memory required"""
 
         if program_name not in self.programs:
@@ -806,8 +802,9 @@ class Cluster:
             file.write("")
             file.write(data)
         
-        self._load_programs()
-        self.run_rebalancer()
+        if reload:
+            self._load_programs()
+            self.run_rebalancer()
         return True
         
     def rename_program(self, program_name : str, new_program_name: str):
@@ -858,33 +855,47 @@ class Cluster:
 
 
 #Instances
-    def add_instance(self, program_name : str, instance_id : str):
+    def add_instance(self, program_name : str, instance_id : str = ""):
+        """Adds new instance either by user created id or self generated id"""
         if program_name not in self.programs:
             return False
+        
+        if not instance_id:
+            instance_id = self._generate_instance_id()
         
         if self.is_instance_on_cluster_by_id(instance_id):
             return False
         
         parent_program = self.programs[program_name]
-
         new_instance = {'status': True, 'cores': parent_program['cores'], 'memory': parent_program['memory'], 'computer': None, 'date_started': datetime.now().strftime('%Y-%m-%d %H:%M:%S'), 'id': instance_id}
         
-        # Check if the cluster has enough space for it
-        # If it oversteps the instance count the of the program we need to ask the user
-        # 1 We add the one to the instance count that and then put the instance on
-            # here we need to use a function that is not yet created which will be the edit program function with it we can change the name instance count and resources of a program and then reload the programs
-        
-        # 2 We add the instance as an inactive instance 
-        # 3 the user should be able to abort the process
-        # then save it to the self.instances dict 
-        # reload the programs
+        while True:
+            user_input = self.user_input(
+                f"{Style.BRIGHT}What status would you like the instance to be?\n"
+                "1 - Active\n"
+                "2 - Inactive\n"
+                "3 - Exit instance creation >> ").strip()
+            
+            if user_input == "1":
+                if self._validate_instance_placement(program_name, parent_program["required_count"] + 1):
+                    self.edit_program_resources(program_name, "required_count", parent_program["required_count"] + 1, reload=False)
+                    break
+                self.print(f"{Fore.RED}Can`t add new instance. There isn`t enough space on the cluster. Try adding it as inactive")
 
+            elif user_input =="2":
+                new_instance["status"] == False
+                break
 
+            elif user_input =="3":
+                return False
+            
+            self.print(f"{Fore.RED}Please enter a valid choice!")
 
+        self.instances[program_name][instance_id] = new_instance
 
-        pass
-
-    
+        self._load_programs()
+        self.run_rebalancer()
+        return True
 
     def edit_instance_status(self, instance_id: str, new_status: str, reload : bool = True) -> bool:
         """Edit instance status to true or false"""
@@ -935,12 +946,11 @@ class Cluster:
         
         if reload:
             self._load_programs()
+            self.run_rebalancer()
         return True
 
     def change_instance_id(self, instance_id : str, new_instance_id : str = "", program_name : str = "", reload : bool = True):
-        #This function should take in the instance id  and then change the id of the instance from the old id to the new one
-        # It should also save itself to the self.instances dict to keep it 
-        # We should reload the programs
+        """Changes the instance id of a given instance. To change the instance in the filesystem reload needs to be called in the cycle. You may enter program name for a specific instance."""
         if not self.is_instance_on_cluster_by_id(instance_id): return False
 
         target_program, instnace_to_change = self.get_instance_by_id(instance_id)
@@ -1107,19 +1117,7 @@ class Cluster:
                     answer : str = answer.get()
                     popout.destroy()
                     return answer
-            
-            
-            
 
-            
-                    
-
-
-            
-        
-            
-
-            
 
     def print(self, text: str):
         """Debugging print method."""
