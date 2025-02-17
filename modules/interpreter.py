@@ -153,6 +153,10 @@ class CLI_Interpreter:
             if key_event == b"\t":
                 
                 current_step, arguments, success, user_input = self.cicle_through_commands(self.root_commands, shlex.split(user_input), user_input, True, cursor_pos)
+                if not success:
+                    
+                    break
+                
                 cursor_pos = len(user_input)
                 sys.stdout.write("\r")
                 sys.stdout.write(f"{prompt}>{user_input[:cursor_pos]}|{user_input[cursor_pos:]}")
@@ -485,8 +489,8 @@ class CLI_Interpreter:
             
                 for item in clusters.keys():
                     
-                    self.root_commands["try_del_cluster"].update({f"{item}" : {"?algo" : (self.current_root.try_delete_cluster, )}})
-                    self.root_commands["force_del_cluster"].update({f"{item}" : {"?algo" : (self.current_root.force_delete_cluster, )}})
+                    # self.root_commands["try_del_cluster"].update({f"{item}" : {"?algo" : (self.current_root.try_delete_cluster, )}})
+                    # self.root_commands["force_del_cluster"].update({f"{item}" : {"?algo" : (self.current_root.force_delete_cluster, )}})
                     self.root_commands["rename_cluster"].update({f"{item}" : {"<cluster name" : {"?algo" : (self.current_root.rename_cluster, )}}})
                     
                 for item in self.current_root.clusters.keys():
@@ -560,18 +564,17 @@ class CLI_Interpreter:
                             
                     if not temp:
                         
-                        items = 0
-                        
-                        finished = ""
+                        finished = []
 
                         for keys in current_step.keys():
-
-                            if item in keys:
                                 
-                                items += 1
-                                finished = keys
+                            if keys[:len(item)] == item:
+                                
+                                finished.append(keys)
 
-                        if items == 1 and tab:
+                        if len(finished) == 1 and tab:
+                            
+                            finished = finished[0]
 
                             finished = finished[len(item):]
                             
@@ -579,9 +582,33 @@ class CLI_Interpreter:
 
                                 original_command += finished
                             
-                            return f"Did you mean {keys}?", "", False, original_command
+                            return f"Did you mean {keys}?", "", True, original_command
                         
-                        return f"Keyerror: {item}", "", False, original_command
+                        elif len(finished) > 0 and tab:
+                            
+                            keys = current_step.keys()
+                            
+                            current_step = ""
+                                
+                            for coms in keys:
+                                
+                                if coms != "?non_args" and coms != "?value":
+                                
+                                    if "<" in coms:
+                                        
+                                        current_step += coms[1:] + "\n"
+                                        
+                                    else:
+                                            
+                                        current_step += coms + "\n"
+                                        
+                            return current_step, "", False, f"{original_command}"
+                        
+                        if "?" not in item and not tab:
+    
+                            return f"Keyerror: {item}", "", False, original_command
+                        
+                        return "That is not a full command", "", False, original_command
                 
                 if type(current_step[temp_item]) != tuple:
                     

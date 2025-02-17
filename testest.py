@@ -12,8 +12,8 @@ from modules.computer import Computer
 #         print(f"Row: {row}, Item: {items.index(item)}")
 
 
-test2 = {0: [0,1], 1: [0,1,3], 2: [",22"]}
+# test2 = {0: [0,1], 1: [0,1,3], 2: [",22"]}
 
-for row in test2:
-    for item in test2[row]:
-        print(f"Row: {row}, Item: {test2[row].index(item)}")
+# for row in test2:
+#     for item in test2[row]:
+#         print(f"Row: {row}, Item: {test2[row].index(item)}")
