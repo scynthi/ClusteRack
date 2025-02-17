@@ -12,7 +12,7 @@ class CLI_Interpreter:
     
     def __init__(self):
         
-        root : Root = Root(r"./Thing")
+        root : Root = Root(r"./Thing", "ui")
         
         self.folder = r"./sutoandar"
         
@@ -117,23 +117,29 @@ class CLI_Interpreter:
                 
     def take_input(self, default_text):
         
+        current_commands = {}
+        
         match self.mode.lower():
             
             case "computer":
                 
                 prompt = f"{self.current_root.name.capitalize()}>{self.current_cluster.name.capitalize()}>{self.current_computer.name.capitalize()}"
+                current_commands = self.computer_commands
                 
             case "cluster":
                 
                 prompt = f"{self.current_root.name.capitalize()}>{self.current_cluster.name.capitalize()}"
+                current_commands = self.cluster_commands
                 
             case "root":
                 
                 prompt = f"{self.current_root.name.capitalize()}"
+                current_commands = self.root_commands
                 
             case _:
                 
                 prompt = "None"
+                current_commands = self.noMode_commands
 
         user_input = f"{default_text}"
         if len(user_input) > 0:
@@ -152,10 +158,14 @@ class CLI_Interpreter:
                 
             if key_event == b"\t":
                 
-                current_step, arguments, success, user_input = self.cicle_through_commands(self.root_commands, shlex.split(user_input), user_input, True, cursor_pos)
+                current_step, arguments, success, user_input = self.cicle_through_commands(current_commands, shlex.split(user_input), user_input, True, cursor_pos)
                 if not success:
                     
-                    break
+                    sys.stdout.write("\n")
+                    sys.stdout.write(f"{current_step}")
+                    sys.stdout.write("\033[K")
+                    sys.stdout.write("\n")
+                    sys.stdout.flush()
                 
                 cursor_pos = len(user_input)
                 sys.stdout.write("\r")
@@ -514,9 +524,20 @@ class CLI_Interpreter:
         arguments = []
         
         skips = 1
+        cants = ["?non_args", "?value", "?algo"]
+        
+        for item in cants:
+            
+            if item in original_command:
+                
+                return f"Can't type that bruw: {item}", "", False, original_command
 
         try:
             for item in shlashed_command:
+                
+                if isinstance(current_step, tuple):
+                    
+                    return "Too many arguments", "", False, original_command
                 
                 if "?non_args" in current_step.keys():
                 
@@ -547,10 +568,6 @@ class CLI_Interpreter:
                                 current_step += coms + "\n"
                                 
                     return current_step, "", True, f"{original_command[:-2]}"
-                
-                if item == "?non_args" or item == "?value":
-                    
-                    return "Can't type that bruw", "", False, original_command
 
                 if isinstance(current_step, dict) and item not in current_step.keys():
                     
@@ -586,7 +603,7 @@ class CLI_Interpreter:
                         
                         elif len(finished) > 0 and tab:
                             
-                            keys = current_step.keys()
+                            keys = finished
                             
                             current_step = ""
                                 
