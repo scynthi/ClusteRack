@@ -59,9 +59,9 @@ class AppWindow(CTk):
         title_bar.grid(row=0, column=0, sticky="new")
 
 
-        close_button : UI.Button = UI.Button(title_bar, text=' X ', fg_color="white", command=lambda: os._exit(0), padx=2, pady=2)
-        expand_button : UI.Button= UI.Button(title_bar, text=' 🗖 ', fg_color="white", command=self.maximize_me, padx=2, pady=2)
-        minimize_button : UI.Button = UI.Button(title_bar, text=' 🗕 ', fg_color="white", command=self.minimize_me, padx=2, pady=2)
+        close_button : UI.Button = UI.Button(title_bar, text=' X ', command=lambda: os._exit(0), padx=2, pady=2)
+        expand_button : UI.Button= UI.Button(title_bar, text=' 🗖 ', command=self.maximize_me, padx=2, pady=2)
+        minimize_button : UI.Button = UI.Button(title_bar, text=' 🗕 ', command=self.minimize_me, padx=2, pady=2)
 
         program_logo : CTkImage = CTkImage(light_image=Image.open(Path.join("Assets", "Images", "logo.png")), size=(40,40))
         
@@ -212,18 +212,18 @@ class UI:
         self.DGRAY = DGRAY
 
     class Button(Button):
-        def __init__(self, master : AppWindow, text : str, fg_color : str = DGRAY, bg_color : str = LBLUE, font : tuple = small_font, **kwargs) -> None:
+        def __init__(self, master : AppWindow, text : str, fg_color : str = "black", bg_color : str = "white", font : tuple = small_font, **kwargs) -> None:
             super().__init__(master, 
                              text=text,
-                             background="white",
-                             foreground="black",
+                             background=bg_color,
+                             foreground=fg_color,
                              font=font,
                              borderwidth=6,
                              **kwargs)
             self.bind("<ButtonPress-1>", lambda event: audio.play_rnd_click())
 
     class Label(CTkLabel):
-        def __init__(self, master, text, text_color="black", font : tuple = large_font, **kwargs) -> None:
+        def __init__(self, master, text : str, text_color : str="black", font : tuple = large_font, **kwargs) -> None:
             super().__init__(master, 
                              text=text, 
                              text_color=text_color, 
@@ -231,12 +231,12 @@ class UI:
                              **kwargs)
             
     class Frame(Frame):
-        def __init__(self, master, bg_color=LGRAY, height: int = 200, **kwargs):
+        def __init__(self, master, bg_color : str=LGRAY, height: int = 200, **kwargs):
             super().__init__(master, bg=bg_color, height=height, borderwidth=4, relief="raised", **kwargs)
 
 
     class Entry(Entry):
-        def __init__(self, master, font=large_font, bg=LGRAY, fg="black", borderwidth=4, **kwargs) -> None:
+        def __init__(self, master, font : tuple=large_font, bg : str=LGRAY, fg : str="black", borderwidth : int=4, **kwargs) -> None:
             super().__init__(master,
                              font=font,
                              bg=bg,

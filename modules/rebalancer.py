@@ -55,6 +55,31 @@ class Rebalancer:
             for instance in computer.get_prog_instances():
                 computer.remove_instance(instance)
 
+
+    def write_instance_to_file(self, target_computer : Computer, instance: dict) -> bool:
+        """Adds an instance file to the computer."""
+        instance_filename = f"{instance['program']}-{instance['id']}"
+        instance_path = Path.join(target_computer.path, instance_filename)
+
+        # Ensure there's enough resources
+        if not target_computer.can_fit_instance(instance):
+            self.print(f"{Fore.RED}Not enough resources to place instance {instance_filename}.")
+            return False
+
+        try:
+            with open(instance_path, "w", encoding="utf8") as f:
+                f.write(f"{instance['date_started']}\n")
+                f.write(f"{"AKTÍV" if instance['status'] == True else "INAKTÍV"}\n")
+                f.write(f"{instance['cores']}\n")
+                f.write(f"{instance['memory']}\n")
+
+            # Update resource usage
+            target_computer.calculate_resource_usage()
+            return True
+        except Exception as e:
+            self.print(f"{Fore.RED}Failed to add instance {instance_filename}: {str(e)}")
+            return False
+
     def rebalance_load_balance(self):
         """Evenly distributes instances across all computers."""
         print(f"{Fore.YELLOW}Running Load Balance Algorithm...")
@@ -65,7 +90,7 @@ class Rebalancer:
 
         for idx, instance in enumerate(self.cluster.distributable_instances):
             target_computer = available_computers[idx % len(available_computers)]
-            self.cluster.add_instance(target_computer, instance)
+            self.write_instance_to_file(target_computer, instance)
 
         print(f"{Fore.GREEN}Load balancing complete!{Fore.RESET}")
 
@@ -80,7 +105,7 @@ class Rebalancer:
         for instance in self.cluster.distributable_instances:
             for computer in self.sorted_computer_list:
                 if computer[1].can_fit_instance(instance):
-                    self.cluster.add_instance(computer[1], instance)
+                    self.write_instance_to_file(computer[1], instance)
                     break
 
         print(f"{Fore.GREEN}Best Fit packing complete!{Fore.RESET}")
@@ -95,7 +120,7 @@ class Rebalancer:
         for instance in self.cluster.distributable_instances:
             for computer in self.cluster.computers.values():
                 if computer.can_fit_instance(instance):
-                    self.cluster.add_instance(computer, instance)
+                    self.write_instance_to_file(computer, instance)
                     break
 
 

@@ -3,7 +3,7 @@ from modules.cluster import Cluster
 from modules.root import Root
 from modules.interpreter import CLI_Interpreter
 
-root : Root = Root(r".\Test folder")
+root : Root = Root(r".\Test folder", None)
 cluster : Cluster = root.clusters["cluster0"]
 
 """
@@ -11,9 +11,9 @@ Root
 Create cluster                 D
 Delete cluster (try, force)    D
 Edit cluster name              D
-Move computer between clusters
-Move program between clusters
-Cleanup root
+Move computer between clusters 
+Move program between clusters  
+Cleanup root                   D
 
 Cluster
 Create computer            D
@@ -22,7 +22,7 @@ Edit computer resources    D
 Rename computer            D
 Set default rebalance algo D
 Run rebalance              D
-Cleanup cluster 
+Cleanup cluster            D
 
 >>(Programok)
      Start program             D
@@ -32,10 +32,10 @@ Cleanup cluster
      Rename program            D
 
      >>(Program instancek)
-         Add prog. instance           TODO: Implamented temporary way of working but it is not permanent
+         Add prog. instance           TODO: Working on it
          Edit prog. instance status   D
          Kill prog. instance          D
-         Change prog. instance id
+         Change prog. instance id     D
 
 Computer:
 Cleanup computer D

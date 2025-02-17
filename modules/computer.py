@@ -9,6 +9,8 @@ class Computer:
         computer_name: str = path.split(os.sep)[-1]
         self.name: str = computer_name
         self.cluster = parent
+        if not hasattr(self, "initialized"):
+            self.instialized = False
 
         if Path.exists(Path.join(path, ".szamitogep_config")):
             config_file = open(Path.join(path, ".szamitogep_config"), "r", encoding="utf8")
@@ -30,6 +32,7 @@ class Computer:
             if not self.validate_computer(): return
             self.cleanup()
             self.print(f"{Back.GREEN}{Fore.BLACK}Computer ({computer_name}) initialized with {cores} cores and {memory} of memory. {self.free_cores} cores and {self.free_memory} memory left free.{Back.RESET}\n\n")
+            self.instialized = True
 
         else:
             self.print(f"{Fore.RED}There's no config file in {path}")

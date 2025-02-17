@@ -29,7 +29,7 @@ class SubWindow(CTkToplevel):
         title_bar.grid(row=0, column=0, sticky="new")
 
 
-        close_button : UI.Button = UI.Button(title_bar, text=' X ', fg_color="white", command=self.destroy, padx=2, pady=2)
+        close_button : UI.Button = UI.Button(title_bar, text=' X ', command=self.destroy, padx=2, pady=2)
         program_logo : CTkImage = CTkImage(light_image=Image.open(Path.join("Assets", "Images", "logo.png")), size=(40,40))
         logo_label : CTkLabel = CTkLabel(title_bar, image=program_logo, text="")
         logo_label.grid(row=0, column=0, sticky="nw", padx=10)
@@ -139,21 +139,110 @@ class SubWindow(CTkToplevel):
 class ClusterCreateSubWindow(SubWindow):
     def __init__(self, root : Root, ui):
         super().__init__()
-        self.ui = ui
-        self.root : Root = root
         self.content.grid_columnconfigure(0, weight=1)
         self.content.grid_rowconfigure(2, weight=1)
-        Label(self.content, text="Create a cluster", fg="black",  font=large_font, bg=DGRAY).grid(row=0, column=0, pady=5)
+
+        Label(self.content, text="Create cluster", fg="black",  font=large_font, bg=DGRAY).grid(row=0, column=0, pady=5)
         entry : UI.Entry = UI.Entry(self.content)
         entry.grid(row=1, column=0, pady=20, padx=50, stick="ew")
         Button(self.content, text="Create", font=large_font, bg=DBLUE, fg="white", command=lambda: create_cluster(self)).grid(row=2, column=0, sticky="N")
+        error_message : UI.Label = UI.Label(self.content, text="", text_color="red", font=large_font)
+        error_message.grid(row=3, column=0, pady=15)
+
 
         def create_cluster(self) -> None:
-            if self.root.create_cluster(entry.get()):
-                self.ui.reload()
+            try:
+                if root.create_cluster(entry.get()):
+                    ui.reload()
+                    audio.play_accept()
+                    self.destroy()
+                else:
+                    audio.play_error()
+                    error_message._text = "Check the cluster's name again!"
+            except:
+                error_message._text = "Please enter a valid name!"
+                audio.play_error()
+
+class ComputerCreateSubWindow(SubWindow):
+    def __init__(self, cluster : Cluster, ui):
+        super().__init__()
+        self.geometry("500x400")
+        self.content.grid_columnconfigure(0, weight=1)
+
+        Label(self.content, text=f"Create computer to {cluster.name}", fg="black",  font=large_font, bg=DGRAY).grid(row=0, column=0, pady=5)
+
+        UI.Label(self.content, "Computer name:").grid(row=1, column=0)
+        computer_name : UI.Entry = UI.Entry(self.content)
+        computer_name.grid(row=2, column=0, pady=5, padx=50, stick="ew")
+
+        UI.Label(self.content, "Core count in millicores: ").grid(row=3, column=0)
+        core_entry : UI.Entry = UI.Entry(self.content)
+        core_entry.grid(row=4, column=0, pady=5, padx=50, stick="ew")
+
+        UI.Label(self.content, "Memory count in MB:").grid(row=5, column=0)
+        memory_entry : UI.Entry = UI.Entry(self.content)
+        memory_entry.grid(row=6, column=0, pady=5, padx=50, stick="ew")
+
+
+        Button(self.content, text="Create", font=large_font, bg=DBLUE, fg="white", command=lambda: create_computer(self)).grid(row=7, column=0, sticky="N")
+
+        error_message : UI.Label = UI.Label(self.content, text="", text_color="red", font=large_font)
+        error_message.grid(row=8, column=0, pady=15)
+
+        def create_computer(self) -> None:
+            try:
+                if cluster.create_computer(computer_name.get(), int(core_entry.get()), int(memory_entry.get())):
+                    ui.reload()
+                    if ui.parent_ui:
+                        ui.parent_ui.reload()
+                    audio.play_accept()
+                    self.destroy()
+                else:
+                    audio.play_error()
+                    error_message._text = "Invalid resources were given. Check again."
+            except:
+                    audio.play_error()
+                    error_message._text = "Internal error. Try again."
+
+
+
+
+
+
+class StartProgramSubWindow(SubWindow):
+    def __init__(self, cluster : Cluster, ui):
+        super().__init__()
+        self.geometry("500x500")
+        self.content.grid_columnconfigure(0, weight=1)
+        Label(self.content, text=f"Add program to {cluster.name}", fg="black",  font=large_font, bg=DGRAY).grid(row=0, column=0, pady=5)
+
+        UI.Label(self.content, "Program name").grid(row=1, column=0)
+        program_name : UI.Entry = UI.Entry(self.content)
+        program_name.grid(row=2, column=0, pady=5, padx=50, stick="ew")
+
+        UI.Label(self.content, "Instance count: ").grid(row=3, column=0)
+        instance_entry : UI.Entry = UI.Entry(self.content)
+        instance_entry.grid(row=4, column=0, pady=5, padx=50, stick="ew")
+
+        UI.Label(self.content, "Core count in millicores: ").grid(row=5, column=0)
+        core_entry : UI.Entry = UI.Entry(self.content)
+        core_entry.grid(row=6, column=0, pady=6, padx=50, stick="ew")
+
+        UI.Label(self.content, "Memory count in MB:").grid(row=7, column=0)
+        memory_entry : UI.Entry = UI.Entry(self.content)
+        memory_entry.grid(row=8, column=0, pady=8, padx=50, stick="ew")
+
+        Button(self.content, text="Add program", font=large_font, bg=DBLUE, fg="white", command=lambda: try_add_program()).grid(row=9, column=0, sticky="N")
+
+        error_message : UI.Label = UI.Label(self.content, text="", text_color="red", font=large_font)
+        error_message.grid(row=10, column=0, pady=15)
+
+        def try_add_program() -> None:
+            if cluster.add_program(program_name.get(), instance_entry.get(), core_entry.get(), memory_entry.get()):
+                ui.reload()
                 audio.play_accept()
                 self.destroy()
             else:
                 audio.play_error()
-                UI.Label(self.content, text="Check the cluster's name again!", text_color="red", font=large_font).grid(row=3, column=0, pady=15)
+                error_message._text = "Invalid value(s) were given. Try again."
 

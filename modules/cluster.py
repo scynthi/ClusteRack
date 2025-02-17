@@ -8,6 +8,7 @@ from datetime import datetime
 from modules.computer import Computer
 from colorama import Fore, Style, Back
 from modules.rebalancer import *
+import unicodedata
 
 rebalancing_algos : list = ["load_balance", "best_fit", "fast"]
 
@@ -23,23 +24,24 @@ class Cluster:
         self.computers = {}
         self._load_computers()
 
-        # Ignore if `.klaszter` file is missing
-        self.config_path = Path.join(path, ".klaszter")
-        if not Path.exists(self.config_path):
-            self.print(f"{Fore.YELLOW}Skipping {cluster_name}: No .klaszter file found.")
-            return
-
         if not hasattr(self, "initialized"):
             self.initialized = False
             self.programs = {}  # Stores program details (name, instance count, cores, memory)
             self.instances = {}  # Stores instance details (id, running, date_started)
             self.distributable_instances = []
 
+        # Ignore if `.klaszter` file is missing
+        self.config_path = Path.join(path, ".klaszter")
+        if not Path.exists(self.config_path):
+            self.print(f"{Fore.YELLOW}Skipping {cluster_name}: No .klaszter file found.")
+            return
+
         self._load_programs()
 
         self.rebalancer = Rebalancer(self)
         self.set_rebalance_algo(0)
         self.run_rebalancer()
+        self.cleanup()
 
         self.print(f"{Fore.BLACK}{Back.GREEN}Cluster ({self.name}) initialized succesfully with {len(self.computers)} computer(s) and {len(self.programs)} program(s).{Back.RESET+Fore.RESET}\n")
         self.initialized = True
@@ -54,7 +56,8 @@ class Cluster:
             files.remove(".klaszter")
 
         for file in files:
-            self.computers[file] = Computer(Path.join(self.path, file), self)
+            computer : Computer = Computer(Path.join(self.path, file), self)
+            if computer.instialized: self.computers[file] = computer
 
         self._check_duplicate_computer_names()
 
@@ -430,7 +433,7 @@ class Cluster:
             new_id = ''.join(random.choices(string.ascii_letters + string.digits, k=6))
             
             if new_id not in existing_ids:
-                return new_id 
+                return new_id
 
     def _check_duplicate_instance_ids(self):
         """Detects duplicate instance IDs and resolves conflicts by user input."""
@@ -457,17 +460,18 @@ class Cluster:
                             new_id = self.user_input("Enter new unique ID (6 characters): ").strip()
                             if len(new_id) == 6 and new_id.isalnum() and new_id not in seen_ids:
                                 new_instance_id = new_id  # Just store the new ID, program name is already mapped
-                                self.instances[program_name][new_instance_id] = self.instances[program_name].pop(instance_id)
+                                self.change_instance_id(instance_id, new_instance_id, program_name, False)
+
                                 seen_ids[new_id] = program_name  # Update tracking
                                 break
                             else:
                                 self.print(f"{Style.BRIGHT + Fore.RED}Invalid ID. Ensure it is 6 alphanumeric characters and unique.")
                         
-                        elif user_choice == "2":
-                            new_id = self._generate_instance_id()
-                            new_instance_id = new_id  # Just store the unique ID
-                            self.instances[program_name][new_instance_id] = self.instances[program_name].pop(instance_id)
-                            seen_ids[new_id] = program_name  # Update tracking
+                        elif user_choice == "2":                            
+                            _, instance = self.get_instance_by_id(instance_id)
+                            self.change_instance_id(instance_id, "",program_name, False)
+
+                            seen_ids[instance["id"]] = program_name  # Update tracking
                             break
 
                         else:
@@ -854,45 +858,39 @@ class Cluster:
 
 
 #Instances
-    # def add_instance(self, program_name : str, instance_id : str):
-    #     # Check if the cluster has enough space for it
-    #     # If it oversteps the instance count the of the program we need to ask the user
-    #     # 1 We add the one to the instance count that and then put the instance on
-    #         # here we need to use a function that is not yet created which will be the edit program function with it we can change the name instance count and resources of a program and then reload the programs
+    def add_instance(self, program_name : str, instance_id : str):
+        if program_name not in self.programs:
+            return False
         
-    #     # 2 We add the instance as an inactive instance 
-    #     # 3 the user should be able to abort the process
-    #     # then save it to the self.instances dict 
-    #     # reload the programs
-    #     pass
-
-    def add_instance(self, target_computer : Computer, instance: dict) -> bool:
-        """Adds an instance file to the computer."""
-        instance_filename = f"{instance['program']}-{instance['id']}"
-        instance_path = Path.join(target_computer.path, instance_filename)
-
-        # Ensure there's enough resources
-        if not target_computer.can_fit_instance(instance):
-            self.print(f"{Fore.RED}Not enough resources to place instance {instance_filename}.")
+        if self.is_instance_on_cluster_by_id(instance_id):
             return False
+        
+        parent_program = self.programs[program_name]
 
-        try:
-            with open(instance_path, "w", encoding="utf8") as f:
-                f.write(f"{instance['date_started']}\n")
-                f.write(f"{"AKTÍV" if instance['status'] == True else "INAKTÍV"}\n")
-                f.write(f"{instance['cores']}\n")
-                f.write(f"{instance['memory']}\n")
+        new_instance = {'status': True, 'cores': parent_program['cores'], 'memory': parent_program['memory'], 'computer': None, 'date_started': datetime.now().strftime('%Y-%m-%d %H:%M:%S'), 'id': instance_id}
+        
+        # Check if the cluster has enough space for it
+        # If it oversteps the instance count the of the program we need to ask the user
+        # 1 We add the one to the instance count that and then put the instance on
+            # here we need to use a function that is not yet created which will be the edit program function with it we can change the name instance count and resources of a program and then reload the programs
+        
+        # 2 We add the instance as an inactive instance 
+        # 3 the user should be able to abort the process
+        # then save it to the self.instances dict 
+        # reload the programs
 
-            # Update resource usage
-            target_computer.calculate_resource_usage()
-            return True
-        except Exception as e:
-            self.print(f"{Fore.RED}Failed to add instance {instance_filename}: {str(e)}")
-            return False
+
+
+
+        pass
+
+    
 
     def edit_instance_status(self, instance_id: str, new_status: str, reload : bool = True) -> bool:
         """Edit instance status to true or false"""
         
+        if not self.is_instance_on_cluster_by_id(instance_id): return False
+
         target_program, instance_to_stop = self.get_instance_by_id(instance_id)
 
         if not instance_to_stop:
@@ -911,15 +909,15 @@ class Cluster:
     def kill_instance(self, instance_id : str, reload : bool = True):
         """Kills an instance and removes references, can be used for batch removal is reload is turned off."""
 
-        target_program = ""
-        target_computer = ""
-        
+        if not self.is_instance_on_cluster_by_id(instance_id): return False
+
         target_program, instance_to_kill = self.get_instance_by_id(instance_id)
 
         if not instance_to_kill:
             self.print(f"{Fore.RED}Could not find instance to kill.")
             return False
-
+        
+        target_computer = ""
         full_name = f'{target_program}-{instance_id}'
         for computer in self.computers:
             instances = self.computers[computer].get_prog_instances()
@@ -939,23 +937,101 @@ class Cluster:
             self._load_programs()
         return True
 
-        
-        # if instance_id in self.instances: 
-            
-
-        # this function should take in the instance id and then kill the instance by deleting it from the filesystem
-        # It should also remove itself from the self.instances dict so that we dont have it on reload 
-        # Then it should reload the programs
-        pass
-
-    def change_instance_id(self, instance_id : str, new_instnace_id : str):
+    def change_instance_id(self, instance_id : str, new_instance_id : str = "", program_name : str = "", reload : bool = True):
         #This function should take in the instance id  and then change the id of the instance from the old id to the new one
         # It should also save itself to the self.instances dict to keep it 
         # We should reload the programs
-        pass
+        if not self.is_instance_on_cluster_by_id(instance_id): return False
+
+        target_program, instnace_to_change = self.get_instance_by_id(instance_id)
+        
+        if not instnace_to_change:
+            self.print(f"{Fore.RED}Could not find instance to change.")
+            return False
+        
+        if program_name:
+            target_program = program_name
+
+        existing_ids = []
+
+        for program_instances in self.instances.values():
+            for key in program_instances.keys():
+                existing_ids.append(key)
+
+        if new_instance_id == "":
+            new_instance_id = self._generate_instance_id()
+            self.instances[target_program][new_instance_id] = self.instances[target_program].pop(instance_id)
+
+        elif len(new_instance_id) == 6 and new_instance_id.isalnum() and new_instance_id not in existing_ids:        
+            self.instances[target_program][new_instance_id] = self.instances[target_program].pop(instance_id)
+
+        else:
+            self.print(f"{Style.BRIGHT + Fore.RED}Invalid ID. Ensure it is 6 alphanumeric characters and unique.")
+            return False
+        
+        if reload:
+            self._update_distributable_instances()
+            self.run_rebalancer()
+        return True
+        
 
 
 #UTILS
+    def cleanup(self):
+        """Removes unnescecary files and directories from the cluster""" 
+        files: list = os.listdir(self.path)
+
+        for computer in self.computers:
+            files.remove(computer)
+
+        files.remove(".klaszter")
+
+        self.print(f"{Fore.GREEN}Starting cleanup...")
+
+        removed_files : int = 0
+        try:
+            for file in files:
+                target_path = Path.join(self.path, file)
+
+                while True:
+                    user_input = self.user_input(
+                        f"Unidentified file detected in {self.name}: {file}\n"
+                        "1: Delete\n"
+                        "2: Keep (Warning: Might make the cluster unstable)\n"
+                        "Enter your choice (1/2): "
+                    ).strip()
+
+                    if user_input == "1":
+                        try:
+                            if Path.isfile(target_path):
+                                self.print(f"Removing file ({file}).")
+                                os.remove(target_path)
+                            else:
+                                self.print(f"Removing folder ({file}).")
+                                shutil.rmtree(target_path)
+                            removed_files += 1
+
+                        except Exception as e:
+                            self.print(f"{Fore.BLACK}{Back.RED}CRITICAL ERROR: Cannot delete ({file}). {e}")
+                        break
+
+                    elif user_input == "2":
+                        self.print(f"Skipping file ({file}).")
+                        break  # Exit the while loop after action
+
+                    else:
+                        self.print("Invalid input. Please enter 1 or 2.")
+
+                self.print(f"{Fore.YELLOW}Removed {file} from filesystem.")
+                
+        except:
+            self.print(f"{Fore.BLACK}{Back.RED}CRITICAL ERROR DETECTED: can't delete file or folder ({file}). Cluster might be unstable.")
+            return False
+        
+
+        self.print(f"{Fore.GREEN}Cleanup completed. Removed a total of {removed_files} incorrect files plus folders.")
+        return True
+
     def is_prog_instance_file(self, path: str) -> bool:
         """Runs a check to see wether the file under the given path is an instance or not using a pattern."""
         filename = Path.basename(path)
@@ -987,13 +1063,63 @@ class Cluster:
                 if instance == id:
                     return (target_program, program[id])
 
+    def is_instance_on_cluster_by_id(self, id : str) -> bool:
+        instance_exists = False
+        for _, programs in self.instances.items():
+            for instance_id in programs:
+                if instance_id == id: instance_exists = True
+        if not instance_exists : return False
+        return True
+
     def user_input(self, input_question : str) -> str:
         """Splits input so we can use input from the ui."""
+        
         if self.root.ui == None:
             user_input = input(input_question)
             return user_input
         else:
-            pass
+            question : str = input_question.splitlines()
+            from modules.subwindow import SubWindow
+            from modules.ui import UI
+
+            popout : SubWindow = SubWindow()
+            popout.geometry("600x300")
+            popout.close_button.grid_forget()
+
+            popout.content.grid_columnconfigure(0, weight=1)
+
+            question_frame : UI.Frame = UI.Frame(popout.content)
+            question_frame.grid(row=0, column=0, sticky="new")
+            question_frame.grid_columnconfigure(0, weight=1)
+
+            for i, line in enumerate(question):
+                line = re.sub(r"\033\[[0-9;]*m", "", line)
+                line = line.replace(">>", "")
+        
+                UI.Label(question_frame, text=line, justify="left").grid(row=i, column=0)
+
+            answer : UI.Entry =  UI.Entry(popout.content)
+            answer.grid(row=1, column=0, pady=10)
+
+            while True:
+                popout.update()
+                if len(answer.get()) == 1:
+                    answer : str = answer.get()
+                    popout.destroy()
+                    return answer
+            
+            
+            
+
+            
+                    
+
+
+            
+        
+            
+
+            
 
     def print(self, text: str):
         """Debugging print method."""
