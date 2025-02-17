@@ -23,7 +23,7 @@ class Root:
 
             self._load_clusters()
 
-            # self.cleanup()
+            self.cleanup()
             self.print(f"{Fore.BLACK}{Back.GREEN}Root ({root_name}) initialized succesfully with {len(self.clusters)} cluster(s).{Back.RESET+Fore.RESET}\n")
 
 
@@ -287,27 +287,47 @@ class Root:
     def cleanup(self) -> bool:
         """Removes unnescecary files and directories from the root""" 
         files: list = os.listdir(self.path)
-        
+
+        for cluster in self.clusters:
+            files.remove(cluster)
+
         self.print(f"{Fore.GREEN}Starting cleanup...")
 
         removed_files : int = 0
-
         try:
             for file in files:
                 target_path = Path.join(self.path, file)
 
-                if Path.isdir(target_path):
-                    if ".klaszter" in os.listdir(target_path):
-                        continue
+                while True:
+                    user_input = self.user_input(
+                        f"Unidentified file detected in {self.name}: {file}\n"
+                        "1: Delete\n"
+                        "2: Keep (Warning: Might make the root unstable)\n"
+                        "Enter your choice (1/2): "
+                    ).strip()
 
-                    shutil.rmtree(target_path)
-                    removed_files += 1
-            
-                else:
-                    os.remove(target_path)
-                    removed_files += 1
+                    if user_input == "1":
+                        try:
+                            if Path.isfile(target_path):
+                                self.print(f"Removing file ({file}).")
+                                os.remove(target_path)
+                            else:
+                                self.print(f"Removing folder ({file}).")
+                                shutil.rmtree(target_path)
+                            removed_files += 1
 
-                self.print(f"{Fore.YELLOW}Removed {file} from filesystem since it was marked as incorrect.")
+                        except Exception as e:
+                            self.print(f"{Fore.BLACK}{Back.RED}CRITICAL ERROR: Cannot delete ({file}). {e}")
+                        break
+
+                    elif user_input == "2":
+                        self.print(f"Skipping file ({file}).")
+                        break  # Exit the while loop after action
+
+                    else:
+                        self.print("Invalid input. Please enter 1 or 2.")
+
+                self.print(f"{Fore.YELLOW}Removed {file} from filesystem.")
                 
         except:
             self.print(f"{Fore.BLACK}{Back.RED}CRITICAL ERROR DETECTED: can't delete file or folder ({file}). Root might be unstable.")
@@ -317,6 +337,43 @@ class Root:
         self.print(f"{Fore.GREEN}Cleanup completed. Removed a total of {removed_files} incorrect files plus folders.")
         return True
 
+#----------------------------
+        # while True:
+        # try:
+        #     user_input = self.user_input(
+        #         f"Unidentified file detected in {self.name}: {file}\n"
+        #         "1: Delete\n"
+        #         "2: Keep (Warning: Might make the computer unstable)\n"
+        #         "Enter your choice (1/2): "
+        #     ).strip()
+
+        #     if user_input == "1":
+        #         try:
+        #             if Path.isfile(target_path):
+        #                 self.print(f"Removing file ({file}).")
+        #                 os.remove(target_path)
+        #             else:
+        #                 self.print(f"Removing folder ({file}).")
+        #                 shutil.rmtree(target_path)
+        #             removed_files += 1
+        #         except Exception as e:
+        #             self.print(f"{Fore.BLACK}{Back.RED}CRITICAL ERROR: Cannot delete ({file}). {e}")
+        #         break  # Exit the while loop after action
+        #     elif user_input == "2":
+        #         self.print(f"Skipping file ({file}).")
+        #         break  # Exit the while loop after action
+        #     else:
+        #         self.print("Invalid input. Please enter 1 or 2.")
+
+
+
+    def user_input(self, input_question : str) -> str:
+        """Splits input so we can use input from the ui."""
+        if self.ui == None:
+            user_input = input(input_question)
+            return user_input
+        else:
+            pass
 
     def print(self, text: str):
         """DEBUGGING TOOL: A print for the terminal"""
