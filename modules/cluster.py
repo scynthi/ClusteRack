@@ -1046,9 +1046,16 @@ class Cluster:
         return True
 
     #TODO : Make and integrate this
-    def get_active_inactive_instances() -> tuple:
+    def get_active_inactive_instances(self) -> tuple:
         active_dict = {}
         inactive_dict = {}
+        
+        for prog_name, instances in self.instances.items():
+            for instance_id, instance in instances.items():
+                if instance["status"] == True:
+                    active_dict[instance_id] = instance
+                elif instance["satutus"] == True:
+                    inactive_dict[instance_id] = instance
         
         return (active_dict, inactive_dict)
 

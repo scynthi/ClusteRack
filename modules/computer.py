@@ -5,38 +5,50 @@ from colorama import Fore, Style, Back
 
 class Computer:
     def __init__(self, path: str, parent):
-        path: str = Path.normpath(fr"{path}")
-        self.path = path
-        computer_name: str = path.split(os.sep)[-1]
-        self.name: str = computer_name
-        self.cluster = parent
         if not hasattr(self, "initialized"):
             self.instialized = False
+        
+        path: str = Path.normpath(fr"{path}")
+        self.path = path
+        
+        computer_name: str = path.split(os.sep)[-1]
+        self.name: str = computer_name
+        
+        self.cluster = parent
+        
+        self.cores: int = 0
+        self.memory: int = 0
+        
+        if self._load_config():
+            
+            self.cleanup()
+            self.print(f"{Back.GREEN}{Fore.BLACK}Computer ({computer_name}) initialized with {self.cores} cores and {self.memory} of memory. {self.free_cores} cores and {self.free_memory} memory left free.{Back.RESET}\n\n")
+            self.instialized = True
+        else:
+            return
 
-        if Path.exists(Path.join(path, ".szamitogep_config")):
-            config_file = open(Path.join(path, ".szamitogep_config"), "r", encoding="utf8")
+
+    def _load_config(self) -> bool:
+        """Loads computer attributes if there is a config file. Creates config file by user input if there is no config file."""
+        if Path.exists(Path.join(self.path, ".szamitogep_config")):
+            config_file = open(Path.join(self.path, ".szamitogep_config"), "r", encoding="utf8")
             config: list = config_file.readlines()
             config_file.close()
 
             if len(config) != 2:
-                self.print(f"{Fore.RED}Invalid configuration file at path: {path}")
-                return
+                self.print(f"{Fore.RED}Invalid configuration file at path: {self.path}")
+                return False
             
             cores: int = int(config[0])
             memory: int = int(config[1])
 
             self.cores: int = cores
             self.memory: int = memory
+            if not self.validate_computer(): return False
+            return True
             
-            self.path: str = path
-
-            if not self.validate_computer(): return
-            self.cleanup()
-            self.print(f"{Back.GREEN}{Fore.BLACK}Computer ({computer_name}) initialized with {cores} cores and {memory} of memory. {self.free_cores} cores and {self.free_memory} memory left free.{Back.RESET}\n\n")
-            self.instialized = True
-
         else:
-            self.print(f"{Fore.RED}There's no config file in {path}")
+            self.print(f"{Fore.RED}There's no config file in {self.path}")
             try:
                 while True:
                     user_input = self.user_input(
@@ -58,24 +70,25 @@ class Computer:
                             self.print(f"{Fore.RED}Please enter a valid positive number.")
 
                         with open(Path.join(self.path, ".szamitogep_config"), "w", encoding="utf8") as config_file:
-                            print("hell")
                             config_file.write(f"{new_cores}\n{new_memory}")
                         
                         self.cluster.computers[self.name] = self
-                        self.__init__(self.path, self.cluster)
-                        return
+                        self._load_config()
+                        return True
 
                     elif user_input == "2":
-                        return
+                        return False
+                    
                     self.print(f"{Fore.RED}Choose a valid option.")
-
 
             except Exception as e:
                 self.print(f"{Fore.RED}Computer config creation abendoned because of: {e}")
-            return
-
+            return False
+            
 
     def validate_computer(self) -> bool:
+        """Checks wether the usage is overstepping the computer's resources."""
+        
         usage: dict = self.calculate_resource_usage()
 
         if usage["memory_usage_percent"] > 100:
@@ -89,6 +102,8 @@ class Computer:
         return True
 
     def calculate_resource_usage(self) -> dict:
+        """Calculates resource usage based on child instances of the computer."""
+        
         prog_instances: dict = self.get_prog_instances()
 
         memory_usage: int = 0
@@ -109,6 +124,7 @@ class Computer:
     
     def get_prog_instances(self) -> dict:
         """Return only valid instances"""
+        
         files = os.listdir(self.path)
         valid_instances = {}
         
