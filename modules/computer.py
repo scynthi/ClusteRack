@@ -45,7 +45,9 @@ class Computer:
 
             self.cores: int = cores
             self.memory: int = memory
-            if not self.validate_computer(): return False
+            if not self.validate_computer(): 
+                self.print(f"{Fore.RED}Couldn`t validate computer. Too much resource usage on startup.")
+                return False
             return True
             
         else:

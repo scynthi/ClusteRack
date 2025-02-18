@@ -38,8 +38,8 @@ class Cluster:
         self._load_programs()
 
         self.rebalancer = Rebalancer(self)
-        self.set_rebalance_algo(2)
-        self.run_rebalancer()
+        self.set_rebalance_algo(0)
+        self.run_rebalance()
         self.cleanup()
 
         self.print(f"{Fore.BLACK}{Back.GREEN}Cluster ({self.name}) initialized succesfully with {len(self.computers)} computer(s) and {len(self.programs)} program(s).{Back.RESET+Fore.RESET}\n")
@@ -166,7 +166,7 @@ class Cluster:
                     while True:
                         user_input = self.user_input(
                                             f"Not enough active '{program_name}' instances to fulfill quota : {required_count}! \n"
-                                            f"{Fore.GREEN}Inactive instances found.{Fore.WHITE + Style.BRIGHT} Would you like to start them?{Style.RESET_ALL}\n"
+                                            f"{Fore.GREEN}Inactive instances found ({len(inactive_valid_instances)}).{Fore.WHITE + Style.BRIGHT} Would you like to start them?{Style.RESET_ALL}\n"
                                             f"1 - Yes\n"
                                             f"2 - Cancel >> ").strip()
                         if user_input == '1':
@@ -217,8 +217,11 @@ class Cluster:
 
                 # Handle excess instances
                 extra_instances_count = len(active_valid_instances) - required_count
+                if len(all_instances) > required_count:
+                    self.print(f"{Back.BLUE + Fore.BLACK}More instances (Active({len(active_valid_instances)}), Incative({len(inactive_valid_instances)})) found on cluster than required ({required_count}).")
+
                 if extra_instances_count > 0:
-                    self.print(f"{Fore.YELLOW}Warning: extra '{program_name}' instances found!")
+                    self.print(f"{Fore.YELLOW}Warning: extra active '{program_name}' instances found!")
 
                     extra_instances = []
                     for i in range(extra_instances_count):
@@ -262,8 +265,8 @@ class Cluster:
 
         # self.print("================================")
         # self.print(self.programs)
-        # self.print(self.instances)
-        # self.print(self.distributable_instances)
+        self.print(self.instances)
+        self.print(self.distributable_instances)
         # self.print("================================")
 
 
@@ -530,7 +533,7 @@ class Cluster:
     def reload_cluster(self):
         self._load_computers()
         self._load_programs()
-        self.run_rebalancer()
+        self.run_rebalance()
 
         self.print(f"{Back.BLUE + Fore.WHITE}Successfully reloaded cluster")
 
@@ -539,7 +542,7 @@ class Cluster:
     def set_rebalance_algo(self, new_algo_id: int = 0):
         self.rebalancer.default_rebalance_algo = rebalancing_algos[new_algo_id]
 
-    def run_rebalancer(self):
+    def run_rebalance(self):
         self.rebalancer.run_default_rebalance_algo()
 
 
@@ -713,7 +716,7 @@ class Cluster:
 
         if reload:
             self._load_programs()
-            self.run_rebalancer()
+            self.run_rebalance()
         return True
 
     def kill_program(self, program_name : str):
@@ -763,7 +766,7 @@ class Cluster:
         
         if reload:
             self._load_programs()
-            self.run_rebalancer()
+            self.run_rebalance()
         return True
 
     def edit_program_resources(self, program_name: str, property_to_edit:str, new_value, reload : bool = True):
@@ -812,7 +815,7 @@ class Cluster:
         
         if reload:
             self._load_programs()
-            self.run_rebalancer()
+            self.run_rebalance()
         return True
         
     def rename_program(self, program_name : str, new_program_name: str, reload : bool = True):
@@ -859,7 +862,7 @@ class Cluster:
 
         if reload:
             self._load_programs()
-            self.run_rebalancer()
+            self.run_rebalance()
         return True
 
 
@@ -903,7 +906,7 @@ class Cluster:
         self.instances[program_name][instance_id] = new_instance
 
         self._load_programs()
-        self.run_rebalancer()
+        self.run_rebalance()
         return True
 
     def edit_instance_status(self, instance_id: str, new_status: str, reload : bool = True) -> bool:
@@ -924,7 +927,7 @@ class Cluster:
 
         if reload:
             self._load_programs()
-            self.run_rebalancer()
+            self.run_rebalance()
         return True
 
     def kill_instance(self, instance_id : str, reload : bool = True):
@@ -956,10 +959,10 @@ class Cluster:
         
         if reload:
             self._load_programs()
-            self.run_rebalancer()
+            self.run_rebalance()
         return True
 
-    def change_instance_id(self, instance_id : str, new_instance_id : str = "", program_name : str = "", reload : bool = True):
+    def change_instance_id(self, instance_id : str, new_instance_id : str = "", program_name : str = "", reload : bool = True) -> bool:
         """Changes the instance id of a given instance. To change the instance in the filesystem reload needs to be called in the cycle. You may enter program name for a specific instance."""
         if not self.is_instance_on_cluster_by_id(instance_id): return False
 
@@ -991,7 +994,7 @@ class Cluster:
         
         if reload:
             self._update_distributable_instances()
-            self.run_rebalancer()
+            self.run_rebalance()
         return True
         
 
@@ -1051,8 +1054,8 @@ class Cluster:
         self.print(f"{Fore.GREEN}Cleanup completed. Removed a total of {removed_files} incorrect files plus folders.")
         return True
 
-    #TODO : Make and integrate this
     def get_active_inactive_instances(self) -> tuple:
+        """Gives back a tuple with the current active and inactive instances in dictionaries."""
         active_dict = {}
         inactive_dict = {}
         
@@ -1140,7 +1143,6 @@ class Cluster:
                     answer : str = answer.get()
                     popout.destroy()
                     return answer
-
 
     def print(self, text: str):
         """Debugging print method."""
