@@ -38,7 +38,7 @@ class Cluster:
         self._load_programs()
 
         self.rebalancer = Rebalancer(self)
-        self.set_rebalance_algo(1)
+        self.set_rebalance_algo(2)
         self.run_rebalancer()
         self.cleanup()
 
