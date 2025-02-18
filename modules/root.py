@@ -151,7 +151,6 @@ class Root:
             self.print(f"{Fore.RED}Failed to start process {process_name} in {destination_cluster_name}.")
             return False
 
-
     def move_computer(self, computer_name: str, origin_cluster_name: str, destination_cluster_name: str) -> bool:
         """Moves computer from one cluster to another"""
         origin_cluster : Cluster = self.clusters[origin_cluster_name]
@@ -189,6 +188,7 @@ class Root:
 
 #Cluster
     def create_cluster(self, cluster_name: str) -> Cluster:
+        """Creates a new cluster under the root with no computers."""
         path: str = Path.join(self.path, cluster_name)
 
         if Path.exists(path):
@@ -208,7 +208,6 @@ class Root:
         except:
             self.print(f"{Fore.RED}Error while creating cluster '{cluster_name}'.")
             return False
-
 
     def delete_cluster(self, cluster_name : str, mode : str = "try") -> bool:
         """Deletes clusters either with soft mode('try') or force mode('f')"""
@@ -252,8 +251,8 @@ class Root:
             self.print(f"{Fore.RED}Can not delete cluster ({cluster_name}) please specify a valid mode")
             return False
 
-
     def rename_cluster(self, target_cluster : str, new_name : str) -> bool:
+        """Changes the name of the cluster without reinitializing it."""
         if not target_cluster in self.clusters:
             self.print(f"{Fore.RED}Target cluster ({new_name}) could not be found. Check the name and retry.")
             return False
@@ -283,7 +282,7 @@ class Root:
             return False
 
 
-#MISC.
+#Utils.
     def cleanup(self) -> bool:
         """Removes unnescecary files and directories from the root""" 
         files: list = os.listdir(self.path)
@@ -336,36 +335,6 @@ class Root:
 
         self.print(f"{Fore.GREEN}Cleanup completed. Removed a total of {removed_files} incorrect files plus folders.")
         return True
-
-#----------------------------
-        # while True:
-        # try:
-        #     user_input = self.user_input(
-        #         f"Unidentified file detected in {self.name}: {file}\n"
-        #         "1: Delete\n"
-        #         "2: Keep (Warning: Might make the computer unstable)\n"
-        #         "Enter your choice (1/2): "
-        #     ).strip()
-
-        #     if user_input == "1":
-        #         try:
-        #             if Path.isfile(target_path):
-        #                 self.print(f"Removing file ({file}).")
-        #                 os.remove(target_path)
-        #             else:
-        #                 self.print(f"Removing folder ({file}).")
-        #                 shutil.rmtree(target_path)
-        #             removed_files += 1
-        #         except Exception as e:
-        #             self.print(f"{Fore.BLACK}{Back.RED}CRITICAL ERROR: Cannot delete ({file}). {e}")
-        #         break  # Exit the while loop after action
-        #     elif user_input == "2":
-        #         self.print(f"Skipping file ({file}).")
-        #         break  # Exit the while loop after action
-        #     else:
-        #         self.print("Invalid input. Please enter 1 or 2.")
-
-
 
     def user_input(self, input_question : str) -> str:
         """Splits input so we can use input from the ui."""

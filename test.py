@@ -6,9 +6,13 @@ from modules.interpreter import CLI_Interpreter
 root : Root = Root(r".\Test folder", None)
 cluster : Cluster = root.clusters["cluster0"]
 
-cluster.add_instance("superman")
 
 """
+
+
+-- Make sure no negativs in .klazter file
+
+
 Root
 Create cluster                 D
 Delete cluster (try, force)    D

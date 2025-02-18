@@ -142,10 +142,10 @@ class ClusterCreateSubWindow(SubWindow):
         self.content.grid_columnconfigure(0, weight=1)
         self.content.grid_rowconfigure(2, weight=1)
 
-        Label(self.content, text="Create cluster", fg="black",  font=large_font, bg=DGRAY).grid(row=0, column=0, pady=5)
+        Label(self.content, text="Klaszter létrehozás", fg="black",  font=large_font, bg=DGRAY).grid(row=0, column=0, pady=5)
         entry : UI.Entry = UI.Entry(self.content)
         entry.grid(row=1, column=0, pady=20, padx=50, stick="ew")
-        Button(self.content, text="Create", font=large_font, bg=DBLUE, fg="white", command=lambda: create_cluster(self)).grid(row=2, column=0, sticky="N")
+        Button(self.content, text="Létrehozás", font=large_font, bg=DBLUE, fg="white", command=lambda: create_cluster(self)).grid(row=2, column=0, sticky="N")
         error_message : UI.Label = UI.Label(self.content, text="", text_color="red", font=large_font)
         error_message.grid(row=3, column=0, pady=15)
 
@@ -158,9 +158,9 @@ class ClusterCreateSubWindow(SubWindow):
                     self.destroy()
                 else:
                     audio.play_error()
-                    error_message._text = "Check the cluster's name again!"
+                    error_message._text = "Hibás klaszter név!"
             except:
-                error_message._text = "Please enter a valid name!"
+                error_message._text = "Adjon meg egy nevet!"
                 audio.play_error()
 
 class ComputerCreateSubWindow(SubWindow):
@@ -169,22 +169,22 @@ class ComputerCreateSubWindow(SubWindow):
         self.geometry("500x400")
         self.content.grid_columnconfigure(0, weight=1)
 
-        Label(self.content, text=f"Create computer to {cluster.name}", fg="black",  font=large_font, bg=DGRAY).grid(row=0, column=0, pady=5)
+        Label(self.content, text=f"Gép hozzáadás a {cluster.name} klaszterhez", fg="black",  font=large_font, bg=DGRAY).grid(row=0, column=0, pady=5)
 
-        UI.Label(self.content, "Computer name:").grid(row=1, column=0)
+        UI.Label(self.content, "Számítógép neve:").grid(row=1, column=0)
         computer_name : UI.Entry = UI.Entry(self.content)
         computer_name.grid(row=2, column=0, pady=5, padx=50, stick="ew")
 
-        UI.Label(self.content, "Core count in millicores: ").grid(row=3, column=0)
+        UI.Label(self.content, "Magok száma millimagokban: ").grid(row=3, column=0)
         core_entry : UI.Entry = UI.Entry(self.content)
         core_entry.grid(row=4, column=0, pady=5, padx=50, stick="ew")
 
-        UI.Label(self.content, "Memory count in MB:").grid(row=5, column=0)
+        UI.Label(self.content, "Memória megabájtban:").grid(row=5, column=0)
         memory_entry : UI.Entry = UI.Entry(self.content)
         memory_entry.grid(row=6, column=0, pady=5, padx=50, stick="ew")
 
 
-        Button(self.content, text="Create", font=large_font, bg=DBLUE, fg="white", command=lambda: create_computer(self)).grid(row=7, column=0, sticky="N")
+        Button(self.content, text="Létrehozás", font=large_font, bg=DBLUE, fg="white", command=lambda: create_computer(self)).grid(row=7, column=0, sticky="N")
 
         error_message : UI.Label = UI.Label(self.content, text="", text_color="red", font=large_font)
         error_message.grid(row=8, column=0, pady=15)
@@ -199,10 +199,10 @@ class ComputerCreateSubWindow(SubWindow):
                     self.destroy()
                 else:
                     audio.play_error()
-                    error_message._text = "Invalid resources were given. Check again."
+                    error_message._text = "Rossz típusú adatok lettek megadva."
             except:
                     audio.play_error()
-                    error_message._text = "Internal error. Try again."
+                    error_message._text = "Belső hiba. Próbálja újra."
 
 
 
@@ -214,25 +214,25 @@ class StartProgramSubWindow(SubWindow):
         super().__init__()
         self.geometry("500x500")
         self.content.grid_columnconfigure(0, weight=1)
-        Label(self.content, text=f"Add program to {cluster.name}", fg="black",  font=large_font, bg=DGRAY).grid(row=0, column=0, pady=5)
+        Label(self.content, text=f"Program hozzáadás a {cluster.name} klaszterhez", fg="black",  font=large_font, bg=DGRAY).grid(row=0, column=0, pady=5)
 
-        UI.Label(self.content, "Program name").grid(row=1, column=0)
+        UI.Label(self.content, "Program neve").grid(row=1, column=0)
         program_name : UI.Entry = UI.Entry(self.content)
         program_name.grid(row=2, column=0, pady=5, padx=50, stick="ew")
 
-        UI.Label(self.content, "Instance count: ").grid(row=3, column=0)
+        UI.Label(self.content, "Futtatandó példányok: ").grid(row=3, column=0)
         instance_entry : UI.Entry = UI.Entry(self.content)
         instance_entry.grid(row=4, column=0, pady=5, padx=50, stick="ew")
 
-        UI.Label(self.content, "Core count in millicores: ").grid(row=5, column=0)
+        UI.Label(self.content, "Magok száma millimagokban: ").grid(row=5, column=0)
         core_entry : UI.Entry = UI.Entry(self.content)
         core_entry.grid(row=6, column=0, pady=6, padx=50, stick="ew")
 
-        UI.Label(self.content, "Memory count in MB:").grid(row=7, column=0)
+        UI.Label(self.content, "Memória megabájtban").grid(row=7, column=0)
         memory_entry : UI.Entry = UI.Entry(self.content)
         memory_entry.grid(row=8, column=0, pady=8, padx=50, stick="ew")
 
-        Button(self.content, text="Add program", font=large_font, bg=DBLUE, fg="white", command=lambda: try_add_program()).grid(row=9, column=0, sticky="N")
+        Button(self.content, text="Program hozzáadása", font=large_font, bg=DBLUE, fg="white", command=lambda: try_add_program()).grid(row=9, column=0, sticky="N")
 
         error_message : UI.Label = UI.Label(self.content, text="", text_color="red", font=large_font)
         error_message.grid(row=10, column=0, pady=15)
@@ -244,5 +244,35 @@ class StartProgramSubWindow(SubWindow):
                 self.destroy()
             else:
                 audio.play_error()
-                error_message._text = "Invalid value(s) were given. Try again."
+                error_message._text = "Rossz típusú adatok. Próbálja újra."
 
+
+class ClusterRenameSubWindow(SubWindow):
+    def __init__(self, root : Root, cluster : Cluster, ui):
+        super().__init__()
+        self.content.grid_columnconfigure(0, weight=1)
+        self.content.grid_rowconfigure(2, weight=1)
+
+        Label(self.content, text=f"Klaszter ({cluster.name}) átnevezése", fg="black",  font=large_font, bg=DGRAY).grid(row=0, column=0, pady=5)
+        entry : UI.Entry = UI.Entry(self.content)
+        entry.grid(row=1, column=0, pady=20, padx=50, stick="ew")
+        
+
+        Button(self.content, text="Átnevezés", font=large_font, bg=DBLUE, fg="white", command=lambda: rename_cluster(self)).grid(row=2, column=0, sticky="N")
+        error_message : UI.Label = UI.Label(self.content, text="", text_color="red", font=large_font)
+        error_message.grid(row=3, column=0, pady=15)
+
+
+        def rename_cluster(self) -> None:
+            try:
+                if root.rename_cluster(cluster.name, entry.get()):
+                    root._load_clusters()
+                    audio.play_accept()
+                    ui.reload()
+                    self.destroy()
+                else:
+                    audio.play_error()
+                    error_message._text = "Hibás klaszter név!"
+            except:
+                error_message._text = "Adjon meg egy nevet!"
+                audio.play_error()

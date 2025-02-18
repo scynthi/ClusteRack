@@ -390,10 +390,11 @@ class CLI_Interpreter:
                                 return f"No command beggining with {item}", "", False, f"{original_command}"
                         
                         if "?" not in item:
+
+                            return f"No such commands starting with: {item}", "", False, original_command
+
     
-                            return f"Keyerror: {item}", "", False, original_command
-                        
-                        return "That is not a full command", "", False, original_command
+                        return f"Keyerror: {item}", "", False, original_command
                 
                 if type(current_step[temp_item]) != tuple:
                     

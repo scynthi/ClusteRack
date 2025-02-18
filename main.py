@@ -2,7 +2,7 @@ from customtkinter import *
 from tkinter import *
 from PIL import Image
 from os import path as Path
-from modules.ui import UI, AppWindow, DGRAY, LGRAY, DBLUE, LBLUE, large_font, small_font, extra_large_font, bold_large_font
+from modules.ui import UI, AppWindow, DGRAY, LGRAY, DBLUE, LBLUE, large_font, small_font, extra_large_font, bold_large_font, larger_font
 from modules.root import Root
 from modules.cluster import Cluster
 from modules.computer import Computer
@@ -85,7 +85,7 @@ class ClusterView:
             image_frame.grid(row=1, column=0, sticky="NSEW")
 
             UI.Label(cluster_frame, text=cluster.name, font=large_font).grid(row=0, column=0)
-            UI.Button(cluster_frame, text=f"Open {cluster.name}", command=lambda selected_cluster = cluster: self.open_cluster_tab(selected_cluster)).grid(row=2, column=0, sticky="EW")
+            UI.Button(cluster_frame, text=f"{cluster.name} megnyitása", command=lambda selected_cluster = cluster: self.open_cluster_tab(selected_cluster)).grid(row=2, column=0, sticky="EW")
             
 
             pc_amount : int = len(cluster.computers.keys())
@@ -96,14 +96,14 @@ class ClusterView:
                     label.grid(row=0, column=x, padx=5)
             else:
                 image_frame.grid_rowconfigure(0, weight=1)
-                UI.Label(image_frame, text="0 computers have been detected").grid(row=0, column=0, padx=5)
+                UI.Label(image_frame, text="Nem található számítógépek").grid(row=0, column=0, padx=5)
 
         add_cluster_frame : UI.Frame = UI.Frame(self.clusters_frame)
         add_cluster_frame.grid_rowconfigure(1, weight=1)
         add_cluster_frame.grid(row=0, column=len(root.clusters.values())+1, padx=20, pady=10, sticky="NS")
 
-        UI.Label(add_cluster_frame, text="New cluster", font=large_font).grid(row=0, column=0)
-        UI.Button(add_cluster_frame, text="Create new cluster", command=lambda: ClusterCreateSubWindow(root, self)).grid(row=1, column=0)
+        UI.Label(add_cluster_frame, text="Új klaszter", font=large_font).grid(row=0, column=0)
+        UI.Button(add_cluster_frame, text="Új klaszter létrehozása", command=lambda: ClusterCreateSubWindow(root, self)).grid(row=1, column=0)
 
 
     def open_cluster_tab(self, cluster : Cluster) -> None:
@@ -118,9 +118,11 @@ class ClusterView:
     def reload(self) -> None:
         self.clusters_frame.destroy()
         try:
-            self.cluster_tab.reload()
+            self.cluster_tab.destroy()
         except: pass
         self.__init__()
+        
+
 
 
 
@@ -137,6 +139,11 @@ class ClusterBoard:
         self.frame.grid(row=0, column=0, sticky="nsw")
         self.frame.grid_rowconfigure(2, weight=1)
 
+        UI.Label(self.frame, text="Parancsok", font=larger_font, text_color=DBLUE).grid(row=0, column=0, pady=8)
+        UI.Label(self.frame, text=cluster.name, font=larger_font, text_color=DBLUE).grid(row=0, column=1)
+        UI.Label(self.frame, text="Információk", font=larger_font, text_color=DBLUE).grid(row=0, column=2)
+
+
         button_frame_helper : UI.Frame = UI.Frame(self.frame)
         button_frame_helper.grid(row=1, column=0, rowspan=2, sticky="EWNS")
         button_frame_helper.grid_rowconfigure(0, weight=1)
@@ -145,14 +152,13 @@ class ClusterBoard:
         self.button_frame.grid(row=0, column=0, sticky="EWNS")
         self.button_frame.grid_columnconfigure(0, weight=1)
 
-        UI.Label(self.frame, text="Commands", font=extra_large_font, text_color=DBLUE).grid(row=0, column=0, pady=12)
 
-        UI.Button(self.button_frame, text=f"Create computer", command=lambda: ComputerCreateSubWindow(self.cluster, self)).grid(row=0, column=0, pady=5, padx=10, sticky="we")
-        UI.Button(self.button_frame, text=f"Start program", command=lambda: StartProgramSubWindow(self.cluster, self)).grid(row=1, column=0, pady=5, padx=10, sticky="we")
-        UI.Button(self.button_frame, text=f"Algorithm settings", command=SubWindow).grid(row=2, column=0, pady=5, padx=10, sticky="we")
-        UI.Button(self.button_frame, text=f"Move program", command=SubWindow).grid(row=3, column=0, pady=5, padx=10, sticky="we")
-        UI.Button(self.button_frame, text=f"Edit cluster name", command=SubWindow).grid(row=4, column=0, pady=5, padx=10, sticky="we")
-        UI.Button(self.button_frame, text=f"Delete cluster", bg_color="red", command=lambda: delete_cluster_and_reload()).grid(row=5, column=0, pady=5, padx=10, sticky="we")
+        UI.Button(self.button_frame, text=f"Gép hozzáadás", command=lambda: ComputerCreateSubWindow(self.cluster, self)).grid(row=0, column=0, pady=5, padx=10, sticky="we")
+        UI.Button(self.button_frame, text=f"Program hozzáadás", command=lambda: StartProgramSubWindow(self.cluster, self)).grid(row=1, column=0, pady=5, padx=10, sticky="we")
+        UI.Button(self.button_frame, text=f"Algoritmus\nbeállítások", command=SubWindow).grid(row=2, column=0, pady=5, padx=10, sticky="we")
+        UI.Button(self.button_frame, text=f"Program mozgatás", command=SubWindow).grid(row=3, column=0, pady=5, padx=10, sticky="we")
+        UI.Button(self.button_frame, text=f"Klaszter\nátnevezése", command=lambda: ClusterRenameSubWindow(root, cluster, self.parent_ui)).grid(row=4, column=0, pady=5, padx=10, sticky="we")
+        UI.Button(self.button_frame, text=f"Klaszter törlése", bg_color="red", command=lambda: delete_cluster_and_reload()).grid(row=5, column=0, pady=5, padx=10, sticky="we")
 
 
         program_help_frame : UI.Frame = UI.Frame(self.frame)
@@ -163,33 +169,30 @@ class ClusterBoard:
         self.program_frame : CTkScrollableFrame = CTkScrollableFrame(program_help_frame, orientation="vertical")
         self.program_frame.grid(row=0, column=0, sticky="EWNS")
         self.program_frame.grid_columnconfigure(0, weight=1)
+        UI.Label(self.program_frame, text="Program lista", font=larger_font, text_color=DBLUE).grid(row=0, column=0)
 
-        UI.Label(self.program_frame, text="Program list", font=extra_large_font).grid(row=0, column=0)
 
         for i, program in enumerate(cluster.programs):
             temp_program_frame : UI.Frame = UI.Frame(self.program_frame)
             temp_program_frame.grid(row=i+1, column=0, sticky="EW", pady=5)
         
             UI.Button(temp_program_frame, text=f"{program}".upper(), font=bold_large_font).grid(row=0, column=0, sticky="ew")
-            UI.Label(temp_program_frame, text=f"Required instances: {cluster.programs[program]["required_count"]}").grid(row=1, column=0, pady=10, sticky="w")
+            UI.Label(temp_program_frame, text=f"Futtatandó példányok: {cluster.programs[program]["required_count"]}").grid(row=1, column=0, pady=10, sticky="w")
             
             temp_program_frame.grid_columnconfigure(0, weight=1)
             help_button_frame : UI.Frame = UI.Frame(temp_program_frame)
             help_button_frame.grid(row=2, column=0, sticky="ew")
             help_button_frame.grid_columnconfigure([0,1,2], weight=1)
-            UI.Button(help_button_frame, text="Pause").grid(row=2, column=0, sticky="ew")
+            UI.Button(help_button_frame, text="Megállítás").grid(row=2, column=0, sticky="ew")
             UI.Button(help_button_frame, text="Start").grid(row=2, column=1, sticky="ew")
-            UI.Button(help_button_frame, text="Kill").grid(row=2, column=2, sticky="ew")
-            UI.Button(help_button_frame, text="Edit").grid(row=3, column=0, columnspan=3, sticky="ew")
+            UI.Button(help_button_frame, text="Törlés").grid(row=2, column=2, sticky="ew")
+            UI.Button(help_button_frame, text="Átírás").grid(row=3, column=0, columnspan=3, sticky="ew")
 
-
-        UI.Label(self.frame, text=cluster.name, font=extra_large_font, text_color=DBLUE).grid(row=0, column=1)
 
         cluster_frame : UI.Frame = UI.Frame(self.frame)
         cluster_frame.grid(row=1, column=1, sticky="new")
         self.rack_model = UI.EmbedRenderer(cluster_frame, "rack_8", 12, app).get_renderer()
 
-        UI.Label(self.frame, text="Information", font=extra_large_font, text_color=DBLUE).grid(row=0, column=2)
         self.info_frame : UI.Frame = UI.Frame(self.frame)
         self.info_frame.grid(column=2, row=1, sticky="EWN")
         
@@ -209,13 +212,13 @@ class ClusterBoard:
             for _ in cluster.instances[program].keys():
                 instance_count += 1
 
-        UI.Label(self.info_frame, text=f"Cores: {cores} millicores").grid(row=0, column=0, sticky="w", padx=10)
-        UI.Label(self.info_frame, text=f"Memory: {memory} MB").grid(row=1, column=0, sticky="w", padx=10)
-        UI.Label(self.info_frame, text=f"Free cores: {free_cores} millicores").grid(row=2, column=0, sticky="w", padx=10)
-        UI.Label(self.info_frame, text=f"Free memory: {free_memory} MB").grid(row=3, column=0, sticky="w", padx=10)
-        UI.Label(self.info_frame, text=f"Programs: {len(cluster.programs)}").grid(row=4, column=0, sticky="w", padx=10)
-        UI.Label(self.info_frame, text=f"Instance count: {instance_count}").grid(row=5, column=0, sticky="w", padx=10)
-        UI.Label(self.info_frame, text=f"Computers: {len(cluster.computers.keys())}").grid(row=6, column=0, sticky="w", padx=10)        
+        UI.Label(self.info_frame, text=f"Magok: {cores} millimag").grid(row=0, column=0, sticky="w", padx=10)
+        UI.Label(self.info_frame, text=f"Memória: {memory} MB").grid(row=1, column=0, sticky="w", padx=10)
+        UI.Label(self.info_frame, text=f"Szabad magok: {free_cores} millimag").grid(row=2, column=0, sticky="w", padx=10)
+        UI.Label(self.info_frame, text=f"Szabad memória: {free_memory} MB").grid(row=3, column=0, sticky="w", padx=10)
+        UI.Label(self.info_frame, text=f"Programok: {len(cluster.programs)}").grid(row=4, column=0, sticky="w", padx=10)
+        UI.Label(self.info_frame, text=f"Program példányok: {instance_count}").grid(row=5, column=0, sticky="w", padx=10)
+        UI.Label(self.info_frame, text=f"Számítógépek: {len(cluster.computers.keys())}").grid(row=6, column=0, sticky="w", padx=10)        
 
 
         self.computer_list_frame : CTkScrollableFrame = CTkScrollableFrame(self.frame, orientation="vertical", border_width=4, border_color="gray", corner_radius=0, width=230)
@@ -228,7 +231,7 @@ class ClusterBoard:
             computer_image : CTkLabel = CTkLabel(cur_pc_frame, text=pc.name, font=large_font, text_color="white", image=image)
             computer_image.grid(row=0, column=0, pady=5)
 
-            UI.Button(cur_pc_frame, text=f"Open {pc.name}", command=lambda pc = pc: self.open_computer_tab(pc)).grid(row=1, column=0, pady=5)
+            UI.Button(cur_pc_frame, text=f"{pc.name} megnyitása", command=lambda pc = pc: self.open_computer_tab(pc)).grid(row=1, column=0, pady=5)
             cur_pc_frame.grid(row=i, column=0, pady=5)
         
         def delete_cluster_and_reload():
@@ -267,54 +270,64 @@ class ComputerBoard:
         self.frame : UI.Frame = UI.Frame(_frame)
         self.frame.grid(row=0, column=1, sticky="nsew")
 
-        UI.Label(self.frame, computer.name, font=extra_large_font).grid(row=0, column=0)
+        UI.Label(self.frame, computer.name, font=larger_font, text_color=DBLUE).grid(row=0, column=0, pady=8)
+        UI.Label(self.frame, "Erőforrások", font=larger_font, text_color=DBLUE).grid(row=0, column=1)
+        UI.Label(self.frame, "Kihasználtság %", font=larger_font, text_color=DBLUE).grid(row=0, column=2)
+
         self.computer_frame : UI.Frame = UI.Frame(self.frame)
         self.computer_frame.grid(row=1, column=0, sticky="nesw")
         self.computer_frame.grid_rowconfigure(2, weight=1)
 
         self.computer_model = UI.EmbedRenderer(self.computer_frame, "computer", 10, app).get_renderer()
-        UI.Button(self.computer_frame, text="Delete computer").grid(row=2, column=0, sticky="sew", padx=10, pady=5)
-        UI.Button(self.computer_frame, text="Move computer").grid(row=3, column=0, sticky="sew", padx=10, pady=5)
+        UI.Button(self.computer_frame, text="Számítógép törlése", fg_color="red").grid(row=2, column=0, sticky="sew", padx=10, pady=5)
+        UI.Button(self.computer_frame, text="Számítógép mozgatása").grid(row=3, column=0, sticky="sew", padx=10, pady=5)
 
 
-        UI.Label(self.frame, "Resources", font=extra_large_font).grid(row=0, column=1)
         self.resources_frame : UI.Frame = UI.Frame(self.frame)
         self.resources_frame.grid(row=1, column=1, sticky="NS")
         self.resources_frame.grid_rowconfigure(5, weight=1)
 
 
-        UI.Label(self.resources_frame, text=f"Cores: {self.computer.cores} millicores").grid(row=0, column=0, sticky="w", padx=10)
-        UI.Label(self.resources_frame, text=f"Memory: {self.computer.memory} MB").grid(row=1, column=0, sticky="w", padx=10)
-        UI.Label(self.resources_frame, text=f"Free cores: {self.computer.free_cores} millicores").grid(row=2, column=0, sticky="w", padx=10)
-        UI.Label(self.resources_frame, text=f"Free memory: {self.computer.free_memory} MB").grid(row=3, column=0, sticky="w", padx=10)
-        UI.Label(self.resources_frame, text=f"Processes: {len(self.computer.get_prog_instances().keys())}").grid(row=4, column=0, sticky="w", padx=10)
-        UI.Button(self.resources_frame, text="Edit Resources").grid(row=5, column=0, sticky="sew", padx=10, pady=5)
-        UI.Button(self.resources_frame, text="Change name").grid(row=6, column=0, sticky="sew", padx=10, pady=5)
+        UI.Label(self.resources_frame, text=f"Magok: {self.computer.cores} millimag").grid(row=0, column=0, sticky="w", padx=10)
+        UI.Label(self.resources_frame, text=f"Memória: {self.computer.memory} MB").grid(row=1, column=0, sticky="w", padx=10)
+        UI.Label(self.resources_frame, text=f"Szabad magok: {self.computer.free_cores} millimag").grid(row=2, column=0, sticky="w", padx=10)
+        UI.Label(self.resources_frame, text=f"Szabad memória: {self.computer.free_memory} MB").grid(row=3, column=0, sticky="w", padx=10)
+        UI.Label(self.resources_frame, text=f"Futó példányok: {len(self.computer.get_prog_instances().keys())}").grid(row=4, column=0, sticky="w", padx=10)
+        
+        UI.Button(self.resources_frame, text="Erőforrások átírása").grid(row=5, column=0, sticky="sew", padx=10, pady=5)
+        UI.Button(self.resources_frame, text="Átnevezés").grid(row=6, column=0, sticky="sew", padx=10, pady=5)
     
-        self.processes_frame : UI.Frame = UI.Frame(self.frame)
-        self.processes_frame.grid(row=2, column=0, columnspan=2, sticky="nsew")
-        self.processes_frame.grid_rowconfigure(0, weight=1)
-        self.processes_frame.grid_columnconfigure(0, weight=1)
+        self.instances_frame : UI.Frame = UI.Frame(self.frame)
+        self.instances_frame.grid(row=2, column=0, columnspan=2, sticky="nsew")
+        self.instances_frame.grid_rowconfigure(0, weight=1)
+        self.instances_frame.grid_columnconfigure(0, weight=1)
 
-        self.processes_scrollbar_frame : CTkScrollableFrame = CTkScrollableFrame(self.processes_frame, orientation="vertical")
-        self.processes_scrollbar_frame.grid(row=0, column=0, sticky="nsew")
-        self.processes_scrollbar_frame.grid_rowconfigure(0, weight=1)
+        self.instances_scrollbar_frame : CTkScrollableFrame = CTkScrollableFrame(self.instances_frame, orientation="vertical")
+        self.instances_scrollbar_frame.grid(row=0, column=0, sticky="nsew")
+        self.instances_scrollbar_frame.grid_columnconfigure(0, weight=1)
 
-        UI.Label(self.processes_scrollbar_frame, "Process list", font=extra_large_font).grid(row=0, column=0)
+        UI.Label(self.instances_scrollbar_frame, "Futó példányok:", font=extra_large_font, text_color=DBLUE).grid(row=0, column=0)
 
-        for i, process in enumerate(self.computer.get_prog_instances()):
-            process_info : dict = self.computer.get_prog_instance_info(process)
+        for i, instance in enumerate(self.computer.get_prog_instances()):
+            instance_info : dict = self.computer.get_prog_instance_info(instance)
 
-            process_help_frame : UI.Frame = UI.Frame(self.processes_scrollbar_frame)
-            process_help_frame.grid(row=i+1, column=0, pady=5, sticky="EW")
+            instance_help_frame : UI.Frame = UI.Frame(self.instances_scrollbar_frame)
+            instance_help_frame.grid(row=i+1, column=0, pady=5, sticky="EW")
+            instance_help_frame.grid_columnconfigure(0, weight=1)
 
-            UI.Button(process_help_frame, process).grid(row=0, column=0, padx=10)
-            UI.Label(process_help_frame, f"Cores: {process_info["cores"]}").grid(row=0, column=1, padx=10)
-            UI.Label(process_help_frame, f"Memory: {process_info["memory"]}").grid(row=0, column=2, padx=10)
-            UI.Label(process_help_frame, f"Running: {process_info["status"]}").grid(row=0, column=3, padx=10)
+            UI.Button(instance_help_frame, instance).grid(row=0, column=0, pady=10, sticky="w")
+
+            instance_info_help_frame : UI.Frame = UI.Frame(instance_help_frame)
+            instance_info_help_frame.grid(row=1, column=0, sticky="ew")
+
+            instance_helper : str = "Aktív"
+            if instance_info["status"]: instance_helper == "Inaktív"
+
+            UI.Label(instance_info_help_frame, f"Magok: {instance_info["cores"]}").grid(row=0, column=0, padx=10)
+            UI.Label(instance_info_help_frame, f"Memória: {instance_info["memory"]}").grid(row=0, column=1, padx=10)
+            UI.Label(instance_info_help_frame, f"Státusz: {instance_info["status"]}").grid(row=0, column=2, padx=10)
 
 
-        UI.Label(self.frame, "Usage %", font=extra_large_font).grid(row=0, column=2)
         self.cpu_usage_frame : UI.Frame = UI.Frame(self.frame)
         self.cpu_usage_frame.grid(row=1, column=2)
         UI.Plot(self.computer, self.cpu_usage_frame, "Core usage %", "core_usage_percent")

@@ -25,10 +25,10 @@ FontManager.load_font(Path.join("Assets","Font", "VCR_OSD_MONO_1.001.ttf"))
 font_entry : font_manager.FontEntry = font_manager.FontEntry(fname=Path.join("Assets","Font", "VCR_OSD_MONO_1.001.ttf"), name="VCR OSD MONO")
 font_manager.fontManager.ttflist.insert(0, font_entry)
 matplotlib.rcParams["font.family"] = font_entry.name
-#font_for_plot : font_manager.FontProperties = font_manager.FontProperties(font_manager.fontManager.addfont())
 
 
 extra_large_font : tuple = ("VCR OSD MONO", 30)
+larger_font : tuple = ("VCR OSD MONO", 25)
 large_font : tuple = ("VCR OSD MONO", 15)
 bold_large_font : tuple = ("VCR OSD MONO", 15, "bold")
 small_font : tuple = ("VCR OSD MONO", 12)
@@ -82,11 +82,11 @@ class AppWindow(CTk):
         content : Frame = Frame(self, bg=DGRAY)
         content.grid(row=1, column=0, sticky="nsew")
 
-        resizey_widget : Frame = Frame(self, cursor='sb_v_double_arrow')
+        resizey_widget : Frame = Frame(self, cursor='sb_v_double_arrow', width=10)
         resizey_widget.grid(row=1, column=0, sticky="SEW")
         resizey_widget.bind("<B1-Motion>", self.resizey)
 
-        resizex_widget : Frame = Frame(self, cursor='sb_h_double_arrow')
+        resizex_widget : Frame = Frame(self, cursor='sb_h_double_arrow', height=10)
         resizex_widget.grid(row=1, column=1, sticky="NSE")
         resizex_widget.bind("<B1-Motion>", self.resizex)
 

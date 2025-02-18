@@ -5,77 +5,91 @@ from colorama import Fore, Style, Back
 
 class Computer:
     def __init__(self, path: str, parent):
-        path: str = Path.normpath(fr"{path}")
-        self.path = path
-        computer_name: str = path.split(os.sep)[-1]
-        self.name: str = computer_name
-        self.cluster = parent
         if not hasattr(self, "initialized"):
             self.instialized = False
+        
+        path: str = Path.normpath(fr"{path}")
+        self.path = path
+        
+        computer_name: str = path.split(os.sep)[-1]
+        self.name: str = computer_name
+        
+        self.cluster = parent
+        
+        self.cores: int = 0
+        self.memory: int = 0
+        
+        if self._load_config():
+            
+            self.cleanup()
+            self.print(f"{Back.GREEN}{Fore.BLACK}Computer ({computer_name}) initialized with {self.cores} cores and {self.memory} of memory. {self.free_cores} cores and {self.free_memory} memory left free.{Back.RESET}\n\n")
+            self.instialized = True
+        else:
+            return
 
-        if Path.exists(Path.join(path, ".szamitogep_config")):
-            config_file = open(Path.join(path, ".szamitogep_config"), "r", encoding="utf8")
+
+    def _load_config(self) -> bool:
+        """Loads computer attributes if there is a config file. Creates config file by user input if there is no config file."""
+        if Path.exists(Path.join(self.path, ".szamitogep_config")):
+            config_file = open(Path.join(self.path, ".szamitogep_config"), "r", encoding="utf8")
             config: list = config_file.readlines()
             config_file.close()
 
             if len(config) != 2:
-                self.print(f"{Fore.RED}Invalid configuration file at path: {path}")
-                return
+                self.print(f"{Fore.RED}Invalid configuration file at path: {self.path}")
+                return False
             
             cores: int = int(config[0])
             memory: int = int(config[1])
 
             self.cores: int = cores
             self.memory: int = memory
+            if not self.validate_computer(): return False
+            return True
             
-            self.path: str = path
-
-            if not self.validate_computer(): return
-            self.cleanup()
-            self.print(f"{Back.GREEN}{Fore.BLACK}Computer ({computer_name}) initialized with {cores} cores and {memory} of memory. {self.free_cores} cores and {self.free_memory} memory left free.{Back.RESET}\n\n")
-            self.instialized = True
-
         else:
-            self.print(f"{Fore.RED}There's no config file in {path}")
+            self.print(f"{Fore.RED}There's no config file in {self.path}")
             try:
                 while True:
                     user_input = self.user_input(
-                        f"{Fore.WHITE + Style.BRIGHT}Would you like to create one?\n"
-                        f"1 - Yes\n"
-                        f"2 - No >>").strip()
+                        f"Nincs configurációs file a {self.path}\n"
+                        f"{Fore.WHITE + Style.BRIGHT}Szeretne generálni egyet?\n"
+                        f"1 - Igen\n"
+                        f"2 - Nem >> ").strip()
                     
                     if user_input == "1":
                         new_cores = 0
                         new_memory = 0
                         while True:
-                            new_cores = self.user_input("Enter core amount >> ")
+                            new_cores = self.user_input("Adja meg a magok számát(Millimag) >> ")
                             if new_cores.isdigit() and int(new_cores) > 0: break
                             self.print(f"{Fore.RED}Please enter a valid positive number.")
                         while True:
-                            new_memory = self.user_input("Enter memory amount >> ")
+                            new_memory = self.user_input("Adja meg a memóriát(Megabyte) >> ")
                             if new_memory.isdigit() and int(new_memory) > 0: break
                             
                             self.print(f"{Fore.RED}Please enter a valid positive number.")
 
                         with open(Path.join(self.path, ".szamitogep_config"), "w", encoding="utf8") as config_file:
-                            print("hell")
                             config_file.write(f"{new_cores}\n{new_memory}")
                         
                         self.cluster.computers[self.name] = self
-                        self.__init__(self.path, self.cluster)
-                        return
+                        self._load_config()
+                        return True
 
                     elif user_input == "2":
-                        return
+                        return False
+                    
                     self.print(f"{Fore.RED}Choose a valid option.")
-
 
             except Exception as e:
                 self.print(f"{Fore.RED}Computer config creation abendoned because of: {e}")
-            return
-
+            return False
+            
 
     def validate_computer(self) -> bool:
+        """Checks wether the usage is overstepping the computer's resources."""
+        
         usage: dict = self.calculate_resource_usage()
 
         if usage["memory_usage_percent"] > 100:
@@ -89,6 +103,8 @@ class Computer:
         return True
 
     def calculate_resource_usage(self) -> dict:
+        """Calculates resource usage based on child instances of the computer."""
+        
         prog_instances: dict = self.get_prog_instances()
 
         memory_usage: int = 0
@@ -109,6 +125,7 @@ class Computer:
     
     def get_prog_instances(self) -> dict:
         """Return only valid instances"""
+        
         files = os.listdir(self.path)
         valid_instances = {}
         
@@ -143,22 +160,6 @@ class Computer:
         except:
             return None
 
-    def remove_instance(self, instance_id: str) -> bool:
-        """Removes an instance file from the computer."""
-        instance_path = Path.join(self.path, instance_id)
-        
-        if not Path.exists(instance_path):
-            self.print(f"{Fore.YELLOW}Instance {instance_id} not found on this computer.")
-            return False
-
-        try:
-            os.remove(instance_path)
-            self.calculate_resource_usage()
-            return True
-        except Exception as e:
-            self.print(f"{Fore.RED}Failed to remove instance {instance_id}: {str(e)}")
-            return False
-
 
 #Utils
     def can_fit_instance(self, instance: dict) -> bool:
@@ -188,10 +189,10 @@ class Computer:
             while True:
                 try:
                     user_input = self.user_input(
-                        f"Unidentified file detected in {self.name}: {file}\n"
-                        "1: Delete\n"
-                        "2: Keep (Warning: Might make the computer unstable)\n"
-                        "Enter your choice (1/2): "
+                        f"Ismeretlen file a {self.name}: {file} - ban\n"
+                        "1: Törlés\n"
+                        "2: Megtartás (Warning: Lehetséges hogy destabilizálja a számítógépet)\n"
+                        "Irja be választását(1/2): "
                     ).strip()
 
                     if user_input == "1":
