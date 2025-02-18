@@ -700,7 +700,10 @@ class Cluster:
             return False
         
         data = f"{program_name}\n{instance_count}\n{cores}\n{memory}\n"
-    
+
+        if not self._validate_instance_placement(program_name, instance_count):
+            return False
+
         cluster_config_path = Path.join(self.path, ".klaszter")
         with open(cluster_config_path, "a", encoding="utf8") as config_file:
             config_file.write(data)
