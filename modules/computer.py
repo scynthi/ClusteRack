@@ -2,6 +2,7 @@ import shutil
 import os
 from os import path as Path
 from colorama import Fore, Style, Back
+import re
 
 class Computer:
     def __init__(self, path: str, parent):
@@ -52,7 +53,7 @@ class Computer:
             try:
                 while True:
                     user_input = self.user_input(
-                        f"Nincs configurációs file a {self.path}\n"
+                        f"Nincs konfigurációs file a {self.path}\n"
                         f"{Fore.WHITE + Style.BRIGHT}Szeretne generálni egyet?\n"
                         f"1 - Igen\n"
                         f"2 - Nem >> ").strip()
@@ -189,9 +190,9 @@ class Computer:
             while True:
                 try:
                     user_input = self.user_input(
-                        f"Ismeretlen file a {self.name}: {file} - ban\n"
+                        f"Ismeretlen fájl a {self.name}: {file} - ban\n"
                         "1: Törlés\n"
-                        "2: Megtartás (Warning: Lehetséges hogy destabilizálja a számítógépet)\n"
+                        "2: Megtartás (Figyelmeztetés: Lehetséges hogy destabilizálja a számítógépet)\n"
                         "Irja be választását(1/2): "
                     ).strip()
 
@@ -225,7 +226,35 @@ class Computer:
             user_input = input(input_question)
             return user_input
         else:
-            pass
+            question : str = input_question.splitlines()
+            from modules.subwindow import SubWindow
+            from modules.ui import UI
+
+            popout : SubWindow = SubWindow()
+            popout.geometry("600x300")
+            popout.close_button.grid_forget()
+
+            popout.content.grid_columnconfigure(0, weight=1)
+
+            question_frame : UI.Frame = UI.Frame(popout.content)
+            question_frame.grid(row=0, column=0, sticky="new")
+            question_frame.grid_columnconfigure(0, weight=1)
+
+            for i, line in enumerate(question):
+                line = re.sub(r"\033\[[0-9;]*m", "", line)
+                line = line.replace(">>", "")
+        
+                UI.Label(question_frame, text=line, justify="left").grid(row=i, column=0)
+
+            answer : UI.Entry =  UI.Entry(popout.content)
+            answer.grid(row=1, column=0, pady=10)
+
+            while True:
+                popout.update()
+                if len(answer.get()) == 1:
+                    answer : str = answer.get()
+                    popout.destroy()
+                    return answer
 
     def print(self, text: str):
         """DEBUGGING TOOL: A print for the terminal"""
