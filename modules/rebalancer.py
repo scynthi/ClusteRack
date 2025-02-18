@@ -53,7 +53,7 @@ class Rebalancer:
         """Clears all program instances from computers before rebalancing."""
         for computer in self.cluster.computers.values():
             for instance in computer.get_prog_instances():
-                computer.remove_instance(instance)
+                self.remove_instance_from_file(computer, instance)
 
 
     def write_instance_to_file(self, target_computer : Computer, instance: dict) -> bool:
@@ -79,7 +79,27 @@ class Rebalancer:
         except Exception as e:
             print(f"{Fore.RED}Failed to add instance {instance_filename}: {str(e)}")
             return False
+    
+    
+    def remove_instance_from_file(self, computer : Computer, instance_name: str) -> bool:
+        """Removes an instance file from the computer."""
 
+        instance_path = Path.join(computer.path, instance_name)
+        
+        if not Path.exists(instance_path):
+            computer.print(f"{Fore.YELLOW}Instance {instance_name} not found on {computer.name}.")
+            return False
+
+        try:
+            os.remove(instance_path)
+            computer.calculate_resource_usage()
+            return True
+        except Exception as e:
+            computer.print(f"{Fore.RED}Failed to remove instance {instance_name}: {str(e)}")
+            return False
+
+
+#Algorithms
     def rebalance_load_balance(self):
         """Evenly distributes instances across all computers."""
         print(f"{Fore.YELLOW}Running Load Balance Algorithm...")
@@ -125,21 +145,3 @@ class Rebalancer:
 
 
         print(f"{Fore.GREEN}Fast rebalancing complete!{Fore.RESET}")
-
-    def print_computer_scores(self):
-        """DEBUGGING TOOL: A print for the terminal"""
-        print(Fore.CYAN + "Current Computer Scores:" + Style.RESET_ALL)
-        for name, computer in self.sorted_computer_list:
-            score = self.calculate_computer_score(computer)
-            print(f"{Style.BRIGHT + Fore.CYAN}[{Fore.WHITE}{name}{Fore.CYAN}] -> {Fore.WHITE}Score: {Style.BRIGHT+Fore.GREEN}{score:.2f} {Style.NORMAL+Fore.WHITE}(Cores: {computer.free_cores}/{computer.cores}, Memory: {computer.free_memory}/{computer.memory})")
-
-    def print_assignments(self, assignments):
-        """DEBUGGING TOOL: A print for the terminal"""
-        if not assignments:
-            print(Fore.MAGENTA + Style.BRIGHT  + "\nNo assignments happened ---------" + Style.RESET_ALL + Back.RESET)
-            return
-
-        print(Fore.CYAN + Style.BRIGHT + "\nProcess Assignments:" + Style.RESET_ALL)
-        for process_name, computers in assignments.items():
-            assigned_to = [comp.name for comp in computers]
-            print(f"{Style.BRIGHT + Fore.CYAN}[{Fore.YELLOW}{process_name}{Fore.CYAN}] -> {Fore.WHITE}{', '.join(assigned_to)}{Style.RESET_ALL}")

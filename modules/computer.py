@@ -52,19 +52,20 @@ class Computer:
             try:
                 while True:
                     user_input = self.user_input(
-                        f"{Fore.WHITE + Style.BRIGHT}Would you like to create one?\n"
-                        f"1 - Yes\n"
-                        f"2 - No >>").strip()
+                        f"Nincs configurációs file a {self.path}\n"
+                        f"{Fore.WHITE + Style.BRIGHT}Szeretne generálni egyet?\n"
+                        f"1 - Igen\n"
+                        f"2 - Nem >> ").strip()
                     
                     if user_input == "1":
                         new_cores = 0
                         new_memory = 0
                         while True:
-                            new_cores = self.user_input("Enter core amount >> ")
+                            new_cores = self.user_input("Adja meg a magok számát(Millimag) >> ")
                             if new_cores.isdigit() and int(new_cores) > 0: break
                             self.print(f"{Fore.RED}Please enter a valid positive number.")
                         while True:
-                            new_memory = self.user_input("Enter memory amount >> ")
+                            new_memory = self.user_input("Adja meg a memóriát(Megabyte) >> ")
                             if new_memory.isdigit() and int(new_memory) > 0: break
                             
                             self.print(f"{Fore.RED}Please enter a valid positive number.")
@@ -159,22 +160,6 @@ class Computer:
         except:
             return None
 
-    def remove_instance(self, instance_id: str) -> bool:
-        """Removes an instance file from the computer."""
-        instance_path = Path.join(self.path, instance_id)
-        
-        if not Path.exists(instance_path):
-            self.print(f"{Fore.YELLOW}Instance {instance_id} not found on this computer.")
-            return False
-
-        try:
-            os.remove(instance_path)
-            self.calculate_resource_usage()
-            return True
-        except Exception as e:
-            self.print(f"{Fore.RED}Failed to remove instance {instance_id}: {str(e)}")
-            return False
-
 
 #Utils
     def can_fit_instance(self, instance: dict) -> bool:
@@ -204,10 +189,10 @@ class Computer:
             while True:
                 try:
                     user_input = self.user_input(
-                        f"Unidentified file detected in {self.name}: {file}\n"
-                        "1: Delete\n"
-                        "2: Keep (Warning: Might make the computer unstable)\n"
-                        "Enter your choice (1/2): "
+                        f"Ismeretlen file a {self.name}: {file} - ban\n"
+                        "1: Törlés\n"
+                        "2: Megtartás (Warning: Lehetséges hogy destabilizálja a számítógépet)\n"
+                        "Irja be választását(1/2): "
                     ).strip()
 
                     if user_input == "1":
