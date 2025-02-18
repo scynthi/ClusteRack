@@ -1,6 +1,7 @@
 from pygame import mixer
 import random
-from colorama import Fore, Style, Back
+from colorama import Fore, Style, Back, init
+init(autoreset=True)
 
 
 small_click_list: list[str] = [
