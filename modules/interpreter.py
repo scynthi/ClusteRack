@@ -7,6 +7,8 @@ from modules.computer import Computer
 from modules.root import Root
 import msvcrt
 import sys
+from colorama import init
+init(autoreset=True)
 
 class CLI_Interpreter:
     

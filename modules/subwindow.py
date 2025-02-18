@@ -192,9 +192,9 @@ class ComputerCreateSubWindow(SubWindow):
         def create_computer(self) -> None:
             try:
                 if cluster.create_computer(computer_name.get(), int(core_entry.get()), int(memory_entry.get())):
-                    ui.reload()
                     if ui.parent_ui:
                         ui.parent_ui.reload()
+                    ui.reload()
                     audio.play_accept()
                     self.destroy()
                 else:
@@ -203,10 +203,6 @@ class ComputerCreateSubWindow(SubWindow):
             except:
                     audio.play_error()
                     error_message._text = "Belső hiba. Próbálja újra."
-
-
-
-
 
 
 class StartProgramSubWindow(SubWindow):
@@ -268,7 +264,7 @@ class ClusterRenameSubWindow(SubWindow):
                 if root.rename_cluster(cluster.name, entry.get()):
                     root._load_clusters()
                     audio.play_accept()
-                    ui.reload()
+                    ui.parent_ui.reload()
                     self.destroy()
                 else:
                     audio.play_error()

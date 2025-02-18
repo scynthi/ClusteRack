@@ -157,7 +157,7 @@ class ClusterBoard:
         UI.Button(self.button_frame, text=f"Program hozzáadás", command=lambda: StartProgramSubWindow(self.cluster, self)).grid(row=1, column=0, pady=5, padx=10, sticky="we")
         UI.Button(self.button_frame, text=f"Algoritmus\nbeállítások", command=SubWindow).grid(row=2, column=0, pady=5, padx=10, sticky="we")
         UI.Button(self.button_frame, text=f"Program mozgatás", command=SubWindow).grid(row=3, column=0, pady=5, padx=10, sticky="we")
-        UI.Button(self.button_frame, text=f"Klaszter\nátnevezése", command=lambda: ClusterRenameSubWindow(root, cluster, self.parent_ui)).grid(row=4, column=0, pady=5, padx=10, sticky="we")
+        UI.Button(self.button_frame, text=f"Klaszter\nátnevezése", command=lambda: ClusterRenameSubWindow(root, cluster, self)).grid(row=4, column=0, pady=5, padx=10, sticky="we")
         UI.Button(self.button_frame, text=f"Klaszter törlése", bg_color="red", command=lambda: delete_cluster_and_reload()).grid(row=5, column=0, pady=5, padx=10, sticky="we")
 
 
