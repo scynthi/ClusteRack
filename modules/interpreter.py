@@ -16,7 +16,7 @@ class CLI_Interpreter:
         
         # Setup modes
         
-        self.current_root : Root = Root(r"./Thing", "ui")
+        self.current_root : Root = Root(r"./Thing", None)
         self.current_cluster : Cluster = None
         self.current_computer : Computer = None
         self.mode : str = "None"
@@ -69,7 +69,8 @@ class CLI_Interpreter:
             "kill_process" : {},
             "edit_process_resources" : {},
             "rename_process" : {},
-            "run" : {}
+            "run" : {},
+            "add_instance" : {}
         }
         
         self.computer_commands : dict = {
@@ -178,8 +179,10 @@ class CLI_Interpreter:
             
             #Print out the user input
             sys.stdout.write("\r")
-            sys.stdout.write(f"{prompt}>{user_input[:cursor_pos]}|{user_input[cursor_pos:]}")
+            sys.stdout.write(f"{prompt}>{user_input}")
             sys.stdout.write("\033[K")
+            for i in range(len(user_input)-cursor_pos):
+                sys.stdout.write("\033[1D")
             sys.stdout.flush()
             
             # Get the input
@@ -287,12 +290,21 @@ class CLI_Interpreter:
         
         skips = 1
         cants = ["?non_args", "?value", "?algo"]
+        index = 0
+        indexes = {}
         
         for item in cants:
             
             if item in original_command:
                 
                 return f"Can't type that bruw: {item}", "", False, original_command
+            
+        current_index = 0
+            
+        for item in shlashed_command:
+            
+            indexes.update({index : item})
+            index += len(item) + 1
 
         try:
             for item in shlashed_command:
@@ -341,27 +353,35 @@ class CLI_Interpreter:
                             
                             temp_item = fitem
                             
-                    if not temp:
+                    unfinished_item = item
                         
-                        finished = []
-
+                    for key in indexes.keys():
+                            
+                        if key < cursor_pos <= key+len(indexes[key]):
+                                
+                            index = key
+                            unfinished_item = indexes[key]
+                            break
+                        
+                    finished = []
+                            
+                    if not temp:
+                    
                         for keys in current_step.keys():
                                 
-                            if keys[:len(item)] == item:
+                            if keys[:len(unfinished_item)] == unfinished_item:
                                 
                                 finished.append(keys)
                                 
-                        if tab:
+                        if tab and current_index == index:
 
                             if len(finished) == 1:
                                 
-                                finished = finished[0]
-
-                                finished = finished[len(item):]
+                                finished = finished[0][len(unfinished_item):]
+      
+                                cursor_pos_diff = index+len(unfinished_item) - cursor_pos
                                 
-                                cursor_pos_diff = original_command.index(item)+len(item) - cursor_pos
-                                
-                                if original_command.index(item) < cursor_pos <= original_command.index(item)+len(item):
+                                if index < cursor_pos <= index+len(unfinished_item):
 
                                     original_command = original_command[:cursor_pos + cursor_pos_diff] + finished + original_command[cursor_pos + cursor_pos_diff:]
                                 
@@ -389,22 +409,33 @@ class CLI_Interpreter:
                             
                             else:
                                 
-                                return f"No command beggining with {item}", "", False, f"{original_command}"
+                                return f"No command beggining with {unfinished_item}", "", False, f"{original_command}"
                             
                         else:
+                            
+                            finished = []
+                        
+                            for keys in current_step.keys():
+                                    
+                                if keys[:len(item)] == item:
+                                    
+                                    finished.append(keys)
 
                             if len(finished) == 1:
 
                                 bitem = finished[0]
                                 temp_item = finished[0]
+
                             else:
-                        
+                            
                                 if "?" not in item:
 
                                     return f"No such commands starting with: {item}", "", False, original_command
-            
-                                return f"Keyerror: {item}", "", False, original_command
                 
+                                return f"Keyerror: {item}", "", False, original_command     
+                        
+                current_index += len(item) + 1   
+
                 if type(current_step[temp_item]) != tuple:
                     
                     if "?value" in current_step[temp_item].keys():
@@ -591,7 +622,15 @@ class CLI_Interpreter:
                     self.noMode_commands["select"]["computer"][f"{item}"].update({f"{comps}" : {"?value" : clusters[item].computers[comps], "?algo" : (self.select_computer, )}, "?value" : clusters[item]})
                     self.computer_commands["select"]["computer"][f"{item}"].update({f"{comps}" : {"?value" : clusters[item].computers[comps], "?algo" : (self.select_computer, )}, "?value" : clusters[item]})
                     self.root_commands["select"]["computer"][f"{item}"].update({f"{comps}" : {"?value" : clusters[item].computers[comps], "?algo" : (self.select_computer, )}, "?value" : clusters[item]})
-        
+
+            if self.current_cluster:
+                
+                for cluster_name in clusters.keys():
+                    
+                    for programs in clusters[cluster_name].programs.keys():
+                    
+                        self.cluster_commands["add_instance"].update({f"{programs}" : {"<instance id" : {"?algo": (self.current_cluster.add_instance, )}}})
+                
         if self.current_cluster:
         
             computers = self.current_cluster.computers
