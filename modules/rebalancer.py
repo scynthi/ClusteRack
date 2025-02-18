@@ -124,6 +124,7 @@ class Rebalancer:
 
         for instance in self.cluster.distributable_instances:
             for computer in self.sorted_computer_list:
+                computer[1].calculate_resource_usage()
                 if computer[1].can_fit_instance(instance):
                     self.write_instance_to_file(computer[1], instance)
                     break
@@ -139,8 +140,9 @@ class Rebalancer:
 
         for instance in self.cluster.distributable_instances:
             for computer in self.cluster.computers.values():
-                if computer.can_fit_instance(instance):
-                    self.write_instance_to_file(computer, instance)
+                computer[1].calculate_resource_usage()
+                if computer[1].can_fit_instance(instance):
+                    self.write_instance_to_file(computer[1], instance)
                     break
 
 
