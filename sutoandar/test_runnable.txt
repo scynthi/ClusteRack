@@ -1,5 +1,5 @@
 select root
 create_cluster borgerer
 select cluster borgerer
-create_computer computer1
+create_computer computer1 1200 6000
 select computer borgerer computer1

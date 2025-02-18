@@ -1,6 +1,7 @@
 from modules.root import Root
 from modules.cluster import Cluster
 from modules.computer import Computer
+import os
 
 # root : Root = Root(r".\Test folder")
 # cluster : Cluster = root.clusters.get("cluster0")
@@ -17,3 +18,7 @@ from modules.computer import Computer
 # for row in test2:
 #     for item in test2[row]:
 #         print(f"Row: {row}, Item: {test2[row].index(item)}")
+
+command = "py interp_test.py"
+
+os.system(f"start /wait cmd /c {command}")
