@@ -153,8 +153,8 @@ class Root:
 
     def move_computer(self, computer_name: str, origin_cluster_name: str, destination_cluster_name: str) -> bool:
         """Moves computer from one cluster to another"""
-        origin_cluster : Cluster = self.clusters[origin_cluster_name]
-        destination_cluster : Cluster = self.clusters[destination_cluster_name]
+        origin_cluster : Cluster = self.clusters.get(origin_cluster_name)
+        destination_cluster : Cluster = self.clusters.get(destination_cluster_name)
         
         if origin_cluster == None:
             self.print(f"{Back.RED}The origin cluster {origin_cluster_name} could not be found. Perhaps you misstyped the name.")
@@ -165,7 +165,7 @@ class Root:
             return False
         
 
-        computer : Computer = origin_cluster.computers[computer_name]
+        computer : Computer = origin_cluster.computers.get(computer_name)
         if computer == None:
             self.print(f"{Back.RED}The computer ({computer_name}) could not be found under the cluster ({origin_cluster_name}). Perhaps you misstyped the name.")
             return False
@@ -175,15 +175,21 @@ class Root:
             return False
 
 
-        computer_stats_dict : dict = {
-            "computer_name" : computer.name,
-            "computer_memory" : computer.memory,
-            "computer_cores" : computer.cores,
-        }
+        # computer_stats_dict : dict = {
+        #     "computer_name" : computer.name,
+        #     "computer_memory" : computer.memory,
+        #     "computer_cores" : computer.cores,
+        # }
 
-        origin_cluster.force_delete_computer(computer_name)
+        origin_cluster.delete_computer(computer_name, "f")
+        destination_cluster.create_computer(computer_name, computer.memory, computer.memory)
 
-        destination_cluster.create_computer(computer_stats_dict["computer_name"],computer_stats_dict["computer_cores"],computer_stats_dict["computer_memory"])
+        origin_cluster.reload_cluster()
+        destination_cluster.reload_cluster()
+
+        return True
+
+        # destination_cluster.create_computer(computer_stats_dict["computer_name"],computer_stats_dict["computer_cores"],computer_stats_dict["computer_memory"])
 
 
 #Cluster

@@ -7,7 +7,7 @@ root : Root = Root(r".\Test folder", None)
 cluster : Cluster = root.clusters["cluster0"]
 
 # root.create_cluster("test_cluster")
-
+root.move_computer("computer3", "cluster0", "test_cluster")
 
 """
 
