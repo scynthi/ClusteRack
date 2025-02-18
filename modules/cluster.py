@@ -381,11 +381,12 @@ class Cluster:
         total_free_memory = sum(comp.memory for comp in self.computers.values())
 
         # Get program requirements
-        req_cores = self.programs[program_name]["cores"]
-        req_memory = self.programs[program_name]["memory"]
+        req_cores = int(self.programs[program_name]["cores"])
+        req_memory = int(self.programs[program_name]["memory"])
+
 
         # Quick Check: If total cluster resources aren't enough, fail immediately
-        if required_count * req_cores > total_free_cores or required_count * req_memory > total_free_memory:
+        if int(required_count) * req_cores > int(total_free_cores) or int(required_count) * req_memory > int(total_free_memory):
             return False
 
         # Sort computers by total available resources (largest first)
@@ -701,7 +702,9 @@ class Cluster:
         
         data = f"{program_name}\n{instance_count}\n{cores}\n{memory}\n"
 
-        if not self._validate_instance_placement(program_name, instance_count):
+        self.programs[program_name] = {"instance_count" : instance_count, "cores": cores, "memory" : memory}
+        if not self._validate_instance_placement(program_name, int(instance_count)):
+            del self.programs[program_name]
             return False
 
         cluster_config_path = Path.join(self.path, ".klaszter")
