@@ -246,3 +246,33 @@ class StartProgramSubWindow(SubWindow):
                 audio.play_error()
                 error_message._text = "Rossz típusú adatok. Próbálja újra."
 
+
+class ClusterRenameSubWindow(SubWindow):
+    def __init__(self, root : Root, cluster : Cluster, ui):
+        super().__init__()
+        self.content.grid_columnconfigure(0, weight=1)
+        self.content.grid_rowconfigure(2, weight=1)
+
+        Label(self.content, text=f"Klaszter ({cluster.name}) átnevezése", fg="black",  font=large_font, bg=DGRAY).grid(row=0, column=0, pady=5)
+        entry : UI.Entry = UI.Entry(self.content)
+        entry.grid(row=1, column=0, pady=20, padx=50, stick="ew")
+        
+
+        Button(self.content, text="Átnevezés", font=large_font, bg=DBLUE, fg="white", command=lambda: rename_cluster(self)).grid(row=2, column=0, sticky="N")
+        error_message : UI.Label = UI.Label(self.content, text="", text_color="red", font=large_font)
+        error_message.grid(row=3, column=0, pady=15)
+
+
+        def rename_cluster(self) -> None:
+            try:
+                if root.rename_cluster(cluster.name, entry.get()):
+                    root._load_clusters()
+                    audio.play_accept()
+                    ui.reload()
+                    self.destroy()
+                else:
+                    audio.play_error()
+                    error_message._text = "Hibás klaszter név!"
+            except:
+                error_message._text = "Adjon meg egy nevet!"
+                audio.play_error()
