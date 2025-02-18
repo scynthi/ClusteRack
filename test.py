@@ -11,7 +11,7 @@ cluster : Cluster = root.clusters["cluster0"]
 
 
 -- Make sure no negativs in .klazter file
-
+        fix loadbalance algo
 
 Root
 Create cluster                 D
