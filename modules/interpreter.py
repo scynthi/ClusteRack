@@ -122,7 +122,7 @@ class CLI_Interpreter:
                         self.root_commands["select"]["computer"][f"{item}"].update({f"{comps}" : {"?value" : clusters[item].computers[comps], "?algo" : (self.select_computer, )}, "?value" : clusters[item]})
         
         # End setup and go to the input phase
-        self.update_dicts
+        self.update_dicts()
         self.take_input("")
 
 # Input handling and converting             
@@ -388,13 +388,20 @@ class CLI_Interpreter:
                             else:
                                 
                                 return f"No command beggining with {item}", "", False, f"{original_command}"
+                            
+                        else:
+
+                            if len(finished) == 1:
+
+                                bitem = finished[0]
+                                temp_item = finished[0]
+                            else:
                         
-                        if "?" not in item:
+                                if "?" not in item:
 
-                            return f"No such commands starting with: {item}", "", False, original_command
-
-    
-                        return f"Keyerror: {item}", "", False, original_command
+                                    return f"No such commands starting with: {item}", "", False, original_command
+            
+                                return f"Keyerror: {item}", "", False, original_command
                 
                 if type(current_step[temp_item]) != tuple:
                     
@@ -641,8 +648,6 @@ class CLI_Interpreter:
         if self.folder:
             
             files = os.listdir(self.folder)
-            
-            print(files)
             
             for text_file in files:
                 
