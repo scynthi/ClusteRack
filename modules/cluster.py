@@ -695,7 +695,7 @@ class Cluster:
         if program_name in self.programs:
             self.print(f"{Fore.RED}There is alrady a program named {program_name}")
             return False
-        if instance_count < 0 or cores < 0 or memory < 0:
+        if int(instance_count) < 0 or int(cores) < 0 or int(memory) < 0:
             self.print(f"{Fore.RED}Can not add program with negative resoruces!")
             return False
         

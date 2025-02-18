@@ -63,7 +63,7 @@ class Rebalancer:
 
         # Ensure there's enough resources
         if not target_computer.can_fit_instance(instance):
-            self.print(f"{Fore.RED}Not enough resources to place instance {instance_filename}.")
+            print(f"{Fore.RED}Not enough resources to place instance {instance_filename}.")
             return False
 
         try:
@@ -77,7 +77,7 @@ class Rebalancer:
             target_computer.calculate_resource_usage()
             return True
         except Exception as e:
-            self.print(f"{Fore.RED}Failed to add instance {instance_filename}: {str(e)}")
+            print(f"{Fore.RED}Failed to add instance {instance_filename}: {str(e)}")
             return False
 
     def rebalance_load_balance(self):

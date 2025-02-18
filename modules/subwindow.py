@@ -169,7 +169,7 @@ class ComputerCreateSubWindow(SubWindow):
         self.geometry("500x400")
         self.content.grid_columnconfigure(0, weight=1)
 
-        Label(self.content, text=f"Gép létrehozása {cluster.name} klaszterhez", fg="black",  font=large_font, bg=DGRAY).grid(row=0, column=0, pady=5)
+        Label(self.content, text=f"Gép hozzáadás a {cluster.name} klaszterhez", fg="black",  font=large_font, bg=DGRAY).grid(row=0, column=0, pady=5)
 
         UI.Label(self.content, "Számítógép neve:").grid(row=1, column=0)
         computer_name : UI.Entry = UI.Entry(self.content)

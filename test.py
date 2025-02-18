@@ -6,7 +6,7 @@ from modules.interpreter import CLI_Interpreter
 root : Root = Root(r".\Test folder", None)
 cluster : Cluster = root.clusters["cluster0"]
 
-print(cluster.get_active_inactive_instances())
+
 """
 
 
