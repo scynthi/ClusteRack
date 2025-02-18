@@ -191,7 +191,13 @@ class ClusterBoard:
 
         cluster_frame : UI.Frame = UI.Frame(self.frame)
         cluster_frame.grid(row=1, column=1, sticky="new")
-        self.rack_model = UI.EmbedRenderer(cluster_frame, "rack_8", 12, app).get_renderer()
+
+        model_num : int = len(cluster.computers.keys())
+        if model_num < 1: model_num = 1
+        elif model_num > 8: model_num = 8
+    
+
+        self.rack_model = UI.EmbedRenderer(cluster_frame, f"rack_{model_num}", 12, app).get_renderer()
 
         self.info_frame : UI.Frame = UI.Frame(self.frame)
         self.info_frame.grid(column=2, row=1, sticky="EWN")
@@ -325,16 +331,16 @@ class ComputerBoard:
 
             UI.Label(instance_info_help_frame, f"Magok: {instance_info["cores"]}").grid(row=0, column=0, padx=10)
             UI.Label(instance_info_help_frame, f"Memória: {instance_info["memory"]}").grid(row=0, column=1, padx=10)
-            UI.Label(instance_info_help_frame, f"Státusz: {instance_info["status"]}").grid(row=0, column=2, padx=10)
+            UI.Label(instance_info_help_frame, f"Státusz: {instance_helper}").grid(row=0, column=2, padx=10)
 
 
         self.cpu_usage_frame : UI.Frame = UI.Frame(self.frame)
         self.cpu_usage_frame.grid(row=1, column=2)
-        UI.Plot(self.computer, self.cpu_usage_frame, "Core usage %", "core_usage_percent")
+        UI.Plot(self.computer, self.cpu_usage_frame, "Processzor %", "core_usage_percent")
 
         self.memory_usage_frame : UI.Frame = UI.Frame(self.frame)
         self.memory_usage_frame.grid(row=2, column=2)
-        UI.Plot(self.computer, self.memory_usage_frame, "Memory usage %", "memory_usage_percent")
+        UI.Plot(self.computer, self.memory_usage_frame, "Memória %", "memory_usage_percent")
         
 
 
