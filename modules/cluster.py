@@ -8,7 +8,6 @@ from datetime import datetime
 from modules.computer import Computer
 from colorama import Fore, Style, Back
 from modules.rebalancer import *
-import unicodedata
 
 rebalancing_algos : list = ["load_balance", "best_fit", "fast"]
 
@@ -95,12 +94,14 @@ class Cluster:
                     while True:
                         user_input = self.user_input(
                             f"Not enough resources to fit {required_count} '{program_name}' instances! \n"
-                            f"Enter a lower instance count (or type '0' to cancel): ").strip()
+                            f"Enter a lower instance count\n"
+                            f"Or type '0' to set the required instances to 0 and skip the program. >> ").strip()
                         
                         if user_input.isdigit():
                             new_count = int(user_input)
                             if new_count == 0:
                                 self.print(f"{Fore.RED}Skipping program ({program_name}) due to insufficient resources.")
+                                self.edit_program_resources(program_name, "required_count", 0, reload=False)
                                 skip_program = True
                                 break
 
@@ -108,8 +109,7 @@ class Cluster:
                                 required_count = new_count
                                 break
 
-                        print("Invalid input. Enter a valid number.")
-                        print(user_input)
+                        self.print(f"{Fore.RED + Style.BRIGHT}Invalid input. Enter a valid number.")
 
                 if skip_program: continue
 
@@ -165,10 +165,10 @@ class Cluster:
                 if (len(active_valid_instances) < required_count) and inactive_valid_instances:
                     while True:
                         user_input = self.user_input(
-                                                    f"Not enough active '{program_name}' instances to fulfill quota : {required_count}! \n"
-                                                    f"{Fore.GREEN}Inactive instances found.{Fore.WHITE + Style.BRIGHT} Would you like to start them?{Style.RESET_ALL}\n"
-                                                    f"1 - Yes\n"
-                                                    f"2 - Cancel >> ").strip()
+                                            f"Not enough active '{program_name}' instances to fulfill quota : {required_count}! \n"
+                                            f"{Fore.GREEN}Inactive instances found.{Fore.WHITE + Style.BRIGHT} Would you like to start them?{Style.RESET_ALL}\n"
+                                            f"1 - Yes\n"
+                                            f"2 - Cancel >> ").strip()
                         if user_input == '1':
                             while (len(active_valid_instances) < required_count) and inactive_valid_instances: 
                                 instance_to_activate = inactive_valid_instances.pop(0) # Get oldest inactive instance
@@ -180,21 +180,20 @@ class Cluster:
                         if user_input == '2':
                             break
 
-                        self.print(f"{Style.BRIGHT + Fore.RED}Please input a valid choice!")
+                        self.print(f"{Fore.RED + Style.BRIGHT}Please input a valid choice!")
 
                 # Generate new instances as needed
                 new_needed = required_count - len(active_valid_instances)
                 if new_needed > 0:
                     while True:
                         user_input = self.user_input(
-                                                    f"Not enough active '{program_name}' instances to fulfill quota : {required_count}! \n"
-                                                    f"{Fore.WHITE + Style.BRIGHT} Would you like to start {Fore.GREEN}new ones?{Fore.RESET + Style.RESET_ALL}\n"
-                                                    f"1 - Yes\n"
-                                                    f"2 - Cancel >> ").strip()
+                                            f"{Fore.YELLOW + Style.BRIGHT}Not enough active{Fore.RESET + Style.RESET_ALL} '{program_name}' instances to fulfill quota : {required_count}! \n"
+                                            f"{Fore.WHITE + Style.BRIGHT} Would you like to start {Fore.GREEN}new ones?{Fore.RESET + Style.RESET_ALL}\n"
+                                            f"1 - Yes\n"
+                                            f"2 - Cancel >> ").strip()
                         if user_input == '1':
                             for _ in range(new_needed):
                                 instance_id = self._generate_instance_id()
-                                full_id = f"{program_name}-{instance_id}"
                                 
                                 self.instances[program_name][instance_id] = {"status" : True,
                                                                             "cores" : self.programs[program_name]["cores"], 
@@ -213,54 +212,45 @@ class Cluster:
                         if user_input == '2':
                             break
 
-                        self.print(f"{Style.BRIGHT + Fore.RED}Please input a valid choice!")
-
+                        self.print(f"{Fore.RED + Style.BRIGHT}Please input a valid choice!")
 
 
                 # Handle excess instances
                 extra_instances_count = len(active_valid_instances) - required_count
-
-                if extra_instances_count > 0: 
+                if extra_instances_count > 0:
                     self.print(f"{Fore.YELLOW}Warning: extra '{program_name}' instances found!")
 
                     extra_instances = []
                     for i in range(extra_instances_count):
                         extra_instances.append(active_valid_instances[-(i+1)])
 
-
                     while True:
                         user_input = self.user_input(
                             f"{Style.BRIGHT}Do you want to\n"
                             f"(1) Deactivate extra instances\n"
-                            f"(2) Delete them? (1/2): {Style.RESET_ALL}"
+                            f"(2) Delete them? (1/2) >> {Style.RESET_ALL}"
                         ).strip()
                         
                         if user_input == '1':
                             for instance in extra_instances:
-                                instance_id = instance['id']
-                        
                                 # Only deactivate if currently active
                                 if instance["status"]:
                                     active_valid_instances.remove(instance)
-
-                                    # Deactivate and move to active list
                                     inactive_valid_instances.append(instance)
-                                    self.instances[program_name][instance['id']]["status"] = False   
+                                    self.edit_instance_status(instance['id'], False, reload=False)
                             break
 
                         if user_input == '2':
                             for instance in extra_instances:
-                                instance_id = instance['id']
                                 try:
                                     if instance["status"]:
                                         active_valid_instances.remove(instance)
-                                        del self.instances[program_name][instance['id']]
-
+                                        self.kill_instance(instance['id'], reload=False)
                                 except Exception as e:
                                     self.print(f"{Fore.RED}Failed to delete {f"{program_name}-{instance_id}"}: {str(e)}")
                             break
 
-                        self.print(f"{Style.BRIGHT + Fore.RED}Please input a valid choice!")
+                        self.print(f"{Fore.RED + Style.BRIGHT}Please input a valid choice!")
 
             except (IndexError, ValueError) as e:
                 self.print(f"{Fore.RED}Error loading program: {str(e)}")
@@ -339,9 +329,9 @@ class Cluster:
             else:
                 valid.append(instance)
         return valid
-    # |
+
     def update_instance_cores_memory(self, computer,instance_id: str, property_name: str, new_value: str) -> bool:
-        """Makes sure that all instances have the same requirements as described in the cluster config file"""
+        """Makes sure that all instances have the same requirements as described in the cluster config file."""
 
         instance_path = Path.join(computer.path, instance_id)
         
@@ -453,7 +443,7 @@ class Cluster:
                             f"{Style.BRIGHT}Would you like to:\n"
                             f"1) Rename {program_name}-{instance_id} manually\n"
                             f"2) Generate a new unique ID automatically\n"
-                            f"Enter choice (1/2): "
+                            f"Enter choice (1/2) >> "
                         ).strip()
 
                         if user_choice == "1":
@@ -465,7 +455,7 @@ class Cluster:
                                 seen_ids[new_id] = program_name  # Update tracking
                                 break
                             else:
-                                self.print(f"{Style.BRIGHT + Fore.RED}Invalid ID. Ensure it is 6 alphanumeric characters and unique.")
+                                self.print(f"{Fore.RED + Style.BRIGHT}Invalid ID. Ensure it is 6 alphanumeric characters and unique.")
                         
                         elif user_choice == "2":                            
                             _, instance = self.get_instance_by_id(instance_id)
@@ -474,8 +464,7 @@ class Cluster:
                             seen_ids[instance["id"]] = program_name  # Update tracking
                             break
 
-                        else:
-                            self.print(f"{Style.BRIGHT + Fore.RED}Please input a valid choice! Please enter 1 or 2")
+                        self.print(f"{Fore.RED + Style.BRIGHT}Please input a valid choice! Please enter 1 or 2")
 
 
                 else:
@@ -560,6 +549,10 @@ class Cluster:
         if Path.exists(full_path):
             self.print(f"{Fore.RED}Computer ({computer_name}) already exists and will NOT be created.")
             return self.computers[computer_name]
+        
+        if cores < 0 or memory < 0:
+            self.print(f"{Fore.RED}Can not start computer with negative resoruces")
+            return False
         
         try:
             os.mkdir(full_path)
@@ -696,11 +689,14 @@ class Cluster:
 
 
 # Programs
-    def add_program(self, program_name: str, instance_count : int, cores: int, memory: int):
+    def add_program(self, program_name: str, instance_count : int, cores: int, memory: int, reload : bool = True):
         """Adds programs to the cluster config file and reloads the cluster."""
 
         if program_name in self.programs:
             self.print(f"{Fore.RED}There is alrady a program named {program_name}")
+            return False
+        if instance_count < 0 or cores < 0 or memory < 0:
+            self.print(f"{Fore.RED}Can not add program with negative resoruces!")
             return False
         
         data = f"{program_name}\n{instance_count}\n{cores}\n{memory}\n"
@@ -709,8 +705,9 @@ class Cluster:
         with open(cluster_config_path, "a", encoding="utf8") as config_file:
             config_file.write(data)
 
-        self._load_programs()
-        self.run_rebalancer()
+        if reload:
+            self._load_programs()
+            self.run_rebalancer()
         return True
 
     def kill_program(self, program_name : str):
@@ -743,7 +740,7 @@ class Cluster:
         self._load_programs()
         return True
 
-    def stop_program(self, program_name : str):
+    def stop_program(self, program_name : str, reload : bool = True):
         """Deactivates all instances of a program and sets instance count to 0"""
         if program_name not in self.programs:
             self.print(f"{Fore.RED}There is no program named {program_name} in the cluster. Check name and try again!")
@@ -758,8 +755,9 @@ class Cluster:
         
         self.programs[program_name]["required_count"] = 0
         
-        self._load_programs()
-        self.run_rebalancer()
+        if reload:
+            self._load_programs()
+            self.run_rebalancer()
         return True
 
     def edit_program_resources(self, program_name: str, property_to_edit:str, new_value, reload : bool = True):
@@ -778,6 +776,10 @@ class Cluster:
         # Convert new_value to correct type
         new_value = int(new_value)
 
+        if new_value < 0:
+            self.print(f"{Fore.RED}Can not change the program's resources to negative values!")
+            return False
+        
         # Check if we can fit it on the cluster
         old_value = self.programs[program_name][property_to_edit]
         
@@ -807,7 +809,7 @@ class Cluster:
             self.run_rebalancer()
         return True
         
-    def rename_program(self, program_name : str, new_program_name: str):
+    def rename_program(self, program_name : str, new_program_name: str, reload : bool = True):
         """Edit the name of a program without effecting the state of its instances"""
 
         if program_name not in self.programs:
@@ -849,8 +851,9 @@ class Cluster:
             file.write("")
             file.write(data)
 
-        self._load_programs()
-        self.run_rebalancer()
+        if reload:
+            self._load_programs()
+            self.run_rebalancer()
         return True
 
 
@@ -880,7 +883,7 @@ class Cluster:
                 if self._validate_instance_placement(program_name, parent_program["required_count"] + 1):
                     self.edit_program_resources(program_name, "required_count", parent_program["required_count"] + 1, reload=False)
                     break
-                self.print(f"{Fore.RED}Can`t add new instance. There isn`t enough space on the cluster. Try adding it as inactive")
+                self.print(f"{Fore.RED + Style.BRIGHT}Can`t add new instance. There isn`t enough space on the cluster. Try adding it as inactive")
 
             elif user_input =="2":
                 new_instance["status"] == False
@@ -889,7 +892,7 @@ class Cluster:
             elif user_input =="3":
                 return False
             
-            self.print(f"{Fore.RED}Please enter a valid choice!")
+            self.print(f"{Fore.RED + Style.BRIGHT}Please enter a valid choice!")
 
         self.instances[program_name][instance_id] = new_instance
 
@@ -915,6 +918,7 @@ class Cluster:
 
         if reload:
             self._load_programs()
+            self.run_rebalancer()
         return True
 
     def kill_instance(self, instance_id : str, reload : bool = True):
@@ -985,7 +989,6 @@ class Cluster:
         return True
         
 
-
 #UTILS
     def cleanup(self):
         """Removes unnescecary files and directories from the cluster""" 
@@ -1008,7 +1011,7 @@ class Cluster:
                         f"Unidentified file detected in {self.name}: {file}\n"
                         "1: Delete\n"
                         "2: Keep (Warning: Might make the cluster unstable)\n"
-                        "Enter your choice (1/2): "
+                        "Enter your choice (1/2) >> "
                     ).strip()
 
                     if user_input == "1":
@@ -1041,6 +1044,13 @@ class Cluster:
 
         self.print(f"{Fore.GREEN}Cleanup completed. Removed a total of {removed_files} incorrect files plus folders.")
         return True
+
+    #TODO : Make and integrate this
+    def get_active_inactive_instances() -> tuple:
+        active_dict = {}
+        inactive_dict = {}
+        
+        return (active_dict, inactive_dict)
 
     def is_prog_instance_file(self, path: str) -> bool:
         """Runs a check to see wether the file under the given path is an instance or not using a pattern."""
