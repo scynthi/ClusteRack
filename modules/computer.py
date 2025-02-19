@@ -20,6 +20,9 @@ class Computer:
         self.cores: int = 0
         self.memory: int = 0
         
+        self.active_inst_num = 0
+        self.inactive_inst_num = 0
+
         if self._load_config():
             
             self.cleanup()
@@ -116,6 +119,7 @@ class Computer:
 
         for _, info in prog_instances.items():
             if info["status"]:
+
                 memory_usage += int(info["memory"])
                 cpu_usage += int(info["cores"])
 

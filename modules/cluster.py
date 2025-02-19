@@ -100,6 +100,9 @@ class Cluster:
             self.instances = {}
 
         self.distributable_instances = []
+        
+        self.active_inst_num = 0
+        self.inactive_inst_num = 0
 
         temp_resource_usage = {
             comp.name: {
@@ -296,6 +299,9 @@ class Cluster:
                             break
 
                         self.print(f"{Fore.RED + Style.BRIGHT}Please input a valid choice!")
+                
+                self.active_inst_num += len(active_valid_instances)
+                self.inactive_inst_num += len(inactive_valid_instances)
 
             except (IndexError, ValueError) as e:
                 self.print(f"{Fore.RED}Error loading program: {str(e)}")
@@ -303,10 +309,6 @@ class Cluster:
 
         # Recalculate after all changes
         self._check_duplicate_instance_ids()
-
-        self.active_inst_num = len(active_valid_instances)
-        self.inactive_inst_num = len(inactive_valid_instances)
-
         self._update_distributable_instances()
 
         # self.print("================================")
