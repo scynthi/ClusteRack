@@ -18,7 +18,7 @@ frame.grid(column=1, row=0)
 # pygame_frame: CTkFrame = CTkFrame(app, width=300, height=200)
 # pygame_frame.grid(column=0, row=0)
 
-pc: Computer = Computer(os.path.normpath(r"./Test folder\cluster0\szamitogep3"))
+pc: Computer = Computer(os.path.normpath(r"./Test folder\cluster0\computer1"))
 
 button: UI.Button = UI.Button(frame, text="Start Monitoring", command=lambda: add_point())
 button.grid(column=0, row=0)

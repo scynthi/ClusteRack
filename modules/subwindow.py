@@ -1,4 +1,4 @@
-from modules.ui import UI, AppWindow, DGRAY, LGRAY, DBLUE, LBLUE, large_font, small_font, extra_large_font, audio
+from modules.ui import UI, AppWindow, DGRAY, LGRAY, DBLUE, LBLUE, large_font, small_font, extra_large_font, audio, larger_font
 from customtkinter import *
 from tkinter import *
 from ctypes import windll
@@ -44,11 +44,11 @@ class SubWindow(CTkToplevel):
         content : Frame = Frame(self, bg=DGRAY)
         content.grid(row=1, column=0, sticky="nsew")
 
-        resizey_widget : Frame = Frame(self, cursor='sb_v_double_arrow')
+        resizey_widget : Frame = Frame(self, cursor='sb_v_double_arrow', width=10)
         resizey_widget.grid(row=1, column=0, sticky="SEW")
         resizey_widget.bind("<B1-Motion>", self.resizey)
 
-        resizex_widget : Frame = Frame(self, cursor='sb_h_double_arrow')
+        resizex_widget : Frame = Frame(self, cursor='sb_h_double_arrow', height=10)
         resizex_widget.grid(row=1, column=1, sticky="NSE")
         resizex_widget.bind("<B1-Motion>", self.resizex)
 
@@ -199,15 +199,13 @@ class ComputerCreateSubWindow(SubWindow):
                     return
 
                 if cluster.create_computer(computer_name.get(), int(core_entry.get()), int(memory_entry.get())):
-                    if ui.parent_ui:
-                        ui.parent_ui.reload()
-                    ui.reload_with_child()
+                    ui.parent_ui.reload()
                     audio.play_accept()
                     self.destroy()
                 else:
                     ErrorSubWindow("Rossz típusú adatok lettek megadva.")
             except:
-                    ErrorSubWindow("Belső hiba. Próbálja újra.")
+                    ErrorSubWindow("Belső hiba. Minden adatot megadott?")
 
 
 class StartProgramSubWindow(SubWindow):
@@ -229,19 +227,23 @@ class StartProgramSubWindow(SubWindow):
         core_entry : UI.Entry = UI.Entry(self.content)
         core_entry.grid(row=6, column=0, pady=6, padx=50, stick="ew")
 
-        UI.Label(self.content, "Memória megabájtban").grid(row=7, column=0)
+        UI.Label(self.content, "Memória megabájtban:").grid(row=7, column=0)
         memory_entry : UI.Entry = UI.Entry(self.content)
         memory_entry.grid(row=8, column=0, pady=8, padx=50, stick="ew")
 
         Button(self.content, text="Program hozzáadása", font=large_font, bg=DBLUE, fg="white", command=lambda: try_add_program()).grid(row=9, column=0, sticky="N")
 
         def try_add_program() -> None:
-            if cluster.add_program(program_name.get(), instance_entry.get(), core_entry.get(), memory_entry.get()):
-                ui.reload()
-                audio.play_accept()
-                self.destroy()
-            else:
-                ErrorSubWindow("Rossz típusú adatok. Próbálja újra.")
+            try:
+                if cluster.add_program(program_name.get(), int(instance_entry.get()), int(core_entry.get()), int(memory_entry.get())):
+                    ui.reload()
+                    audio.play_accept()
+                    self.destroy()
+                else:
+                    ErrorSubWindow("Belső hiba. Próbálja újra.")
+            except:
+                    ErrorSubWindow("Rossz típusú adatok. Próbálja újra.")
+
 
 
 class ClusterRenameSubWindow(SubWindow):
@@ -257,13 +259,12 @@ class ClusterRenameSubWindow(SubWindow):
 
         Button(self.content, text="Átnevezés", font=large_font, bg=DBLUE, fg="white", command=lambda: rename_cluster(self)).grid(row=2, column=0, sticky="N")
 
-
         def rename_cluster(self) -> None:
             try:
                 if root.rename_cluster(cluster.name, entry.get()):
                     root._load_clusters()
                     audio.play_accept()
-                    ui.parent_ui.reload()
+                    ui.parent_ui.destroy_and_reload()
                     self.destroy()
                 else:
                     ErrorSubWindow("Hibás klaszter név!")
@@ -296,8 +297,179 @@ class ClusterAlgorithmSubWindow(SubWindow):
             )).grid(row=3, column=0, pady=10)
 
 
+class ComputerRenameSubWindow(SubWindow):
+    def __init__(self, cluster : Cluster, computer : Computer, ui):
+        super().__init__()
+        self.content.grid_columnconfigure(0, weight=1)
+        self.content.grid_rowconfigure(2, weight=1)
+
+        Label(self.content, text=f"Számítógép ({computer.name}) átnevezése", fg="black",  font=large_font, bg=DGRAY).grid(row=0, column=0, pady=5)
+        entry : UI.Entry = UI.Entry(self.content)
+        entry.grid(row=1, column=0, pady=20, padx=50, stick="ew")
+        
+        Button(self.content, text="Átnevezés", font=large_font, bg=DBLUE, fg="white", command=lambda: rename(self)).grid(row=2, column=0, sticky="N")
+
+        def rename(self) -> None:
+            try:
+                if cluster.rename_computer(computer.name, entry.get()):
+                    cluster.reload_cluster()
+                    audio.play_accept()
+                    ui.parent_ui.reload()
+                    self.destroy()
+                else:
+                    ErrorSubWindow("Hibás számítógép név!")
+            except:
+                ErrorSubWindow("Adjon meg egy nevet!")
+
+
+
+class ComputerEditResourcesSubWindow(SubWindow):
+    def __init__(self, cluster : Cluster, computer : Computer, ui):
+        super().__init__()
+        self.geometry("500x400")
+        self.content.grid_columnconfigure(0, weight=1)
+
+        Label(self.content, text=f"Számítógép ({computer.name}) szerkesztése", fg="black",  font=large_font, bg=DGRAY).grid(row=0, column=0, pady=5)
+
+        UI.Label(self.content, f"Számítógép neve: ({computer.name})").grid(row=1, column=0)
+        computer_name : UI.Entry = UI.Entry(self.content)
+        computer_name.grid(row=2, column=0, pady=5, padx=50, stick="ew")
+
+        UI.Label(self.content, f"Magok száma millimagokban: ({computer.cores})").grid(row=3, column=0)
+        core_entry : UI.Entry = UI.Entry(self.content)
+        core_entry.grid(row=4, column=0, pady=5, padx=50, stick="ew")
+
+        UI.Label(self.content, f"Memória megabájtban: ({computer.memory})").grid(row=5, column=0)
+        memory_entry : UI.Entry = UI.Entry(self.content)
+        memory_entry.grid(row=6, column=0, pady=5, padx=50, stick="ew")
+
+
+        Button(self.content, text="Átírás", font=large_font, bg=DBLUE, fg="white", command=lambda: edit(self)).grid(row=7, column=0, sticky="N")
+
+        def edit(self) -> None:
+            try:
+                if cluster.edit_computer_resources(computer.name, int(core_entry.get()), int(memory_entry.get())):
+                    cluster.reload_cluster()
+                    ui.parent_ui.reload()
+                    audio.play_accept()
+                    self.destroy()
+                else:
+                    ErrorSubWindow("Belső hiba. Próbálja újra.")
+            except:
+                    ErrorSubWindow("Rossz típusú adatok lettek megadva.")
+
+
+
+class InstanceInfoSubWindow(SubWindow):
+    def __init__(self, cluster : Cluster, id: str, ui):
+        super().__init__()
+        self.geometry("600x400")
+        self.content.grid_columnconfigure(0, weight=1)
+
+        info : tuple = cluster.get_instance_by_id(id)
+
+        self.program_name : str = info[0]
+        self.instance_info : dict = info[1]
+        self.id : str = id
+
+        self.status : bool = self.instance_info["status"]
+        self.computer : str = self.instance_info["computer"]
+        self.date_started : str = self.instance_info["date_started"]
+
+        self.cores : int = self.instance_info["cores"]
+        self.memory : int = self.instance_info["memory"]
+        
+
+        info_frame : UI.Frame = UI.Frame(self.content)
+        info_frame.grid(row=0, column=0, padx=10, pady=10, sticky="new")
+        info_frame.grid_columnconfigure([0,1], weight=1)
+
+        UI.Label(info_frame, text=f"{self.program_name}-{self.id}", font=larger_font).grid(row=0, column=0, pady=10, sticky="W")
+        UI.Label(info_frame, text=f"Státusz: {'Aktív' if self.status else 'Inaktív'}").grid(row=1, column=0, pady=2, sticky="W")
+        UI.Label(info_frame, text=f"Számítógép: {self.computer}").grid(row=2, column=0, sticky="W")
+
+        UI.Label(info_frame, text=f"Szükésges magok: {self.cores} millimag").grid(row=1, column=1, sticky="W")
+        UI.Label(info_frame, text=f"Szükésges memória: {self.memory} MB").grid(row=2, column=1, sticky="W")
+
+        UI.Label(info_frame, text=f"Indítás dátuma: {self.date_started}").grid(row=3, column=0, columnspan=2, sticky="W")
+
+        button_frame : UI.Frame = UI.Frame(self.content)
+        button_frame.grid(row=1, column=0, padx=10, pady=10, sticky="new")
+        button_frame.grid_columnconfigure([0,1,2], weight=1)
+
+        UI.Button(button_frame, text="Átírás", font=large_font, bg=DBLUE, fg="white").grid(row=0, column=0, sticky="W")
+        UI.Button(button_frame, text="Törlés", font=large_font, bg="red", fg="white", command=lambda: kill()).grid(row=0, column=1, sticky="N")
+        UI.Button(button_frame, text="Leállítás", font=large_font, bg="white", fg="red", command=lambda: stop()).grid(row=0, column=2, sticky="N")
+        UI.Button(button_frame, text="Elindítás", font=large_font, bg=DBLUE, fg="white", command=lambda: start()).grid(row=0, column=3, sticky="E")
+
+        def kill() -> None:
+            self.destroy()
+            cluster.kill_instance(id)
+            ui.parent_ui.reload()
+
+        def start() -> None:
+            self.destroy()
+            cluster.edit_instance_status(id, True)
+            ui.parent_ui.reload()
+
+        def stop() -> None:
+            self.destroy()
+            cluster.edit_instance_status(id, False)
+            ui.parent_ui.reload()
 
 
 
 
 
+class EditProgramSubWindow(SubWindow):
+    def __init__(self, cluster : Cluster, program_name : str, ui):
+        super().__init__()
+        self.geometry("650x500")
+        self.content.grid_columnconfigure(0, weight=1)
+
+        program_info = cluster.programs.get(program_name)
+
+        Label(self.content, text=f"Program a {cluster.name} klaszterhez", fg="black",  font=large_font, bg=DGRAY).grid(row=0, column=0, pady=5)
+        Label(self.content, text="Azokat az adatokat adja meg, amiket meg szeretne változtatni", fg="black",  font=small_font, bg=DGRAY).grid(row=1, column=0, pady=5)
+
+        UI.Label(self.content, f"Program neve ({program_name})").grid(row=2, column=0)
+        program_name_entry : UI.Entry = UI.Entry(self.content)
+        program_name_entry.grid(row=3, column=0, pady=5, padx=50, stick="ew")
+
+        UI.Label(self.content, f"Futtatandó példányok: ({program_info["required_count"]})").grid(row=4, column=0)
+        instance_entry : UI.Entry = UI.Entry(self.content)
+        instance_entry.grid(row=5, column=0, pady=5, padx=50, stick="ew")
+
+        UI.Label(self.content, f"Magok száma millimagokban: ({program_info["cores"]})").grid(row=6, column=0)
+        core_entry : UI.Entry = UI.Entry(self.content)
+        core_entry.grid(row=7, column=0, pady=6, padx=50, stick="ew")
+
+        UI.Label(self.content, f"Memória megabájtban: ({program_info["memory"]})").grid(row=8, column=0)
+        memory_entry : UI.Entry = UI.Entry(self.content)
+        memory_entry.grid(row=9, column=0, pady=8, padx=50, stick="ew")
+
+        Button(self.content, text="Program átírása", font=large_font, bg=DBLUE, fg="white", command=lambda: edit_program(self)).grid(row=10, column=0, sticky="N")
+
+        def edit_program(self) -> None:
+            try:
+
+                if instance_entry.get():
+                    if not cluster.edit_program_resources(program_name, "required_count", int(instance_entry.get())): return ErrorSubWindow("Példány szám átírása sikertelen.")
+
+                if core_entry.get():
+                    if not cluster.edit_program_resources(program_name, "cores", int(core_entry.get())): return ErrorSubWindow("Szükséges millimagok száma átírása sikertelen.")
+
+                if memory_entry.get():
+                    if not cluster.edit_program_resources(program_name, "memory", int(memory_entry.get())): return ErrorSubWindow("Szükséges memória átírása sikertelen.")
+
+                if program_name_entry.get():
+                    if not cluster.rename_program(program_name, program_name_entry.get()): return ErrorSubWindow("Átnevezés sikertelen.")
+                
+                
+                ui.reload_with_child()
+                audio.play_accept()
+                self.destroy()
+
+            except:
+                ErrorSubWindow("Rossz típusú adatok. Próbálja újra.")
+        

@@ -260,12 +260,20 @@ class Computer:
             answer : UI.Entry =  UI.Entry(popout.content)
             answer.grid(row=1, column=0, pady=10)
 
-            while True:
+            def set_can_continue(event=None):
+                nonlocal can_continue
+                can_continue = True
+
+            can_continue  : bool = False
+            popout.bind("<Return>", set_can_continue)
+
+            while not can_continue:
+                popout.update_idletasks()
                 popout.update()
-                if len(answer.get()) == 1:
-                    answer : str = answer.get()
-                    popout.destroy()
-                    return answer
+
+            answer = answer.get()
+            popout.destroy()
+            return answer
 
     def print(self, text: str):
         """DEBUGGING TOOL: A print for the terminal"""

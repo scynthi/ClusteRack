@@ -53,34 +53,36 @@ class AppWindow(CTk):
         self.normal_size = self.geometry()
 
 
-        title_bar : CTkFrame = Frame(self, bg=DBLUE, relief='raised', border=4)
-        title_bar.grid_columnconfigure([1,2], weight=1)
-        title_bar.bind('<Button-1>', self.get_pos)
-        title_bar.grid(row=0, column=0, sticky="new")
+        self.title_bar : CTkFrame = Frame(self, bg=DBLUE, relief='raised', border=4)
+        self.title_bar.grid_columnconfigure([1,2], weight=1)
+        self.title_bar.bind('<Button-1>', self.get_pos)
+        self.title_bar.grid(row=0, column=0, sticky="new")
 
-
-        close_button : UI.Button = UI.Button(title_bar, text=' X ', command=lambda: os._exit(0), padx=2, pady=2)
-        expand_button : UI.Button= UI.Button(title_bar, text=' 🗖 ', command=self.maximize_me, padx=2, pady=2)
-        minimize_button : UI.Button = UI.Button(title_bar, text=' 🗕 ', command=self.minimize_me, padx=2, pady=2)
 
         program_logo : CTkImage = CTkImage(light_image=Image.open(Path.join("Assets", "Images", "logo.png")), size=(40,40))
-        
-        logo_label : CTkLabel = CTkLabel(title_bar, image=program_logo, text="")
+        logo_label : CTkLabel = CTkLabel(self.title_bar, image=program_logo, text="")
         logo_label.grid(row=0, column=0, sticky="nw", padx=10)
 
 
-        title_bar_title : UI.Label = UI.Label(title_bar, text=name, text_color='white', font=("VCR OSD MONO", 20))
-        title_bar_title.bind('<Button-1>', self.get_pos)
-        title_bar_title.grid(row=0, column=1, sticky="nw", padx=10, pady=5)
+        self.title_bar_title : UI.Label = UI.Label(self.title_bar, text=name, text_color='white', font=("VCR OSD MONO", 20))
+        self.title_bar_title.bind('<Button-1>', self.get_pos)
+        self.title_bar_title.grid(row=0, column=1, sticky="nw", padx=10, pady=5)
 
 
-        minimize_button.grid(row=0, column=2, sticky="ne", padx=7, pady=1)
-        expand_button.grid(row=0, column=3, sticky="ne", padx=7, pady=1)
-        close_button.grid(row=0, column=4, sticky="ne", padx=7, pady=1)
+        self.close_button : UI.Button = UI.Button(self.title_bar, text=' X ', command=lambda: os._exit(0), padx=2, pady=2)
+        self.expand_button : UI.Button= UI.Button(self.title_bar, text=' 🗖 ', command=self.maximize_me, padx=2, pady=2)
+        self.minimize_button : UI.Button = UI.Button(self.title_bar, text=' 🗕 ', command=self.minimize_me, padx=2, pady=2)
+        self.reload_button : UI.Button = UI.Button(self.title_bar, text=' ⟳ ', padx=2, pady=2)
+
+        self.reload_button.grid(row=0, column=2, sticky="ne", padx=7, pady=1)
+        self.minimize_button.grid(row=0, column=3, sticky="ne", padx=7, pady=1)
+        self.expand_button.grid(row=0, column=4, sticky="ne", padx=7, pady=1)
+        self.close_button.grid(row=0, column=5, sticky="ne", padx=7, pady=1)
 
 
-        content : Frame = Frame(self, bg=DGRAY)
-        content.grid(row=1, column=0, sticky="nsew")
+        self.content : Frame = Frame(self, bg=DGRAY)
+        self.content.grid(row=1, column=0, sticky="nsew")
+
 
         resizey_widget : Frame = Frame(self, cursor='sb_v_double_arrow', width=10)
         resizey_widget.grid(row=1, column=0, sticky="SEW")
@@ -90,13 +92,6 @@ class AppWindow(CTk):
         resizex_widget.grid(row=1, column=1, sticky="NSE")
         resizex_widget.bind("<B1-Motion>", self.resizex)
 
-
-        self.title_bar : Frame = title_bar
-        self.close_button : Frame = close_button
-        self.expand_button : Frame = expand_button
-        self.minimize_button : Frame = minimize_button
-        self.title_bar_title : Frame = title_bar_title
-        self.content : Frame = content
 
         self.bind("<FocusIn>", self.deminimize)
         self.after(10, self.set_appwindow)
