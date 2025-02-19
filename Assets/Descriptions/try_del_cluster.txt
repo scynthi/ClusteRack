@@ -1,0 +1,4 @@
+try_del_cluster <cluster_name>
+
+Options:
+cluster_name → Attempts to delete the specified cluster, but will fail if it contains computers or programs.

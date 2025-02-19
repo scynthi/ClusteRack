@@ -856,7 +856,7 @@ class Cluster:
 
         return True
 
-    def edit_program_resources(self, program_name: str, property_to_edit:str, new_value, reload : bool = True):
+    def edit_program_resources(self, program_name: str, property_to_edit: str, new_value, reload : bool = True):
         """Can edit the instance count, the cores and the memory required"""
 
         if program_name not in self.programs:

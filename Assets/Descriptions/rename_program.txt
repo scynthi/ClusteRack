@@ -1,0 +1,6 @@
+USAGE:
+rename_program <program_name> <new_name>
+
+Options:
+program_name → Current name of the program.
+new_name → New name for the program.

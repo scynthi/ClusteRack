@@ -1,0 +1,5 @@
+USAGE:
+get_cluster_programs
+
+Options:
+No arguments needed. Displays a list of all programs running on the cluster.

@@ -1,0 +1,8 @@
+USAGE:
+start_program <program_name> <instance_count> <req_cores> <req_memory>
+
+Options:
+program_name → The name of the program.
+instance_count → Number of instances to start.
+req_cores → Number of CPU cores each instance requires.
+req_memory → Amount of memory each instance requires.

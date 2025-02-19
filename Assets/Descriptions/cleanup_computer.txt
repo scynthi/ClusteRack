@@ -1,0 +1,5 @@
+USAGE:
+cleanup_computer
+
+Options:
+No arguments needed. Cleans up unnecessary files and configurations on the selected computer.

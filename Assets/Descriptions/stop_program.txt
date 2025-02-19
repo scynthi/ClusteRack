@@ -1,0 +1,5 @@
+USAGE:
+stop_program <program_name>
+
+Options:
+program_name → Stops but does not remove all instances of the specified program.

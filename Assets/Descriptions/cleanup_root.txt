@@ -1,0 +1,5 @@
+USAGE:
+cleanup_root
+
+Options:
+No arguments needed. Cleans up unnecessary files and configurations at the root level.

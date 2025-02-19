@@ -1,0 +1,6 @@
+USAGE:
+change_instance_id_user <instance_id> <new_instance_id>
+
+Options:
+instance_id → The current ID of the instance.
+new_instance_id → The new ID for the instance.

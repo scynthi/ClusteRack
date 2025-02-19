@@ -1,0 +1,7 @@
+USAGE:
+edit_program_resources <program_name> <prop_to_change> <new_value>
+
+Options:
+program_name → Name of the program.
+prop_to_change → Property to modify (e.g., cores, memory).
+new_value → The new value for the specified property.

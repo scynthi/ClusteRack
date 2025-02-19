@@ -1,0 +1,7 @@
+USAGE:
+relocate_program <program_name> <origin> <destination>
+
+Options:
+program_name → Name of the program to move.
+origin → The current cluster of the program.
+destination → The target cluster to move the program to.

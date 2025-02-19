@@ -1,0 +1,7 @@
+USAGE:
+move_computer <computer_name> <origin> <destination>
+
+Options:
+computer_name → Name of the computer to move.
+origin → The current cluster of the computer.
+destination → The target cluster to move the computer to.

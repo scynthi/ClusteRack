@@ -1,0 +1,5 @@
+USAGE:
+kill_program <program_name>
+
+Options:
+program_name → Terminates all instances of the specified program.

@@ -1,0 +1,7 @@
+USAGE:
+create_computer <computer_name> <cores> <memory>
+
+Options:
+computer_name → Name of the new computer.
+cores → Number of CPU cores allocated to the computer.
+memory → Amount of memory allocated to the computer.

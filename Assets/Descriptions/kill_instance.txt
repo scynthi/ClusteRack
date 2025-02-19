@@ -1,0 +1,5 @@
+USAGE:
+kill_instance <instance_id>
+
+Options:
+instance_id → Terminates the specified instance.

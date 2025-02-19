@@ -1,0 +1,5 @@
+USAGE:
+force_del_computer <computer_name>
+
+Options:
+computer_name → Forces deletion of the specified computer along with all programs inside.
