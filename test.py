@@ -10,18 +10,6 @@ root : Root = Root(r".\Test folder", None)
 cluster1 = root.create_cluster("cluster0")
 root.relocate_program("word", "cluster1", "cluster0")
 
-# cluster1.kill_program("testprog2")
-# cluster1.delete_computer("computer1", "f")
-# cluster1.create_computer("computer1", 1000, 1000)
-# cluster1.create_computer("computer2", 1000, 1000)
-# cluster1.set_rebalance_algo(0)
-# cluster1.run_rebalance()
-# cluster1.delete_computer("computer2", "f")
-# cluster1.add_program("testprog2", 2, 100,100)
-
-
-
-
 """
 Root
 Create cluster                 D

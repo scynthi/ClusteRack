@@ -996,7 +996,7 @@ class Cluster:
         self.run_rebalance()
         return True
 
-    def edit_instance_status(self, instance_id: str, new_status: str, reload : bool = True) -> bool:
+    def edit_instance_status(self, instance_id: str, new_status: bool, reload : bool = True) -> bool:
         """Edit instance status to true or false"""
         
         if not self.is_instance_on_cluster_by_id(instance_id): 
