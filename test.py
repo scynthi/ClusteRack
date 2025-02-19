@@ -4,17 +4,20 @@ from modules.root import Root
 from modules.interpreter import CLI_Interpreter
 
 root : Root = Root(r".\Test folder", None)
-cluster : Cluster = root.clusters["cluster0"]
+# cluster : Cluster = root.clusters["cluster0"]
+# cluster1 = root.create_cluster("cluster1")
+# cluster1.delete_computer("computer1", "f")
+# cluster1.create_computer("computer1", 1000, 1000)
+# cluster1.create_computer("computer2", 1000, 1000)
+# cluster1.set_rebalance_algo(0)
+# cluster1.run_rebalance()
+# cluster1.delete_computer("computer2", "f")
+# cluster1.add_program("testprog2", 2, 100,100)
 
-# root.create_cluster("test_cluster")
-root.move_computer("computer3", "cluster0", "test_cluster")
+
+
 
 """
-
-
--- Make sure no negativs in .klazter file
-        fix loadbalance algo
-
 Root
 Create cluster                 D
 Delete cluster (try, force)    D

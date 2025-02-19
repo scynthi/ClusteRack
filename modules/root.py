@@ -188,10 +188,7 @@ class Root:
         destination_cluster.reload_cluster()
 
         return True
-
-        # destination_cluster.create_computer(computer_stats_dict["computer_name"],computer_stats_dict["computer_cores"],computer_stats_dict["computer_memory"])
-
-
+    
 #Cluster
     def create_cluster(self, cluster_name: str) -> Cluster:
         """Creates a new cluster under the root with no computers."""
@@ -199,7 +196,7 @@ class Root:
 
         if Path.exists(path):
             self.print(f"{Fore.RED}Cluster ({cluster_name}) already exists and will NOT be created.")
-            return False
+            return self.clusters.get(cluster_name)
         
         try:
             os.mkdir(path)
@@ -208,7 +205,7 @@ class Root:
 
             self.print(f"{Fore.GREEN}Cluster ({cluster_name}) created successfully.")
 
-            self._load_clusters()
+            self.clusters[cluster_name] = Cluster(Path.join(self.path, cluster_name), self) 
 
             return self.clusters.get(cluster_name)
         except:

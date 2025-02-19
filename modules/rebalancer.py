@@ -112,10 +112,10 @@ class Rebalancer:
 #Algorithms
     def rebalance_load_balance(self):
         """Evenly distributes instances across all computers using heuristic-based Best-Fit."""
-        print(f"{Fore.YELLOW}Running Load Balance Algorithm...")
+        self.cluster.print(f"{Fore.YELLOW + Style.BRIGHT}Running Load Balance Algorithm...")
 
         if not self.cluster.computers:
-            print(f"{Fore.RED}No computers found in the cluster!")
+            self.cluster.print(f"{Fore.YELLOW}No computers found in the cluster for {Fore.BLUE}rebalancer{Fore.YELLOW}!")
             return
 
         # Prepare for distribution
@@ -158,10 +158,10 @@ class Rebalancer:
 
     def rebalance_best_fit(self):
         """Packs instances efficiently into the best-fitting computers (Greedy Best-Fit Decreasing)."""
-        print(f"{Fore.YELLOW}Running Best Fit Algorithm...")
+        self.cluster.print(f"{Fore.YELLOW}Running Best Fit Algorithm...")
 
         if not self.cluster.computers:
-            print(f"{Fore.RED}No computers found in the cluster!")
+            self.cluster.print(f"{Fore.YELLOW}No computers found in the cluster for {Fore.BLUE}rebalancer{Fore.YELLOW}!")
             return
 
         # Prepare for distribution
@@ -206,10 +206,10 @@ class Rebalancer:
 
     def rebalance_fast(self):
         """Quickly assigns instances using a first-fit strategy."""
-        print(f"{Fore.YELLOW}Running Fast Algorithm...")
+        self.cluster.print(f"{Fore.YELLOW}Running Fast Algorithm...")
 
         if not self.cluster.computers:
-            print(f"{Fore.RED}No computers found in the cluster!")
+            self.cluster.print(f"{Fore.YELLOW}No computers found in the cluster for {Fore.BLUE}rebalancer{Fore.YELLOW}!")
             return
 
         # Prepare for distribution

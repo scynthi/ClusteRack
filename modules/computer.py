@@ -55,7 +55,7 @@ class Computer:
             try:
                 while True:
                     user_input = self.user_input(
-                        f"Nincs konfigurációs file a {self.path}\n"
+                        f"Nincs konfigurációs file a {self.path} -ban\n"
                         f"{Fore.WHITE + Style.BRIGHT}Szeretne generálni egyet?\n"
                         f"1 - Igen\n"
                         f"2 - Nem >> ").strip()

@@ -20,8 +20,32 @@ class Cluster:
         self.name = cluster_name
         self.root = parent
         
-        self.computers = {}
-        self._load_computers()
+        # Ignore if `.klaszter` file is missing
+        self.config_path = Path.join(path, ".klaszter")
+        if not Path.exists(self.config_path):
+            while True:
+                user_input = self.user_input(
+                    f"Nincs konfigurációs file a {self.path} -ban\n"
+                    f"{Fore.WHITE + Style.BRIGHT}Szeretne generálni egyet?\n"
+                    f"1 - Igen\n"
+                    f"2 - Nem >> ").strip()
+
+                if user_input == "1":
+                    try:
+                        open(Path.join(self.path, ".klaszter"), "w", encoding="utf8")
+                        self.print(f"{Fore.GREEN}Cluster config file created succesfully. Reloading cluster now. . .")
+                        self.__init__(self.path, self.root)
+                        return
+                    except:
+                        self.print(f"{Fore.RED}Error during cluster file creation. Skipping cluster. . .")
+                        return
+
+                elif user_input == "2":
+                    self.print(f"{Fore.WHITE}Skipping folder")
+
+                self.print(f"{Fore.RED}Choose a valid option.")
+
+
 
         if not hasattr(self, "initialized"):
             self.initialized = False
@@ -29,11 +53,10 @@ class Cluster:
             self.instances = {}  # Stores instance details (id, running, date_started)
             self.distributable_instances = []
 
-        # Ignore if `.klaszter` file is missing
-        self.config_path = Path.join(path, ".klaszter")
-        if not Path.exists(self.config_path):
-            self.print(f"{Fore.YELLOW}Skipping {cluster_name}: No .klaszter file found.")
-            return
+            
+
+        self.computers = {}
+        self._load_computers()
 
         self._load_programs()
 
@@ -75,6 +98,14 @@ class Cluster:
 
         self.distributable_instances = []
 
+        temp_resource_usage = {
+            comp.name: {
+                "free_cores": comp.cores,  
+                "free_memory": comp.memory
+            }
+            for comp in self.computers.values()
+        }
+
         for i in range(0, len(lines), 4):
             try:
                 program_name = lines[i]
@@ -90,28 +121,36 @@ class Cluster:
                 }
 
                 skip_program = False
-                if not self._validate_instance_placement(program_name, self.programs[program_name]['required_count']):
+                if not self._validate_instance_placement(program_name, required_count, temp_resource_usage):
                     while True:
                         user_input = self.user_input(
-                            f"Nincsen elég erőforrás {required_count} darabnyi '{program_name}' program példány futtatásához! \n"
-                            f"Adjon meg egy kisebb mennyiséget\n"
-                            f"Vagy írja be a 0-át, hogy átállítsa a darabszámot és átugorja. >> ").strip()
+                            f"{Fore.RED}Nincsen elég erőforrás {required_count} darabnyi '{program_name}' program példány futtatásához! {Fore.RESET}\n"
+                            f"{Style.BRIGHT}Adjon meg egy kisebb mennyiség számot\n"
+                            f"Vagy írja be a 0-át, hogy nullázza a darabszámot és átugorja a programot. >> {Style.RESET_ALL}").strip()
                         
                         if user_input.isdigit():
                             new_count = int(user_input)
                             if new_count == 0:
-                                self.print(f"{Fore.RED}Skipping program ({program_name}) due to insufficient resources.")
+                                self.print(f"{Fore.WHITE}Did not distribute ({program_name}) Set instance count to 0.")
                                 self.edit_program_resources(program_name, "required_count", 0, reload=False)
                                 skip_program = True
                                 break
 
-                            if self._validate_instance_placement(program_name, new_count):
+                            if self._validate_instance_placement(program_name, new_count, temp_resource_usage):
                                 required_count = new_count
                                 break
 
                         self.print(f"{Fore.RED + Style.BRIGHT}Invalid input. Enter a valid number.")
 
                 if skip_program: continue
+
+                # Find a computer that can fit the instances
+                for c_name, resources in temp_resource_usage.items():
+                    if resources["free_cores"] >= required_count * cores and resources["free_memory"] >= required_count * memory:
+                        # Deduct resources
+                        resources["free_cores"] -= required_count * cores
+                        resources["free_memory"] -= required_count * memory
+                        break  # Stop after updating one computer
 
                 # Find and update ALL instances of this program
                 all_instances = self._get_all_program_instances(program_name)
@@ -265,8 +304,8 @@ class Cluster:
 
         # self.print("================================")
         # self.print(self.programs)
-        self.print(self.instances)
-        self.print(self.distributable_instances)
+        # self.print(self.instances)
+        # self.print(self.distributable_instances)
         # self.print("================================")
 
 
@@ -376,33 +415,50 @@ class Cluster:
         return True
 
 
-    def _validate_instance_placement(self, program_name, required_count):
-        """Check if we can fit all instances assuming a fresh start."""
-
-        # Get total available resources across all computers
-        total_free_cores = sum(comp.cores for comp in self.computers.values())  # Ignore current usage
-        total_free_memory = sum(comp.memory for comp in self.computers.values())
+    def _validate_instance_placement(self, program_name, required_count, temp_resource_usage=None):
+        """
+        Check if we can fit all instances, using either a simulated state (`temp_resource_usage`) 
+        or real-time resource availability.
+        """
 
         # Get program requirements
         req_cores = int(self.programs[program_name]["cores"])
         req_memory = int(self.programs[program_name]["memory"])
 
+        # Use `temp_resource_usage` if provided, else use real-time values
+        if temp_resource_usage:
+            total_free_cores  = 0# = sum(comp["free_cores"] for comp in temp_resource_usage.values())
+            for comp in temp_resource_usage.values():
+                total_free_cores += comp["free_cores"]
+
+            total_free_memory = sum(comp["free_memory"] for comp in temp_resource_usage.values())
+
+            # Sort by available resources
+            sorted_computers = sorted(temp_resource_usage.values(), key=lambda c: (-c["free_cores"], -c["free_memory"]))
+        else:
+            total_free_cores = sum(comp.free_cores for comp in self.computers.values())
+            total_free_memory = sum(comp.free_memory for comp in self.computers.values())
+
+            # Sort computers normally
+            sorted_computers = sorted(self.computers.values(), key=lambda c: (-c.free_cores, -c.free_memory))
 
         # Quick Check: If total cluster resources aren't enough, fail immediately
-        if int(required_count) * req_cores > int(total_free_cores) or int(required_count) * req_memory > int(total_free_memory):
+        if required_count * req_cores > total_free_cores or required_count * req_memory > total_free_memory:
             return False
-
-        # Sort computers by total available resources (largest first)
-        sorted_computers = sorted(
-            self.computers.values(),
-            key=lambda c: (-c.cores, -c.memory)  # Sort by max resources (ignoring usage)
-        )
 
         # Try placing instances using Best-Fit Decreasing
         remaining_instances = required_count
         for computer in sorted_computers:
+            if temp_resource_usage:
+                free_cores = computer["free_cores"]
+                free_memory = computer["free_memory"]
+            else:
+                computer.calculate_resource_usage()
+                free_cores = computer.free_cores
+                free_memory = computer.free_memory
+
             # Max instances this computer can fit
-            max_fit = min(computer.cores // req_cores, computer.memory // req_memory)
+            max_fit = min(free_cores // req_cores, free_memory // req_memory)
 
             # Assign as many as possible without exceeding required_count
             to_place = min(max_fit, remaining_instances)
@@ -412,7 +468,9 @@ class Cluster:
             if remaining_instances == 0:
                 return True
 
-        return False  # If there are leftover instances, we failed to fit them
+        return required_count == 0  # If required_count is 0, it's always valid
+
+
 
 
     def _generate_instance_id(self) -> str:
@@ -707,6 +765,7 @@ class Cluster:
 
         self.programs[program_name] = {"instance_count" : instance_count, "cores": cores, "memory" : memory}
         if not self._validate_instance_placement(program_name, int(instance_count)):
+            self.print(f"{Fore.RED}Could not create program due to innsufficient resources.")
             del self.programs[program_name]
             return False
 
@@ -756,8 +815,9 @@ class Cluster:
             return False
         
         instances_to_stop = []
-        for instance_id in self.instances[program_name]:
-            instances_to_stop.append(instance_id)
+        if self.instances.get(program_name):
+            for instance_id in self.instances.get(program_name):
+                instances_to_stop.append(instance_id)
 
         for instance_id in instances_to_stop:
             self.edit_instance_status(instance_id, False, reload=False)
@@ -797,7 +857,8 @@ class Cluster:
         
         self.programs[program_name][property_to_edit] = new_value
 
-        if not self._validate_instance_placement(program_name, self.programs[program_name]["required_count"]):
+        if not self._validate_instance_placement(program_name, self.programs[program_name]["required_count"]) and not (property_to_edit == "required_count" and new_value == 0):
+            # print(self.programs[program_name][property_to_edit])
             self.programs[program_name][property_to_edit] = old_value
             self.print(f"{Fore.RED}The edited program would not fit on the cluster. Abendonding editing process.")
             return False
