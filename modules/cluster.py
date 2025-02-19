@@ -19,6 +19,9 @@ class Cluster:
         cluster_name = path.split(os.sep)[-1]
         self.name = cluster_name
         self.root = parent
+
+        self.active_inst_num : int = 0
+        self.inactive_inst_num : int = 0
         
         # Ignore if `.klaszter` file is missing
         self.config_path = Path.join(path, ".klaszter")
@@ -300,6 +303,10 @@ class Cluster:
 
         # Recalculate after all changes
         self._check_duplicate_instance_ids()
+
+        self.active_inst_num = len(active_valid_instances)
+        self.inactive_inst_num = len(inactive_valid_instances)
+
         self._update_distributable_instances()
 
         # self.print("================================")

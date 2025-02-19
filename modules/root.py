@@ -86,7 +86,7 @@ class Root:
                 return False
 
             elif user_choice == "2":
-                self.print(f"{Fore.YELLOW}Overwriting process {program_name} in {destination_cluster_name}.")
+                self.print(f"{Fore.YELLOW}Overwriting program {program_name} in {destination_cluster_name}.")
                 
                 overwrite_success = destination_cluster.edit_process_resources(
                     program_name, "instance_count", program_data["instance_count"]
