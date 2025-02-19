@@ -194,6 +194,7 @@ class CLI_Interpreter:
                     if not can_add:
                         can_add = True
                         self.previous_commands = self.previous_commands[:len(self.added_commands)]
+                prev_com_index = 0
                 continue
             
             elif key_event == b'\x00' or key_event == b'\xe0': # Special key, like the arrow keys
@@ -254,7 +255,25 @@ class CLI_Interpreter:
                         can_add = True
                         self.previous_commands = self.previous_commands[:len(self.added_commands)]
                     continue
-                    
+            
+            elif key_event == b"?":
+                
+                user_input = user_input[:cursor_pos] + key_event.decode('utf-8') + user_input[cursor_pos:]
+                cursor_pos += 1
+                sys.stdout.write("\r")
+                sys.stdout.write(f"{prompt}>{user_input}")
+                sys.stdout.write("\033[K")
+                for i in range(len(user_input)-cursor_pos):
+                    sys.stdout.write("\033[1D")
+                sys.stdout.flush()
+                print() # New line
+                if not can_add:
+                    can_add = True
+                    self.previous_commands = self.previous_commands[:len(self.added_commands)]
+                    self.added_commands = []
+                self.previous_commands.insert(0, user_input)
+                prev_com_index = 0
+                break  # Stop input
             
             elif key_event == b"\r": # Enter
 
@@ -264,6 +283,7 @@ class CLI_Interpreter:
                     self.previous_commands = self.previous_commands[:len(self.added_commands)]
                     self.added_commands = []
                 self.previous_commands.insert(0, user_input)
+                prev_com_index = 0
                 break  # Stop input
             
             elif key_event == b"\x08": # Backspace
@@ -311,7 +331,7 @@ class CLI_Interpreter:
             
             if item in original_command:
                 
-                return f"Can't type that bruw: {item}", "", False, original_command
+                return f"Can't type that bruw: {item}\n", "", False, original_command
             
         current_index = 0
             
@@ -325,7 +345,7 @@ class CLI_Interpreter:
                 
                 if isinstance(current_step, tuple):
                     
-                    return "Too many arguments", "", False, original_command
+                    return "Too many arguments\n", "", False, original_command
                 
                 if "?non_args" in current_step.keys():
                 
@@ -354,7 +374,16 @@ class CLI_Interpreter:
                             else:
                                     
                                 current_step += coms + "\n"
-                                
+                        
+                        items = current_step.split("\n")[:-1]
+                                                 
+                        for itam in items:
+                            
+                            if f"{original_command[:current_index] + itam + original_command[current_index+len(item):]}" not in self.added_commands:
+                            
+                                self.previous_commands.insert(0, f"{original_command[:current_index] + itam + original_command[current_index+len(item):]}")
+                                self.added_commands.append(f"{original_command[:current_index] + itam + original_command[current_index+len(item):]}")
+
                     return current_step, "", True, f"{original_command[:-2]}"
 
                 if isinstance(current_step, dict) and item not in current_step.keys():
@@ -399,7 +428,7 @@ class CLI_Interpreter:
 
                                     original_command = original_command[:cursor_pos + cursor_pos_diff] + finished + original_command[cursor_pos + cursor_pos_diff:]
                                 
-                                return f"Did you mean {keys}?", len(finished) + cursor_pos_diff, True, original_command
+                                return f"Did you mean {keys}?\n", len(finished) + cursor_pos_diff, True, original_command
                             
                             elif len(finished) > 0:
                                 
@@ -432,7 +461,7 @@ class CLI_Interpreter:
                             
                             else:
                                 
-                                return f"No command beggining with {unfinished_item}", "", False, f"{original_command}"
+                                return f"No command beggining with {unfinished_item}\n", "", False, f"{original_command}"
                             
                         else:
                             
@@ -448,14 +477,48 @@ class CLI_Interpreter:
 
                                 bitem = finished[0]
                                 temp_item = finished[0]
+                                
+                            elif len(finished) > 0:
+                                
+                                keys = finished
+                                
+                                current_step = ""
+                                    
+                                for coms in keys:
+                                    
+                                    if coms != "?non_args" and coms != "?value":
+                                    
+                                        if "<" in coms:
+                                            
+                                            current_step += coms[1:] + "\n"
+                                            
+                                        else:
+                                                
+                                            current_step += coms + "\n"
+                                            
+                                    items = current_step.split("\n")[:-1]
+                                                 
+                                    for itam in items:
+                                        
+                                        if f"{original_command[:current_index] + itam + original_command[current_index+len(item):]}" not in self.added_commands:
+                                        
+                                            self.previous_commands.insert(0, f"{original_command[:current_index] + itam + original_command[current_index+len(item):]}")
+                                            self.added_commands.append(f"{original_command[:current_index] + itam + original_command[current_index+len(item):]}")
+                                            
+                                return current_step, "", False, f"{original_command}"
 
                             else:
                             
                                 if "?" not in item:
 
-                                    return f"No such commands starting with: {item}", "", False, original_command
+                                    return f"No such commands starting with: {item}\n", "", False, original_command
+                                
+                                if item != "?algo":
                 
-                                return f"Keyerror: {item}", "", False, original_command     
+                                    return f"Keyerror: {item}\n", "", False, original_command
+                                
+                                else:
+                                    return "That is not a full command\n", "", False, original_command 
                         
                 current_index += len(item) + 1   
 
@@ -473,15 +536,13 @@ class CLI_Interpreter:
                 
             arguments = arguments[skips:]
             
-            if not isinstance(current_step, dict):
+            if type(current_step) == tuple:
 
                 return current_step, arguments, True, ""
             
             else:
                 
-                current_step = "That is not a full command"
-                
-                return current_step, "", False, original_command
+                return "That is not a full command\n", "", False, original_command
         
         except Exception as e:
             
@@ -523,8 +584,10 @@ class CLI_Interpreter:
         
         # If we didn't reach the end, or it was just a simple string at the end print it out       
         elif output:
-                    
-            print(output)
+
+            sys.stdout.write(f"{output}")
+            sys.stdout.write("\033[K")
+            sys.stdout.flush()
         
         self.update_dicts()
         
@@ -630,8 +693,8 @@ class CLI_Interpreter:
         
         if self.current_computer:
             
-            self.computer_commands["get_program_instances"].update({"?algo" : (self.current_computer.get_prog_instances, )})
-            
+            pass
+
         if self.current_cluster:
         
             computers = self.current_cluster.computers
