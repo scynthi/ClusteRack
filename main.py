@@ -183,9 +183,9 @@ class ClusterBoard:
             help_button_frame : UI.Frame = UI.Frame(temp_program_frame)
             help_button_frame.grid(row=2, column=0, sticky="ew")
             help_button_frame.grid_columnconfigure([0,1,2], weight=1)
-            UI.Button(help_button_frame, text="Megállítás").grid(row=2, column=0, sticky="ew")
-            UI.Button(help_button_frame, text="Start").grid(row=2, column=1, sticky="ew")
-            UI.Button(help_button_frame, text="Törlés").grid(row=2, column=2, sticky="ew")
+            UI.Button(help_button_frame, text="Megállítás", command=lambda program = program: stop_program(program)).grid(row=2, column=0, sticky="ew")
+            UI.Button(help_button_frame, text="Start", command=lambda program = program: start_program(program)).grid(row=2, column=1, sticky="ew")
+            UI.Button(help_button_frame, text="Törlés", command=lambda program = program: delete_program(program)).grid(row=2, column=2, sticky="ew")
             UI.Button(help_button_frame, text="Átírás").grid(row=3, column=0, columnspan=3, sticky="ew")
 
 
@@ -193,8 +193,7 @@ class ClusterBoard:
         cluster_frame.grid(row=1, column=1, sticky="new")
 
         model_num : int = len(cluster.computers.keys())
-        if model_num < 1: model_num = 1
-        elif model_num > 8: model_num = 8
+        if model_num > 8: model_num = 8
     
 
         self.rack_model = UI.EmbedRenderer(cluster_frame, f"rack_{model_num}", 12, app).get_renderer()
@@ -240,19 +239,29 @@ class ClusterBoard:
             UI.Button(cur_pc_frame, text=f"{pc.name} megnyitása", command=lambda pc = pc: self.open_computer_tab(pc)).grid(row=1, column=0, pady=5)
             cur_pc_frame.grid(row=i, column=0, pady=5)
         
-        def delete_cluster_and_reload():
+        def delete_cluster_and_reload() -> None:
             root.delete_cluster(self.cluster.name, "f")
             parent_ui.reload()
             self.destroy()
-        
 
+        def stop_program(program : str) -> None:
+            cluster.stop_program(program)
+            self.reload()
+
+        def start_program(program : str) -> None:
+            cluster.edit_instance_status(list(cluster.instances[program].keys())[0], "aktív")
+            self.reload()
+
+        def delete_program(program : str) -> None:
+            cluster.kill_program(program)
+            self.reload()
 
     def open_computer_tab(self, computer : Computer) -> None:
         if self.computer_tab:
             self.computer_tab.destroy()
-            self.computer_tab = ComputerBoard(computer)
+            self.computer_tab = ComputerBoard(self.cluster, computer, self)
         else:
-            self.computer_tab = ComputerBoard(computer)
+            self.computer_tab = ComputerBoard(self.cluster, computer, self)
     
     def destroy(self) -> None:
         if self.computer_tab:
@@ -261,16 +270,24 @@ class ClusterBoard:
         self.frame.destroy()
 
     def reload(self) -> None:
+        prev_computer_tab = self.computer_tab
         self.destroy()
         self.__init__(self.cluster, self.parent_ui)
+        if prev_computer_tab:
+            try:
+                self.computer_tab = prev_computer_tab
+                self.computer_tab.reload()
+            except: pass
 
         
 
 
 
 class ComputerBoard:
-    def __init__(self, computer : Computer) -> None:
+    def __init__(self, cluster : Cluster, computer : Computer, parent_ui) -> None:
         self.computer : Computer = computer
+        self.cluster : Cluster = cluster
+        self.parent_ui = parent_ui
 
         _frame = app.bottom_frame
         self.frame : UI.Frame = UI.Frame(_frame)
@@ -285,7 +302,7 @@ class ComputerBoard:
         self.computer_frame.grid_rowconfigure(2, weight=1)
 
         self.computer_model = UI.EmbedRenderer(self.computer_frame, "computer", 10, app).get_renderer()
-        UI.Button(self.computer_frame, text="Számítógép törlése", fg_color="red").grid(row=2, column=0, sticky="sew", padx=10, pady=5)
+        UI.Button(self.computer_frame, text="Számítógép törlése", fg_color="red", command=lambda: delete_self()).grid(row=2, column=0, sticky="sew", padx=10, pady=5)
         UI.Button(self.computer_frame, text="Számítógép mozgatása").grid(row=3, column=0, sticky="sew", padx=10, pady=5)
 
 
@@ -326,12 +343,9 @@ class ComputerBoard:
             instance_info_help_frame : UI.Frame = UI.Frame(instance_help_frame)
             instance_info_help_frame.grid(row=1, column=0, sticky="ew")
 
-            instance_helper : str = "Aktív"
-            if instance_info["status"]: instance_helper == "Inaktív"
-
             UI.Label(instance_info_help_frame, f"Magok: {instance_info["cores"]}").grid(row=0, column=0, padx=10)
             UI.Label(instance_info_help_frame, f"Memória: {instance_info["memory"]}").grid(row=0, column=1, padx=10)
-            UI.Label(instance_info_help_frame, f"Státusz: {instance_helper}").grid(row=0, column=2, padx=10)
+            UI.Label(instance_info_help_frame, f"Státusz: {instance_info["status"]}").grid(row=0, column=2, padx=10)
 
 
         self.cpu_usage_frame : UI.Frame = UI.Frame(self.frame)
@@ -341,6 +355,14 @@ class ComputerBoard:
         self.memory_usage_frame : UI.Frame = UI.Frame(self.frame)
         self.memory_usage_frame.grid(row=2, column=2)
         UI.Plot(self.computer, self.memory_usage_frame, "Memória %", "memory_usage_percent")
+
+
+        def delete_self() -> None:
+            cluster.delete_computer(self.computer.name, "f")
+            cluster._load_computers()
+            self.parent_ui.parent_ui.reload()
+            self.parent_ui.reload()
+            self.destroy()
         
 
 
@@ -349,8 +371,12 @@ class ComputerBoard:
         self.frame.destroy()
 
     def reload(self) -> None:
+        computer : Computer = self.computer
+        cluster : Cluster = self.cluster
+        parent_ui = self.parent_ui
+
         self.destroy()
-        self.__init__(self.computer)
+        self.__init__(cluster, computer, parent_ui)
 
 root = Root(r".\Test folder", app)
 DashboardUI()

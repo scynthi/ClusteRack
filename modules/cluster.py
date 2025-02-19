@@ -93,9 +93,9 @@ class Cluster:
                 if not self._validate_instance_placement(program_name, self.programs[program_name]['required_count']):
                     while True:
                         user_input = self.user_input(
-                            f"Not enough resources to fit {required_count} '{program_name}' instances! \n"
-                            f"Enter a lower instance count\n"
-                            f"Or type '0' to set the required instances to 0 and skip the program. >> ").strip()
+                            f"Nincsen elég erőforrás {required_count} darabnyi '{program_name}' program példány futtatásához! \n"
+                            f"Adjon meg egy kisebb mennyiséget\n"
+                            f"Vagy írja be a 0-át, hogy átállítsa a darabszámot és átugorja. >> ").strip()
                         
                         if user_input.isdigit():
                             new_count = int(user_input)
@@ -165,10 +165,10 @@ class Cluster:
                 if (len(active_valid_instances) < required_count) and inactive_valid_instances:
                     while True:
                         user_input = self.user_input(
-                                            f"Not enough active '{program_name}' instances to fulfill quota : {required_count}! \n"
-                                            f"{Fore.GREEN}Inactive instances found ({len(inactive_valid_instances)}).{Fore.WHITE + Style.BRIGHT} Would you like to start them?{Style.RESET_ALL}\n"
-                                            f"1 - Yes\n"
-                                            f"2 - Cancel >> ").strip()
+                                            f"Nem fut elég '{program_name}' példány, minimum {required_count} darabnak kell! \n"
+                                            f"{Fore.GREEN}Inaktív példányok ({len(inactive_valid_instances)}).{Fore.WHITE + Style.BRIGHT} Szeretné őket és/vagy új példányokat indítani?{Style.RESET_ALL}\n"
+                                            f"1 - Igen\n"
+                                            f"2 - Mégse >> ").strip()
                         if user_input == '1':
                             while (len(active_valid_instances) < required_count) and inactive_valid_instances: 
                                 instance_to_activate = inactive_valid_instances.pop(0) # Get oldest inactive instance
@@ -187,10 +187,10 @@ class Cluster:
                 if new_needed > 0:
                     while True:
                         user_input = self.user_input(
-                                            f"{Fore.YELLOW + Style.BRIGHT}Not enough active{Fore.RESET + Style.RESET_ALL} '{program_name}' instances to fulfill quota : {required_count}! \n"
-                                            f"{Fore.WHITE + Style.BRIGHT} Would you like to start {Fore.GREEN}new ones?{Fore.RESET + Style.RESET_ALL}\n"
-                                            f"1 - Yes\n"
-                                            f"2 - Cancel >> ").strip()
+                                            f"{Fore.YELLOW + Style.BRIGHT}Nem fut elég {Fore.RESET + Style.RESET_ALL} '{program_name}' példány, minimum {required_count} kell! \n"
+                                            f"{Fore.WHITE + Style.BRIGHT} Szeretene {Fore.GREEN}újakat indítani?{Fore.RESET + Style.RESET_ALL}\n"
+                                            f"1 - Igen\n"
+                                            f"2 - Mégse >> ").strip()
                         if user_input == '1':
                             for _ in range(new_needed):
                                 instance_id = self._generate_instance_id()
@@ -229,9 +229,9 @@ class Cluster:
 
                     while True:
                         user_input = self.user_input(
-                            f"{Style.BRIGHT}Do you want to\n"
-                            f"(1) Deactivate extra instances\n"
-                            f"(2) Delete them? (1/2) >> {Style.RESET_ALL}"
+                            f"{Style.BRIGHT}Szeretné\n"
+                            f"(1) Leállítani a példányokat\n"
+                            f"(2) Vagy törölni a példányokat? (1/2) >> {Style.RESET_ALL}"
                         ).strip()
                         
                         if user_input == '1':
@@ -444,14 +444,14 @@ class Cluster:
 
                     while True:
                         user_choice = self.user_input(
-                            f"{Style.BRIGHT}Would you like to:\n"
-                            f"1) Rename {program_name}-{instance_id} manually\n"
-                            f"2) Generate a new unique ID automatically\n"
-                            f"Enter choice (1/2) >> "
+                            f"{Style.BRIGHT} Szeretné {program_name}-{instance_id} program példánnyal csinálni:\n"
+                            f"1) Manuálisan átnevezni (\n"
+                            f"2) Automatikusan új azonosítóval ellátni\n"
+                            f"Válasz (1/2) >> "
                         ).strip()
 
                         if user_choice == "1":
-                            new_id = self.user_input("Enter new unique ID (6 characters): ").strip()
+                            new_id = self.user_input("Adjon meg 6 karaktert: ").strip()
                             if len(new_id) == 6 and new_id.isalnum() and new_id not in seen_ids:
                                 new_instance_id = new_id  # Just store the new ID, program name is already mapped
                                 self.change_instance_id(instance_id, new_instance_id, program_name, False)
@@ -490,14 +490,14 @@ class Cluster:
                 self.print(f"{Fore.RED}Duplicate computer name detected: {duplicate}")
 
                 user_input = self.user_input(
-                    f"{Style.BRIGHT}Would you like to:\n"
-                    f"1) Rename {duplicate} manually\n"
-                    f"2) Ignore this computer\n"
-                    f"Enter choice (1/2): "
+                    f"{Style.BRIGHT}Szeretné:\n"
+                    f"1) Manuálisan átnevezni ({duplicate})\n"
+                    f"2) Ignorálni\n"
+                    f"Válasz (1/2): "
                 ).strip()
 
                 if user_input == "1":
-                    new_name = self.user_input("Enter a new unique name: ").strip()
+                    new_name = self.user_input("Adjon meg egy új egyéni nevet: ").strip()
                     if new_name and new_name not in self.computers:
                         self.rename_computer(duplicate, new_name)
                     else:
@@ -883,10 +883,10 @@ class Cluster:
         
         while True:
             user_input = self.user_input(
-                f"{Style.BRIGHT}What status would you like the instance to be?\n"
-                "1 - Active\n"
-                "2 - Inactive\n"
-                "3 - Exit instance creation >> ").strip()
+                f"{Style.BRIGHT}Fusson ez a porgram példány?\n"
+                "1 - Igen\n"
+                "2 - Nem\n"
+                "3 - Kilépés >> ").strip()
             
             if user_input == "1":
                 if self._validate_instance_placement(program_name, parent_program["required_count"] + 1):
@@ -1017,10 +1017,10 @@ class Cluster:
 
                 while True:
                     user_input = self.user_input(
-                        f"Unidentified file detected in {self.name}: {file}\n"
-                        "1: Delete\n"
-                        "2: Keep (Warning: Might make the cluster unstable)\n"
-                        "Enter your choice (1/2) >> "
+                        f"Azonosítatlan fájl {self.name}: {file}\n"
+                        "1: Törlés\n"
+                        "2: Megtartás (Figyelmeztetés: destabilizálhatja a klasztert)\n"
+                        "Válasz (1/2) >> "
                     ).strip()
 
                     if user_input == "1":
@@ -1137,12 +1137,20 @@ class Cluster:
             answer : UI.Entry =  UI.Entry(popout.content)
             answer.grid(row=1, column=0, pady=10)
 
-            while True:
+            def set_can_continue(event=None):
+                nonlocal can_continue
+                can_continue = True
+
+            can_continue  : bool = False
+            popout.bind("<Return>", set_can_continue)
+
+            while not can_continue:
+                popout.update_idletasks()
                 popout.update()
-                if len(answer.get()) == 1:
-                    answer : str = answer.get()
-                    popout.destroy()
-                    return answer
+
+            answer = answer.get()
+            popout.destroy()
+            return answer
 
     def print(self, text: str):
         """Debugging print method."""
