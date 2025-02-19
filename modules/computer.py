@@ -112,16 +112,20 @@ class Computer:
         """Calculates resource usage based on child instances of the computer."""
 
         prog_instances: dict = self.get_prog_instances()
-        # print(prog_instances)
+        self.active_inst_num = 0
+        self.inactive_inst_num = 0
+        
 
         memory_usage: int = 0
         cpu_usage: int = 0
 
         for _, info in prog_instances.items():
             if info["status"]:
-
+                self.active_inst_num += 1
                 memory_usage += int(info["memory"])
                 cpu_usage += int(info["cores"])
+            else:
+                self.inactive_inst_num += 1
 
         self.free_memory: int = self.memory - memory_usage
         self.free_cores: int = self.cores - cpu_usage
