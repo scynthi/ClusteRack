@@ -893,7 +893,7 @@ class CLI_Interpreter:
                         
                         for destination_cluster in clusters.keys():
                             
-                            self.root_commands["relocate_program"][f"{program}"][f"{origin_cluster}"].update({f"{destination_cluster}" : {"?algo" : (self.current_root.relocate_process, )}})
+                            self.root_commands["relocate_program"][f"{program}"][f"{origin_cluster}"].update({f"{destination_cluster}" : {"?algo" : (self.current_root.relocate_program, )}})
                     
                 for computers in clusters[cluster].computers.keys():
                     

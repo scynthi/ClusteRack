@@ -205,7 +205,7 @@ class Cluster:
                     while True:
                         user_input = self.user_input(
                                             f"Nem fut elég '{program_name}' példány, minimum {required_count} darabnak kell! \n"
-                                            f"{Fore.GREEN}Inaktív példányok ({len(inactive_valid_instances)}).{Fore.WHITE + Style.BRIGHT} Szeretné őket és/vagy új példányokat indítani?{Style.RESET_ALL}\n"
+                                            f"{Fore.GREEN}Léteznek inaktív példányok({len(inactive_valid_instances)}).{Fore.WHITE + Style.BRIGHT} Szeretné őket elindítani?{Style.RESET_ALL}\n"
                                             f"1 - Igen\n"
                                             f"2 - Mégse >> ").strip()
                         if user_input == '1':
@@ -805,6 +805,8 @@ class Cluster:
             file.write("")
             file.write(data)
 
+        self.print(f"{Fore.GREEN}Program {program_name} killed successfully!")
+
         self._load_programs()
         return True
 
@@ -824,9 +826,25 @@ class Cluster:
         
         self.programs[program_name]["required_count"] = 0
         
+        data = ""
+        with open(self.config_path, "w+", encoding="utf8") as file:
+            lines = file.readlines()
+            lines = [line.strip() for line in lines]
+
+            for prog_name, details in self.programs.items():
+                data += f"{prog_name}\n{details["required_count"]}\n{details["cores"]}\n{details["memory"]}\n"
+            
+            print(data)
+
+            file.write("")
+            file.write(data)
+
         if reload:
             self._load_programs()
             self.run_rebalance()
+
+        self.print(f"{Fore.GREEN}Program {program_name} stopped successfully!")
+
         return True
 
     def edit_program_resources(self, program_name: str, property_to_edit:str, new_value, reload : bool = True):
@@ -973,7 +991,9 @@ class Cluster:
     def edit_instance_status(self, instance_id: str, new_status: str, reload : bool = True) -> bool:
         """Edit instance status to true or false"""
         
-        if not self.is_instance_on_cluster_by_id(instance_id): return False
+        if not self.is_instance_on_cluster_by_id(instance_id): 
+            self.print(f"{Fore.RED}Instance {instance_id} not found in cluster!")
+            return False
 
         target_program, instance_to_stop = self.get_instance_by_id(instance_id)
 
@@ -994,7 +1014,9 @@ class Cluster:
     def kill_instance(self, instance_id : str, reload : bool = True):
         """Kills an instance and removes references, can be used for batch removal is reload is turned off."""
 
-        if not self.is_instance_on_cluster_by_id(instance_id): return False
+        if not self.is_instance_on_cluster_by_id(instance_id): 
+            self.print(f"{Fore.RED}Instance ({instance_id}) not found on cluster")
+            return False
 
         target_program, instance_to_kill = self.get_instance_by_id(instance_id)
 
@@ -1134,7 +1156,7 @@ class Cluster:
         filename = Path.basename(path)
         
         # Check filename format: programname-id (id must be 6 chars)
-        if not re.match(r"^[a-zA-Z0-9]+-[a-zA-Z0-9]{6}$", filename):
+        if not re.match(Path.join(r"^[a-zA-Z0-9]+-[a-zA-Z0-9]{6}$"), filename):
             return False
         
         # Check file contents structure

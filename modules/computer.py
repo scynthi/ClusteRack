@@ -107,8 +107,9 @@ class Computer:
 
     def calculate_resource_usage(self) -> dict:
         """Calculates resource usage based on child instances of the computer."""
-        
+
         prog_instances: dict = self.get_prog_instances()
+        # print(prog_instances)
 
         memory_usage: int = 0
         cpu_usage: int = 0
