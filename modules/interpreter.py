@@ -1,7 +1,7 @@
 import os
 from os import path as Path
 import shlex
-
+from colorama import Fore, Style, Back
 from modules.cluster import Cluster
 from modules.computer import Computer
 from modules.root import Root
@@ -12,14 +12,24 @@ init(autoreset=True)
 
 class CLI_Interpreter:
     
-    def __init__(self):
+    def __init__(self, root = ""):
         
         # Setup modes
         
-        self.current_root : Root = Root(r"./Thing", None)
+        if root == "":
+        
+            root = self.add_root()
+        
+        if root == "":
+            
+            root = r"./Thing"
+        
+        self.current_root : Root = Root(root, None)
         self.current_cluster : Cluster = None
         self.current_computer : Computer = None
         self.mode : str = "None"
+        
+        self.desc_folder = r"./Assets/Descriptions"
         
         # Setup runable txt files
         
@@ -31,91 +41,6 @@ class CLI_Interpreter:
         self.previous_commands : list = []
         self.arguments : list = []
         self.added_commands : list = []
-        
-        # Commands for different modes
-        
-        self.root_commands : dict = {
-            "select" : {
-                "root" : {"?algo" : (self.select_root, )},
-                "cluster" : {},
-                "computer" : {"?non_args" : 1},
-                "run_folder" : {"<folder name" : {"?algo" : (self.select_run_folder, )}}
-            },
-            "exit" : {"?algo" : (self.exit, )},
-            "reload" : {"?algo" : (self.reload, )},
-            "update_commands" : {"?algo" : (self.update_dicts, )},
-            "create_cluster" : {"<Cluster name" : {"?algo" : (self.current_root.create_cluster, )}},
-            "try_del_cluster" : {},
-            "force_del_cluster" : {},
-            "relocate_program" : {},
-            "move_computer" : {},
-            "rename_cluster" : {},
-            "cleanup_root" : {"?algo" : (self.current_root.cleanup, )},
-            "run" : {}
-        }
-
-        self.cluster_commands : dict = {
-            "select" : {
-                "root" : {"?algo" : (self.select_root, )},
-                "cluster" : {},
-                "computer" : {"?non_args" : 1},
-                "run_folder" : {"<folder name" : {"?algo" : (self.select_run_folder, )}}
-            },
-            "exit" : {"?algo" : (self.exit, )},
-            "reload" : {"?algo" : (self.reload, )},
-            "update_commands" : {"?algo" : (self.update_dicts, )},
-            "run" : {},
-            "set_rebalance_algo" : {},
-            "run_rebalance" : {},
-            "create_computer" : {"<computer name" : {"<cores" : {"<memory" : {}}}},
-            "try_del_computer" : {},
-            "force_del_computer" : {},
-            "rename_computer" : {},
-            "edit_computer_resources" : {},
-            "get_cluster_programs" : {"?algo" : (self.get_cluster_programs, )},
-            "get_cluster_instances" : {"?algo" : (self.get_cluster_instances, )},
-            "start_program" : {"<program name" : {"<instance count?" : {"<req cores?" : {"<req memory?" : {}}}}},
-            "kill_program" : {},
-            "stop_program" : {},
-            "edit_program_resources" : {},
-            "edit_process_resources" : {},
-            "rename_program" : {},
-            "add_instance_gen_id" : {"<program name" : {}},
-            "add_instance_user_id" : {"<program name" : {"<instance_id" : {}}},
-            "edit_instance_status" : {},
-            "kill_instance" : {},
-            "change_instance_id_gen" : {},
-            "change_instance_id_user" : {},
-            "cleanup_cluster" : {}
-            
-        }
-        
-        self.computer_commands : dict = {
-            "select" : {
-                "root" : {"?algo" : (self.select_root, )},
-                "cluster" : {},
-                "computer" : {"?non_args" : 1},
-                "run_folder" : {"<folder name" : {"?algo" : (self.select_run_folder, )}}
-            },
-            "exit" : {"?algo" : (self.exit, )},
-            "reload" : {"?algo" : (self.reload, )},
-            "update_commands" : {"?algo" : (self.update_dicts, )},
-            "run" : {},
-            "cleanup_computer" : {}
-        }
-        
-        self.noMode_commands : dict = {
-            "select" : {
-                "root" : {"?algo" : (self.select_root, )},
-                "cluster" : {},
-                "computer" : {"?non_args" : 1},
-                "run_folder" : {"<folder name" : {"?algo" : (self.select_run_folder, )}, "?non_args" : 2}
-            },
-            "exit" : {"?algo" : (self.exit, )},
-            "reload" : {"?algo" : (self.reload, )},
-            "update_commands" : {"?algo" : (self.update_dicts, )},
-            "run" : {}
-        }
         
         # End setup and go to the input phase
         self.update_dicts()
@@ -135,22 +60,21 @@ class CLI_Interpreter:
             
             case "computer":
                 
-                prompt = f"{self.current_root.name.capitalize()}>{self.current_cluster.name.capitalize()}>{self.current_computer.name.capitalize()}"
+                prompt = f"{Fore.BLACK}{Back.CYAN}{self.current_root.name}{Back.RESET+Fore.RESET}>{Fore.BLACK}{Back.WHITE}{self.current_cluster.name}{Back.RESET+Fore.RESET}>{Fore.WHITE + Style.BRIGHT}{self.current_computer.name}{Back.RESET+Fore.RESET+Style.RESET_ALL}"
                 current_commands = self.computer_commands
                 
             case "cluster":
                 
-                prompt = f"{self.current_root.name.capitalize()}>{self.current_cluster.name.capitalize()}"
+                prompt = f"{Fore.BLACK}{Back.CYAN}{self.current_root.name}{Back.RESET+Fore.RESET}>{Fore.BLACK}{Back.WHITE}{self.current_cluster.name}{Back.RESET+Fore.RESET}"
                 current_commands = self.cluster_commands
                 
             case "root":
                 
-                prompt = f"{self.current_root.name.capitalize()}"
+                prompt = f"{Fore.BLACK}{Back.CYAN}{self.current_root.name}{Back.RESET+Fore.RESET}"
                 current_commands = self.root_commands
                 
             case _:
-                
-                prompt = "None"
+                prompt = f"{Fore.BLACK}{Back.LIGHTCYAN_EX}None{Back.RESET+Fore.RESET}"
                 current_commands = self.noMode_commands
                 
         # If there is something in the default text print it into the input
@@ -335,6 +259,12 @@ class CLI_Interpreter:
         index = 0
         indexes = {}
         
+        if "/?" in original_command:
+            
+            original_command = f"{shlashed_command[0]} /?"
+            
+            shlashed_command = [shlashed_command[0], "?desc", "?algo"]
+        
         for item in cants:
             
             if item in original_command:
@@ -375,7 +305,7 @@ class CLI_Interpreter:
                          
                     for coms in keys:
                         
-                        if coms != "?non_args" and coms != "?value":
+                        if coms != "?non_args" and coms != "?value" and coms != "?desc":
                         
                             if "<" in coms:
                                 
@@ -464,7 +394,7 @@ class CLI_Interpreter:
                                     
                                 for coms in keys:
                                     
-                                    if coms != "?non_args" and coms != "?value":
+                                    if coms != "?non_args" and coms != "?value" and coms != "?desc":
                                     
                                         if "<" in coms:
                                             
@@ -518,7 +448,7 @@ class CLI_Interpreter:
                                     
                                 for coms in keys:
                                     
-                                    if coms != "?non_args" and coms != "?value":
+                                    if coms != "?non_args" and coms != "?value" and coms != "?desc":
                                     
                                         if "<" in coms:
                                             
@@ -552,6 +482,8 @@ class CLI_Interpreter:
                                     return f"No such commands starting with: {item}\n", "", False, original_command
                                 
                                 if item != "?algo":
+                                    
+                                    print("borog")
                 
                                     return f"Keyerror: {item}\n", "", False, original_command
                                 
@@ -618,11 +550,7 @@ class CLI_Interpreter:
             for i in del_args:
                 arguments.remove(i)
             all_args = (*default_args, *arguments)
-            returning = func(*all_args)
-            
-            if returning:
-            
-                print(returning)
+            func(*all_args)
         
         # If we didn't reach the end, or it was just a simple string at the end print it out       
         elif output:
@@ -727,7 +655,7 @@ class CLI_Interpreter:
    
         print(f"selected the {mode}")
         
-# Miscellaneous
+# Miscellaneous ===============================================================================
 
     def update_dicts(self):
         
@@ -736,7 +664,8 @@ class CLI_Interpreter:
                 "root" : {"?algo" : (self.select_root, )},
                 "cluster" : {},
                 "computer" : {"?non_args" : 1},
-                "run_folder" : {"<folder name" : {"?algo" : (self.select_run_folder, )}}
+                "run_folder" : {"<folder name" : {"?algo" : (self.select_run_folder, )}},
+                "?desc" : {"?algo" : (self.run_desc, "select.txt"), "?non_args" : 2}
             },
             "exit" : {"?algo" : (self.exit, )},
             "reload" : {"?algo" : (self.reload, )},
@@ -756,7 +685,8 @@ class CLI_Interpreter:
                 "root" : {"?algo" : (self.select_root, )},
                 "cluster" : {},
                 "computer" : {"?non_args" : 1},
-                "run_folder" : {"<folder name" : {"?algo" : (self.select_run_folder, )}}
+                "run_folder" : {"<folder name" : {"?algo" : (self.select_run_folder, )}},
+                "?desc" : {"?algo" : (self.run_desc, "select.txt"), "?non_args" : 2}
             },
             "exit" : {"?algo" : (self.exit, )},
             "reload" : {"?algo" : (self.reload, )},
@@ -777,8 +707,8 @@ class CLI_Interpreter:
             "edit_program_resources" : {},
             "edit_process_resources" : {},
             "rename_program" : {},
-            "add_instance_gen_id" : {"<program name" : {}},
-            "add_instance_user_id" : {"<program name" : {"<instance_id" : {}}},
+            "add_instance_gen_id" : {},
+            "add_instance_user_id" : {},
             "edit_instance_status" : {},
             "kill_instance" : {},
             "change_instance_id_gen" : {},
@@ -792,13 +722,14 @@ class CLI_Interpreter:
                 "root" : {"?algo" : (self.select_root, )},
                 "cluster" : {},
                 "computer" : {"?non_args" : 1},
-                "run_folder" : {"<folder name" : {"?algo" : (self.select_run_folder, )}}
+                "run_folder" : {"<folder name" : {"?algo" : (self.select_run_folder, )}},
+                "?desc" : {"?algo" : (self.run_desc, "select.txt"), "?non_args" : 2}
             },
             "exit" : {"?algo" : (self.exit, )},
             "reload" : {"?algo" : (self.reload, )},
             "update_commands" : {"?algo" : (self.update_dicts, )},
             "run" : {},
-            "cleanup_computer" : {}
+            "cleanup_computer" : {"?desc" : {"?algo" : (self.run_desc, "cleanup_computer.txt"), "?non_args" : 2}}
         }
         
         self.noMode_commands : dict = {
@@ -806,7 +737,8 @@ class CLI_Interpreter:
                 "root" : {"?algo" : (self.select_root, )},
                 "cluster" : {},
                 "computer" : {"?non_args" : 1},
-                "run_folder" : {"<folder name" : {"?algo" : (self.select_run_folder, )}, "?non_args" : 2}
+                "run_folder" : {"<folder name" : {"?algo" : (self.select_run_folder, )}, "?non_args" : 2},
+                "?desc" : {"?algo" : (self.run_desc, "select.txt"), "?non_args" : 2}
             },
             "exit" : {"?algo" : (self.exit, )},
             "reload" : {"?algo" : (self.reload, )},
@@ -861,8 +793,8 @@ class CLI_Interpreter:
             
             for instance in instances:
                 
-                self.cluster_commands["edit_instance_status"].update({f"{instance}" : {"true" : {"?algo" : (self.cluster_commands, )}, 
-                                                                                       "false" : {"?algo" : (self.cluster_commands, )}}})
+                self.cluster_commands["edit_instance_status"].update({f"{instance}" : {"true" : {"?algo" : (self.current_cluster.edit_instance_status, )}, 
+                                                                                       "false" : {"?algo" : (self.current_cluster.edit_instance_status, )}}})
                 self.cluster_commands["kill_instance"].update({f"{instance}" : {"?algo" : (self.current_cluster.kill_instance, )}})
                 self.cluster_commands["change_instance_id_gen"].update({f"{instance}" : {"?algo" : (self.current_cluster.change_instance_id, )}})
                 self.cluster_commands["change_instance_id_user"].update({f"{instance}" : {"<New instance" : {"?algo" : (self.current_cluster.change_instance_id, )}}})
@@ -941,6 +873,12 @@ class CLI_Interpreter:
                 self.computer_commands["run"].update({f"{text_file.split(".")[0]}" : {"?algo" : (self.read_file, ), "?value": f"{text_file}"}})
                 self.root_commands["run"].update({f"{text_file.split(".")[0]}" : {"?algo" : (self.read_file, ), "?value": f"{text_file}"}})
                 self.cluster_commands["run"].update({f"{text_file.split(".")[0]}" : {"?algo" : (self.read_file, ), "?value": f"{text_file}"}})
+
+
+    def add_root(self):
+
+        return input("Give the path to the root folder: ")
+        
                 
     def get_cluster_programs(self):
         
@@ -975,6 +913,16 @@ class CLI_Interpreter:
     def reload(self):
         
         os.execv(sys.executable, ['python'] + sys.argv)
+        
+    def run_desc(self, file_name):
+        
+        with open(Path.join(self.desc_folder, file_name), "r", encoding="utf-8") as f:
+            
+            content = f.read()
+            f.close()
+            
+        print(content)
+        input("Press enter to continue")
 
     def exit(self):
 
