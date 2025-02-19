@@ -42,13 +42,15 @@ class CLI_Interpreter:
                 "run_folder" : {"<folder name" : {"?algo" : (self.select_run_folder, )}}
             },
             "exit" : {"?algo" : (self.exit, )},
+            "reload" : {"?algo" : (self.reload, )},
+            "update_commands" : {"?algo" : (self.update_dicts, )},
             "create_cluster" : {"<Cluster name" : {"?algo" : (self.current_root.create_cluster, )}},
             "try_del_cluster" : {},
             "force_del_cluster" : {},
-            "relocate_program" : {"<process name" : {}},
+            "relocate_program" : {},
             "move_computer" : {},
             "rename_cluster" : {},
-            "cleanup_root" : (self.current_root.cleanup, ),
+            "cleanup_root" : {"?algo" : (self.current_root.cleanup, )},
             "run" : {}
         }
 
@@ -60,6 +62,8 @@ class CLI_Interpreter:
                 "run_folder" : {"<folder name" : {"?algo" : (self.select_run_folder, )}}
             },
             "exit" : {"?algo" : (self.exit, )},
+            "reload" : {"?algo" : (self.reload, )},
+            "update_commands" : {"?algo" : (self.update_dicts, )},
             "run" : {},
             "set_rebalance_algo" : {},
             "run_rebalance" : {},
@@ -70,7 +74,7 @@ class CLI_Interpreter:
             "edit_computer_resources" : {},
             "get_cluster_programs" : {"?algo" : (self.get_cluster_programs, )},
             "get_cluster_instances" : {"?algo" : (self.get_cluster_instances, )},
-            "start_program" : {"<program name" : {"<instance count" : {"<req cores" : {"<req memory" : {}}}}},
+            "start_program" : {"<program name" : {"<instance count?" : {"<req cores?" : {"<req memory?" : {}}}}},
             "kill_program" : {},
             "stop_program" : {},
             "edit_program_resources" : {},
@@ -94,6 +98,8 @@ class CLI_Interpreter:
                 "run_folder" : {"<folder name" : {"?algo" : (self.select_run_folder, )}}
             },
             "exit" : {"?algo" : (self.exit, )},
+            "reload" : {"?algo" : (self.reload, )},
+            "update_commands" : {"?algo" : (self.update_dicts, )},
             "run" : {},
             "cleanup_computer" : {}
         }
@@ -106,6 +112,8 @@ class CLI_Interpreter:
                 "run_folder" : {"<folder name" : {"?algo" : (self.select_run_folder, )}, "?non_args" : 2}
             },
             "exit" : {"?algo" : (self.exit, )},
+            "reload" : {"?algo" : (self.reload, )},
+            "update_commands" : {"?algo" : (self.update_dicts, )},
             "run" : {}
         }
         
@@ -343,6 +351,8 @@ class CLI_Interpreter:
         try:
             for item in shlashed_command:
                 
+                is_int = False
+                
                 if isinstance(current_step, tuple):
                     
                     return "Too many arguments\n", "", False, original_command
@@ -369,7 +379,13 @@ class CLI_Interpreter:
                         
                             if "<" in coms:
                                 
-                                current_step += coms[1:] + "\n"
+                                if "?" in coms:
+                                    
+                                    current_step += coms[1:-1] + "\n"
+                                    
+                                else:
+                                
+                                    current_step += coms[1:] + "\n"
                                 
                             else:
                                     
@@ -392,9 +408,19 @@ class CLI_Interpreter:
                     
                         if fitem.startswith("<"):
                             
-                            temp = True
+                            if fitem.endswith("?"):
+                                
+                                temp = True
+                                
+                                temp_item = fitem
+                                
+                                is_int = True
+                                
+                            else:
                             
-                            temp_item = fitem
+                                temp = True
+                                
+                                temp_item = fitem
                             
                     unfinished_item = item
                         
@@ -442,7 +468,13 @@ class CLI_Interpreter:
                                     
                                         if "<" in coms:
                                             
-                                            current_step += coms[1:] + "\n"
+                                            if "?" in coms:
+                                                
+                                                current_step += coms[1:-1] + "\n"
+                                                
+                                            else:
+                                            
+                                                current_step += coms[1:] + "\n"
                                             
                                         else:
                                                 
@@ -490,7 +522,13 @@ class CLI_Interpreter:
                                     
                                         if "<" in coms:
                                             
-                                            current_step += coms[1:] + "\n"
+                                            if "?" in coms:
+                                                
+                                                current_step += coms[1:-1] + "\n"
+                                                
+                                            else:
+                                            
+                                                current_step += coms[1:] + "\n"
                                             
                                         else:
                                                 
@@ -529,6 +567,10 @@ class CLI_Interpreter:
                         bitem = current_step[temp_item]["?value"]
                 
                 if bitem != "?algo":
+                    
+                    if is_int:
+                        
+                        bitem = int(bitem)
                 
                     arguments.append(bitem)
                     
@@ -688,6 +730,89 @@ class CLI_Interpreter:
 # Miscellaneous
 
     def update_dicts(self):
+        
+        self.root_commands : dict = {
+            "select" : {
+                "root" : {"?algo" : (self.select_root, )},
+                "cluster" : {},
+                "computer" : {"?non_args" : 1},
+                "run_folder" : {"<folder name" : {"?algo" : (self.select_run_folder, )}}
+            },
+            "exit" : {"?algo" : (self.exit, )},
+            "reload" : {"?algo" : (self.reload, )},
+            "update_commands" : {"?algo" : (self.update_dicts, )},
+            "create_cluster" : {"<Cluster name" : {"?algo" : (self.current_root.create_cluster, )}},
+            "try_del_cluster" : {},
+            "force_del_cluster" : {},
+            "relocate_program" : {},
+            "move_computer" : {},
+            "rename_cluster" : {},
+            "cleanup_root" : {"?algo" : (self.current_root.cleanup, )},
+            "run" : {}
+        }
+
+        self.cluster_commands : dict = {
+            "select" : {
+                "root" : {"?algo" : (self.select_root, )},
+                "cluster" : {},
+                "computer" : {"?non_args" : 1},
+                "run_folder" : {"<folder name" : {"?algo" : (self.select_run_folder, )}}
+            },
+            "exit" : {"?algo" : (self.exit, )},
+            "reload" : {"?algo" : (self.reload, )},
+            "update_commands" : {"?algo" : (self.update_dicts, )},
+            "run" : {},
+            "set_rebalance_algo" : {},
+            "run_rebalance" : {},
+            "create_computer" : {"<computer name" : {"<cores?" : {"<memory?" : {}}}},
+            "try_del_computer" : {},
+            "force_del_computer" : {},
+            "rename_computer" : {},
+            "edit_computer_resources" : {},
+            "get_cluster_programs" : {"?algo" : (self.get_cluster_programs, )},
+            "get_cluster_instances" : {"?algo" : (self.get_cluster_instances, )},
+            "start_program" : {"<program name" : {"<instance count?" : {"<req cores?" : {"<req memory?" : {}}}}},
+            "kill_program" : {},
+            "stop_program" : {},
+            "edit_program_resources" : {},
+            "edit_process_resources" : {},
+            "rename_program" : {},
+            "add_instance_gen_id" : {"<program name" : {}},
+            "add_instance_user_id" : {"<program name" : {"<instance_id" : {}}},
+            "edit_instance_status" : {},
+            "kill_instance" : {},
+            "change_instance_id_gen" : {},
+            "change_instance_id_user" : {},
+            "cleanup_cluster" : {}
+            
+        }
+        
+        self.computer_commands : dict = {
+            "select" : {
+                "root" : {"?algo" : (self.select_root, )},
+                "cluster" : {},
+                "computer" : {"?non_args" : 1},
+                "run_folder" : {"<folder name" : {"?algo" : (self.select_run_folder, )}}
+            },
+            "exit" : {"?algo" : (self.exit, )},
+            "reload" : {"?algo" : (self.reload, )},
+            "update_commands" : {"?algo" : (self.update_dicts, )},
+            "run" : {},
+            "cleanup_computer" : {}
+        }
+        
+        self.noMode_commands : dict = {
+            "select" : {
+                "root" : {"?algo" : (self.select_root, )},
+                "cluster" : {},
+                "computer" : {"?non_args" : 1},
+                "run_folder" : {"<folder name" : {"?algo" : (self.select_run_folder, )}, "?non_args" : 2}
+            },
+            "exit" : {"?algo" : (self.exit, )},
+            "reload" : {"?algo" : (self.reload, )},
+            "update_commands" : {"?algo" : (self.update_dicts, )},
+            "run" : {}
+        }
 
         clusters = self.current_root.clusters
         
@@ -699,14 +824,14 @@ class CLI_Interpreter:
         
             computers = self.current_cluster.computers
             
-            self.cluster_commands["set_rebalance_algo"].update({"load_balance" : {"?algo" : (self.current_cluster.set_rebalance_algo, 0)}, "best_fit" : {"?algo" : (self.current_cluster.set_rebalance_algo, 1)}, "fast" : {"?algo" : (self.current_cluster.set_rebalance_algo, 2)}})
+            self.cluster_commands["set_rebalance_algo"].update({"load_balance" : {"?algo" : (self.current_cluster.set_rebalance_algo, ), "?value" : 0}, "best_fit" : {"?algo" : (self.current_cluster.set_rebalance_algo, ), "?value" : 1}, "fast" : {"?algo" : (self.current_cluster.set_rebalance_algo, ), "?value" : 2}})
                 
             for item in computers.keys():
                 
                 self.cluster_commands["rename_computer"].update({f"{item}" : {"<new name" : {"?algo" : (self.current_cluster.rename_computer, )}}})
-                self.cluster_commands["try_del_computer"].update({f"{item}" : {"?algo" : (self.current_cluster.delete_computer, "try")}})
-                self.cluster_commands["force_del_computer"].update({f"{item}" : {"?algo" : (self.current_cluster.delete_computer, "f")}})
-                self.cluster_commands["edit_computer_resources"].update({f"{item}" : {"<cores" : {"<memory" : {"?algo" : (self.current_cluster.edit_computer_resources, )}}}})
+                self.cluster_commands["try_del_computer"].update({f"{item}" : {"?algo" : (self.current_cluster.delete_computer, "?replace", "try")}})
+                self.cluster_commands["force_del_computer"].update({f"{item}" : {"?algo" : (self.current_cluster.delete_computer, "?replace", "f")}})
+                self.cluster_commands["edit_computer_resources"].update({f"{item}" : {"<cores?" : {"<memory?" : {"?algo" : (self.current_cluster.edit_computer_resources, )}}}})
                 
             for item in clusters.keys():
                 
@@ -715,9 +840,9 @@ class CLI_Interpreter:
                 self.computer_commands["select"]["cluster"].update({f"{item}" : {"?algo" : (self.select_cluster, ), "?value" : clusters[item]}})
                 self.root_commands["select"]["cluster"].update({f"{item}" : {"?algo" : (self.select_cluster, ), "?value" : clusters[item]}})
                 
-            self.cluster_commands["create_computer"]["<computer name"]["<cores"]["<memory"].update({"?algo" : (self.current_cluster.create_computer, )})
+            self.cluster_commands["create_computer"]["<computer name"]["<cores?"]["<memory?"].update({"?algo" : (self.current_cluster.create_computer, )})
             self.cluster_commands["run_rebalance"].update({"?algo" : (self.current_cluster.run_rebalance, )})
-            self.cluster_commands["start_program"]["<program name"]["<instance count"]["<req cores"]["<req memory"].update({"?algo" : (self.current_cluster.add_program, )})
+            self.cluster_commands["start_program"]["<program name"]["<instance count?"]["<req cores?"]["<req memory?"].update({"?algo" : (self.current_cluster.add_program, )})
             
             programs = self.current_cluster.programs.keys()
             
@@ -757,6 +882,18 @@ class CLI_Interpreter:
                 self.noMode_commands["select"]["computer"].update({f"{cluster}" : {}})
                 self.computer_commands["select"]["computer"].update({f"{cluster}" : {}})
                 self.root_commands["select"]["computer"].update({f"{cluster}" : {}})
+                
+                for program in clusters[cluster].programs.keys():
+                
+                    self.root_commands["relocate_program"].update({f"{program}" : {}})
+
+                    for origin_cluster in clusters.keys():
+                    
+                        self.root_commands["relocate_program"][f"{program}"].update({f"{origin_cluster}" : {}})
+                        
+                        for destination_cluster in clusters.keys():
+                            
+                            self.root_commands["relocate_program"][f"{program}"][f"{origin_cluster}"].update({f"{destination_cluster}" : {"?algo" : (self.current_root.relocate_process, )}})
                     
                 for computers in clusters[cluster].computers.keys():
                     
@@ -780,17 +917,7 @@ class CLI_Interpreter:
                 self.root_commands["try_del_cluster"].update({f"{cluster}" : {"?algo" : (self.current_root.delete_cluster, "?replace", "try")}})
                 self.root_commands["force_del_cluster"].update({f"{cluster}" : {"?algo" : (self.current_root.delete_cluster, "?replace", "f")}})
                 self.root_commands["rename_cluster"].update({f"{cluster}" : {"<New name" : {"?algo" : (self.current_root.rename_cluster, )}}})
-                    
-            for item in clusters.keys():
-                
-                self.root_commands["relocate_program"]["<process name"].update({f"{item}" : {}})
-                
-                for jitem in self.current_root.clusters.keys():
-                    
-                    # self.root_commands["relocate_program"]["<process name"][f"{item}"].update({f"{jitem}" : {"?algo" : (self.current_root.relocate_program, )}})
-                    pass
-                
-            
+
                 
             
             # for item in self.current_cluster.processes.keys():
@@ -819,8 +946,12 @@ class CLI_Interpreter:
         
         programs = [item for item in self.current_cluster.instances.keys()]
         
-        for program in programs:
-            print(program)
+        if len(programs) > 0:
+            for program in programs:
+                print(program)
+        else:
+            print("No programs")
+        
             
     def get_cluster_instances(self):
         
@@ -832,10 +963,18 @@ class CLI_Interpreter:
             
             instances.append([program, *self.current_cluster.instances[program].keys()])
         
-        for instance in instances:
-            for item in instance:
-                print(item, end=" ")
-            print()
+        if len(instances) > 0:
+            for instance in instances:
+                for item in instance:
+                    print(item, end=" ")
+                print()
+        else:
+            print("No instances")
+            
+    
+    def reload(self):
+        
+        os.execv(sys.executable, ['python'] + sys.argv)
 
     def exit(self):
 

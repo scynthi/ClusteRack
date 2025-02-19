@@ -135,6 +135,16 @@ class SubWindow(CTkToplevel):
                 except:
                     pass
 
+class ErrorSubWindow(SubWindow):
+    def __init__(self, text: str):
+        super().__init__()
+        self.content.grid_columnconfigure(0, weight=1)
+        self.content.grid_rowconfigure(0, weight=1)
+
+        audio.play_error()
+
+        Label(self.content, text=text, fg="red",  font=large_font, bg=DGRAY).grid(row=0, column=0)
+
 
 class ClusterCreateSubWindow(SubWindow):
     def __init__(self, root : Root, ui):
@@ -146,8 +156,6 @@ class ClusterCreateSubWindow(SubWindow):
         entry : UI.Entry = UI.Entry(self.content)
         entry.grid(row=1, column=0, pady=20, padx=50, stick="ew")
         Button(self.content, text="Létrehozás", font=large_font, bg=DBLUE, fg="white", command=lambda: create_cluster(self)).grid(row=2, column=0, sticky="N")
-        error_message : UI.Label = UI.Label(self.content, text="", text_color="red", font=large_font)
-        error_message.grid(row=3, column=0, pady=15)
 
 
         def create_cluster(self) -> None:
@@ -157,11 +165,9 @@ class ClusterCreateSubWindow(SubWindow):
                     audio.play_accept()
                     self.destroy()
                 else:
-                    audio.play_error()
-                    error_message._text = "Hibás klaszter név!"
+                    ErrorSubWindow("Hibás klaszter név!")
             except:
-                error_message._text = "Adjon meg egy nevet!"
-                audio.play_error()
+                ErrorSubWindow("Folyamat végrehajtása sikertelen!")
 
 class ComputerCreateSubWindow(SubWindow):
     def __init__(self, cluster : Cluster, ui):
@@ -186,23 +192,22 @@ class ComputerCreateSubWindow(SubWindow):
 
         Button(self.content, text="Létrehozás", font=large_font, bg=DBLUE, fg="white", command=lambda: create_computer(self)).grid(row=7, column=0, sticky="N")
 
-        error_message : UI.Label = UI.Label(self.content, text="", text_color="red", font=large_font)
-        error_message.grid(row=8, column=0, pady=15)
-
         def create_computer(self) -> None:
             try:
+                if computer_name.get() in cluster.computers:                    
+                    ErrorSubWindow("Már van ilyen nevű számítógép!") 
+                    return
+
                 if cluster.create_computer(computer_name.get(), int(core_entry.get()), int(memory_entry.get())):
                     if ui.parent_ui:
                         ui.parent_ui.reload()
-                    ui.reload()
+                    ui.reload_with_child()
                     audio.play_accept()
                     self.destroy()
                 else:
-                    audio.play_error()
-                    error_message._text = "Rossz típusú adatok lettek megadva."
+                    ErrorSubWindow("Rossz típusú adatok lettek megadva.")
             except:
-                    audio.play_error()
-                    error_message._text = "Belső hiba. Próbálja újra."
+                    ErrorSubWindow("Belső hiba. Próbálja újra.")
 
 
 class StartProgramSubWindow(SubWindow):
@@ -230,17 +235,13 @@ class StartProgramSubWindow(SubWindow):
 
         Button(self.content, text="Program hozzáadása", font=large_font, bg=DBLUE, fg="white", command=lambda: try_add_program()).grid(row=9, column=0, sticky="N")
 
-        error_message : UI.Label = UI.Label(self.content, text="", text_color="red", font=large_font)
-        error_message.grid(row=10, column=0, pady=15)
-
         def try_add_program() -> None:
             if cluster.add_program(program_name.get(), instance_entry.get(), core_entry.get(), memory_entry.get()):
                 ui.reload()
                 audio.play_accept()
                 self.destroy()
             else:
-                audio.play_error()
-                error_message._text = "Rossz típusú adatok. Próbálja újra."
+                ErrorSubWindow("Rossz típusú adatok. Próbálja újra.")
 
 
 class ClusterRenameSubWindow(SubWindow):
@@ -255,8 +256,6 @@ class ClusterRenameSubWindow(SubWindow):
         
 
         Button(self.content, text="Átnevezés", font=large_font, bg=DBLUE, fg="white", command=lambda: rename_cluster(self)).grid(row=2, column=0, sticky="N")
-        error_message : UI.Label = UI.Label(self.content, text="", text_color="red", font=large_font)
-        error_message.grid(row=3, column=0, pady=15)
 
 
         def rename_cluster(self) -> None:
@@ -267,8 +266,38 @@ class ClusterRenameSubWindow(SubWindow):
                     ui.parent_ui.reload()
                     self.destroy()
                 else:
-                    audio.play_error()
-                    error_message._text = "Hibás klaszter név!"
+                    ErrorSubWindow("Hibás klaszter név!")
             except:
-                error_message._text = "Adjon meg egy nevet!"
-                audio.play_error()
+                ErrorSubWindow("Adjon meg egy nevet!")
+
+
+class ClusterAlgorithmSubWindow(SubWindow):
+    def __init__(self, cluster : Cluster, ui):
+        super().__init__()
+        self.content.grid_columnconfigure(0, weight=1)
+        self.content.grid_rowconfigure(2, weight=1)
+
+        algos : list[str] = ["load_balance", "best_fit", "fast"] 
+
+        current_algo : StringVar =  StringVar()
+        current_algo.set(cluster.rebalancer.default_rebalance_algo)
+
+        Label(self.content, text="Válasszon ki egy algoritmust!", font=large_font, bg=DGRAY, fg="black").grid(row=0, column=0, pady=5)
+        Label(self.content, text=f"Beállított algoritmus: {current_algo.get()}", font=small_font, bg=DGRAY, fg="black").grid(row=1, column=0, pady=5)
+
+        UI.OptionMenu(self.content, values=algos, width=200, variable=current_algo,).grid(row=2, column=0, pady=5, padx=20)
+
+        UI.Button(self.content, text="Futattás", font=large_font, bg=DBLUE, fg="white", command=lambda:(
+            cluster.set_rebalance_algo(algos.index(current_algo.get())),
+            cluster.run_rebalance(),
+            ui.reload(),
+            audio.play_accept(),
+            self.destroy()
+            )).grid(row=3, column=0, pady=10)
+
+
+
+
+
+
+
