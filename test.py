@@ -27,8 +27,8 @@ Root
 Create cluster                 D
 Delete cluster (try, force)    D
 Edit cluster name              D
-Move computer between clusters 
-Move program between clusters  
+Move computer between clusters D
+Move program between clusters  D
 Cleanup root                   D
 
 Cluster
