@@ -1,0 +1,9 @@
+USAGE:
+select <root>
+select <cluster> <cluster_name>
+select <computer> <cluster_name> <computer_name>
+
+Options:
+root Switches to root mode in the CLI.
+cluster <cluster_name> → Switches to cluster mode for the specified cluster.
+computer <cluster_name> <computer_name> → Switches to computer mode for the specified computer.

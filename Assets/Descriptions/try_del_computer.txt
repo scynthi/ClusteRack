@@ -1,0 +1,5 @@
+USAGE:
+try_del_computer <computer_name>
+
+Options:
+computer_name → Attempts to delete the specified computer but will fail if it has active programs.

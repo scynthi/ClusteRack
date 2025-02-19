@@ -1,0 +1,6 @@
+USAGE:
+add_instance_user_id <program_name> <instance_id>
+
+Options:
+program_name → Adds a new instance to the specified program.
+instance_id → Custom user-defined instance ID.

@@ -1,0 +1,6 @@
+USAGE:
+rename_computer <target_computer> <new_name>
+
+Options:
+target_computer → Current name of the computer.
+new_name → New name for the computer.

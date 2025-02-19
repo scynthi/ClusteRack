@@ -1,0 +1,5 @@
+USAGE:
+get_cluster_instances
+
+Options:
+No arguments needed. Displays all instances running on the cluster.

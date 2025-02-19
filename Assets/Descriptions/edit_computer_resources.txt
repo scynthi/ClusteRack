@@ -1,0 +1,7 @@
+USAGE:
+edit_computer_resources <computer_name> <cores> <memory>
+
+Options:
+computer_name → The name of the computer to edit.
+cores → New number of CPU cores.
+memory → New amount of memory.

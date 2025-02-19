@@ -1,0 +1,8 @@
+USAGE:
+set_rebalance_algo [ ? | "load_balance" | "best_fit" | "fast" ]
+
+Options:
+? → Displays this help message.
+load_balance → Sets the rebalancing algorithm to Load Balance.
+best_fit → Sets the rebalancing algorithm to Best Fit.
+fast → Sets the rebalancing algorithm to Fast Rebalancing.

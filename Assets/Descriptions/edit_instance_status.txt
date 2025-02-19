@@ -1,0 +1,6 @@
+USAGE:
+edit_instance_status <instance_id> <new_status>
+
+Options:
+instance_id → The ID of the instance to modify.
+new_status → The new status (e.g., "active" or "inactive").

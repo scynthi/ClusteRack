@@ -1,0 +1,5 @@
+USAGE:
+force_del_cluster <cluster_name>
+
+Options:
+cluster_name → Forces deletion of the specified cluster, removing all computers and programs inside.

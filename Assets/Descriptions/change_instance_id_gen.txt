@@ -1,0 +1,5 @@
+USAGE:
+change_instance_id_gen <instance_id>
+
+Options:
+instance_id → Changes the instance's ID to a system-generated one.

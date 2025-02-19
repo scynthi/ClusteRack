@@ -1,0 +1,5 @@
+USAGE:
+add_instance_gen_id <program_name>
+
+Options:
+program_name → Adds a new instance to the specified program with a generated ID.

@@ -1,0 +1,5 @@
+USAGE:
+exit
+
+Options:
+No arguments needed. Exits from current mode level to a higher one.
