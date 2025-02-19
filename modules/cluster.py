@@ -885,7 +885,6 @@ class Cluster:
         self.programs[program_name][property_to_edit] = new_value
 
         if not self._validate_instance_placement(program_name, self.programs[program_name]["required_count"]) and not (property_to_edit == "required_count" and new_value == 0):
-            # print(self.programs[program_name][property_to_edit])
             self.programs[program_name][property_to_edit] = old_value
             self.print(f"{Fore.RED}The edited program would not fit on the cluster. Abendonding editing process.")
             return False
