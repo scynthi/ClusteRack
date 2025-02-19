@@ -8,7 +8,7 @@ root : Root = Root(r".\Test folder", None)
 
 # cluster : Cluster = root.clusters["cluster0"]
 cluster1 = root.create_cluster("cluster0")
-root.move_computer("computer2", "cluster0", "cluster1")
+root.relocate_program("word", "cluster1", "cluster0")
 
 # cluster1.kill_program("testprog2")
 # cluster1.delete_computer("computer1", "f")

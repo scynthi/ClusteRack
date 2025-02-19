@@ -1247,3 +1247,6 @@ class Cluster:
     def print(self, text: str):
         """Debugging print method."""
         print(f"{Fore.BLACK}{Back.CYAN}[{Back.WHITE}{self.name}{Back.CYAN}]{Back.RESET}{Fore.CYAN}: {text}{Style.RESET_ALL}")
+
+    def signiture(self):
+        print(f"{Fore.BLUE}undefined")

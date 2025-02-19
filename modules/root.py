@@ -64,6 +64,7 @@ class Root:
         # Check if process already exists in the destination
         if program_name in destination_cluster.programs:
             self.print(f"{Fore.YELLOW}Program {program_name} already exists in {destination_cluster_name}.")
+            return False
 
             while True:
                 print(
@@ -88,21 +89,19 @@ class Root:
             elif user_choice == "2":
                 self.print(f"{Fore.YELLOW}Overwriting program {program_name} in {destination_cluster_name}.")
                 
-                overwrite_success = destination_cluster.edit_process_resources(
-                    program_name, "instance_count", program_data["instance_count"]
-                ) and destination_cluster.edit_process_resources(
+                overwrite_success = destination_cluster.edit_program_resources(
+                    program_name, "required_count", program_data["required_count"]
+                ) and destination_cluster.edit_program_resources(
                     program_name, "cores", program_data["cores"]
-                ) and destination_cluster.edit_process_resources(
+                ) and destination_cluster.edit_program_resources(
                     program_name, "memory", program_data["memory"]
-                ) and destination_cluster.edit_process_resources(
-                    program_name, "running", program_data["running"]
                 )
 
                 if not overwrite_success:
-                    self.print(f"{Fore.RED}Failed to overwrite process {program_name} in {destination_cluster_name}.")
+                    self.print(f"{Fore.RED}Failed to overwrite program {program_name} in {destination_cluster_name}.")
                     return False
 
-                self.print(f"{Fore.GREEN}Successfully overwrote process {program_name} in {destination_cluster_name}.")
+                self.print(f"{Fore.GREEN}Successfully overwrote program {program_name} in {destination_cluster_name}.")
 
             elif user_choice == "3":
                 self.print(f"{Fore.GREEN}Merging process {program_name} into {destination_cluster_name}.")
@@ -129,27 +128,30 @@ class Root:
             return True
 
         # If process does NOT exist in destination, perform a normal move
-        self.print(f"{Fore.GREEN}Moving {program_name} from {origin_cluster_name} to {destination_cluster_name}.")
+        self.print(f"{Fore.GREEN}Moving {program_name} from {origin_cluster_name} to {destination_cluster_name}. . .")
 
-        if not origin_cluster.kill_process(program_name):
-            self.print(f"{Fore.RED}Failed to remove process {program_name} from {origin_cluster_name}.")
+        # Good luck figuring  this out.
+        destination_cluster.programs[program_name] = origin_cluster.programs[program_name]
+
+        if not destination_cluster._validate_instance_placement(program_name, destination_cluster.programs[program_name]["required_count"]):
+            del destination_cluster.programs[program_name]
+            
+            self.print(f"{Fore.RED}Could not relocate program due to insufficient resources in destination cluster.")
             return False
+        
+        del destination_cluster.programs[program_name]
 
-        success = destination_cluster.start_process(
-            program_name,
-            program_data["running"],
-            program_data["cores"],
-            program_data["memory"],
-            program_data["instance_count"],
-            program_data["date_started"],
-        )
-
-        if success:
-            self.print(f"{Fore.GREEN}Successfully moved process {program_name} from {origin_cluster_name} to {destination_cluster_name}.")
-            return True
-        else:
-            self.print(f"{Fore.RED}Failed to start process {program_name} in {destination_cluster_name}.")
+        program_details = origin_cluster.programs[program_name]
+        if not destination_cluster.add_program(program_name, program_details["required_count"], program_details["cores"], program_details["memory"]):
+            self.print(f"Error while adding program to new cluster.")
             return False
+        
+        if not origin_cluster.kill_program(program_name):
+            self.print(f"{Fore.RED}Failed to remove program {program_name} from {origin_cluster_name}.")
+            return False
+    
+        self.print(f"{Fore.GREEN}Successfully moved process {program_name} from {origin_cluster_name} to {destination_cluster_name}.")
+        return True
 
     def move_computer(self, computer_name: str, origin_cluster_name: str, destination_cluster_name: str) -> bool:
         """Moves computer from one cluster to another"""
