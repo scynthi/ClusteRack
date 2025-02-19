@@ -693,7 +693,7 @@ class CLI_Interpreter:
         
         if self.current_computer:
             
-            pass
+            self.computer_commands["cleanup_computer"].update({"?algo" : (self.current_computer.cleanup, )})
 
         if self.current_cluster:
         
@@ -729,7 +729,21 @@ class CLI_Interpreter:
                                                                                         "cores" : {"<New value" : {"?algo" : (self.current_cluster.edit_program_resources, )}},
                                                                                         "memory" : {"<New value" : {"?algo" : (self.current_cluster.edit_program_resources, )}}}})
                 self.cluster_commands["rename_program"].update({f"{program}" : {"<New name" : {"?algo" : (self.current_cluster.rename_program, )}}})
+                self.cluster_commands["add_instance_gen_id"].update({f"{program}" : {"?algo" : (self.current_cluster.add_instance, )}})
+                self.cluster_commands["add_instance_user_id"].update({f"{program}" : {"<instance_id : " : {"?algo" : (self.current_cluster.add_instance, )}}})
+                
+            instances = [key for program_name in self.current_cluster.instances.keys() for key in self.current_cluster.instances[program_name].keys()]
             
+            for instance in instances:
+                
+                self.cluster_commands["edit_instance_status"].update({f"{instance}" : {"true" : {"?algo" : (self.cluster_commands, )}, 
+                                                                                       "false" : {"?algo" : (self.cluster_commands, )}}})
+                self.cluster_commands["kill_instance"].update({f"{instance}" : {"?algo" : (self.current_cluster.kill_instance, )}})
+                self.cluster_commands["change_instance_id_gen"].update({f"{instance}" : {"?algo" : (self.current_cluster.change_instance_id, )}})
+                self.cluster_commands["change_instance_id_user"].update({f"{instance}" : {"<New instance" : {"?algo" : (self.current_cluster.change_instance_id, )}}})
+
+            self.cluster_commands["cleanup_cluster"].update({"?algo" : (self.current_cluster.cleanup, )})
+                
         if clusters:
         
             for cluster in clusters.keys():
