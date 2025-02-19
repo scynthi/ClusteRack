@@ -820,12 +820,16 @@ class CLI_Interpreter:
                     self.root_commands["relocate_program"].update({f"{program}" : {}})
 
                     for origin_cluster in clusters.keys():
-                    
-                        self.root_commands["relocate_program"][f"{program}"].update({f"{origin_cluster}" : {}})
                         
-                        for destination_cluster in clusters.keys():
+                        if program in clusters[origin_cluster].programs.keys():
+                    
+                            self.root_commands["relocate_program"][f"{program}"].update({f"{origin_cluster}" : {}})
                             
-                            self.root_commands["relocate_program"][f"{program}"][f"{origin_cluster}"].update({f"{destination_cluster}" : {"?algo" : (self.current_root.relocate_program, )}})
+                            for destination_cluster in clusters.keys():
+                                
+                                if destination_cluster == origin_cluster: continue
+                                
+                                self.root_commands["relocate_program"][f"{program}"][f"{origin_cluster}"].update({f"{destination_cluster}" : {"?algo" : (self.current_root.relocate_program, )}})
                     
                 for computers in clusters[cluster].computers.keys():
                     
@@ -840,29 +844,20 @@ class CLI_Interpreter:
                         
                         for origin_cluster in clusters.keys():
                             
-                            self.root_commands["move_computer"][f"{computers}"].update({origin_cluster : {}})
+                            if computers in clusters[origin_cluster].computers.keys():
                             
-                            for destination_cluster in clusters.keys():
-                                
-                                self.root_commands["move_computer"][f"{computers}"][f"{origin_cluster}"].update({destination_cluster : {"?algo" : (self.current_root.move_computer, )}})
+                                self.root_commands["move_computer"][f"{computers}"].update({origin_cluster : {}})
+                            
+                                for destination_cluster in clusters.keys():
+                                    
+                                    if destination_cluster == origin_cluster: continue
+                                    
+                                    self.root_commands["move_computer"][f"{computers}"][f"{origin_cluster}"].update({destination_cluster : {"?algo" : (self.current_root.move_computer, )}})
                                 
                 self.root_commands["try_del_cluster"].update({f"{cluster}" : {"?algo" : (self.current_root.delete_cluster, "?replace", "try")}})
                 self.root_commands["force_del_cluster"].update({f"{cluster}" : {"?algo" : (self.current_root.delete_cluster, "?replace", "f")}})
                 self.root_commands["rename_cluster"].update({f"{cluster}" : {"<New name" : {"?algo" : (self.current_root.rename_cluster, )}}})
-
-                
-            
-            # for item in self.current_cluster.processes.keys():
-                
-            #     self.cluster_commands["kill_process"].update({f"{item}" : {"?algo" : (self.current_cluster.kill_process, )}})
-            #     self.cluster_commands["edit_process_resources"].update({f"{item}" : {"instance count" : {"<New value (int)" : {"?algo" : (self.current_cluster.edit_process_resources, )}}, 
-            #                                                                          "cores" : {"<New value (int)" : {"?algo" : (self.current_cluster.edit_process_resources, )}},
-            #                                                                          "memory" : {"<New value (int)" : {"?algo" : (self.current_cluster.edit_process_resources, )}},
-            #                                                                          "running" : {"<New value" : {"?algo" : (self.current_cluster.edit_process_resources, )}}}})
-            #     self.cluster_commands["rename_process"].update({f"{item}" : {"<Process name" : {"?algo" : (self.current_cluster.rename_process, )}}})
-                    
-                    
-        
+      
         if self.folder:
             
             files = os.listdir(self.folder)
