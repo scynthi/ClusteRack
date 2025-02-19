@@ -213,7 +213,7 @@ class StartProgramSubWindow(SubWindow):
         super().__init__()
         self.geometry("500x500")
         self.content.grid_columnconfigure(0, weight=1)
-        Label(self.content, text=f"Program hozzáadás a {cluster.name} klaszterhez", fg="black",  font=large_font, bg=DGRAY).grid(row=0, column=0, pady=5)
+        Label(self.content, text=f"Program hozzáadása a {cluster.name} klaszterhez", fg="black",  font=large_font, bg=DGRAY).grid(row=0, column=0, pady=5)
 
         UI.Label(self.content, "Program neve").grid(row=1, column=0)
         program_name : UI.Entry = UI.Entry(self.content)
@@ -363,7 +363,7 @@ class ComputerEditResourcesSubWindow(SubWindow):
 class InstanceInfoSubWindow(SubWindow):
     def __init__(self, cluster : Cluster, id: str, ui):
         super().__init__()
-        self.geometry("600x400")
+        self.geometry("600x460")
         self.content.grid_columnconfigure(0, weight=1)
 
         info : tuple = cluster.get_instance_by_id(id)
@@ -397,10 +397,23 @@ class InstanceInfoSubWindow(SubWindow):
         button_frame.grid(row=1, column=0, padx=10, pady=10, sticky="new")
         button_frame.grid_columnconfigure([0,1,2], weight=1)
 
-        UI.Button(button_frame, text="Átírás", font=large_font, bg=DBLUE, fg="white").grid(row=0, column=0, sticky="W")
-        UI.Button(button_frame, text="Törlés", font=large_font, bg="red", fg="white", command=lambda: kill()).grid(row=0, column=1, sticky="N")
-        UI.Button(button_frame, text="Leállítás", font=large_font, bg="white", fg="red", command=lambda: stop()).grid(row=0, column=2, sticky="N")
-        UI.Button(button_frame, text="Elindítás", font=large_font, bg=DBLUE, fg="white", command=lambda: start()).grid(row=0, column=3, sticky="E")
+        UI.Button(button_frame, text="Törlés", font=large_font, bg="red", fg="white", command=lambda: kill()).grid(row=0, column=0, sticky="w")
+        UI.Button(button_frame, text="Leállítás", font=large_font, bg="white", fg="red", command=lambda: stop()).grid(row=0, column=1, sticky="N")
+        UI.Button(button_frame, text="Elindítás", font=large_font, bg=DBLUE, fg="white", command=lambda: start()).grid(row=0, column=2, sticky="E")
+
+        change_id_frame : UI.Frame = UI.Frame(self.content)
+        change_id_frame.grid(row=2, column=0, padx=10, pady=10, sticky="new")
+        change_id_frame.grid_columnconfigure(0, weight=1)
+
+        UI.Label(change_id_frame, text="Új azonosító", font=larger_font).grid(row=0, column=0, sticky="W")
+
+
+        id_entry : UI.Entry = UI.Entry(change_id_frame)
+        id_entry.grid(row=1, column=0, pady=10, padx=50, stick="ew")
+
+        UI.Button(change_id_frame, text="Átírás", font=small_font, bg=DBLUE, fg="white", command=lambda: change_id()).grid(row=2, column=0, sticky="ew", padx=100, pady=10)
+
+
 
         def kill() -> None:
             self.destroy()
@@ -417,7 +430,17 @@ class InstanceInfoSubWindow(SubWindow):
             cluster.edit_instance_status(id, False)
             ui.parent_ui.reload()
 
-
+        def change_id() -> None:
+            if len(id_entry.get()) == 0:
+                cluster.change_instance_id(self.id, "", self.program_name)
+                ui.parent_ui.reload()
+                self.destroy()
+            else:
+                if not cluster.change_instance_id(self.id, id_entry.get(), self.program_name):
+                    ErrorSubWindow("Az azonosítónak 6 karakter hosszúnak és alfanumerikusnak kell lennie!")
+                else:
+                    ui.parent_ui.reload()
+                    self.destroy()
 
 
 
@@ -429,8 +452,8 @@ class EditProgramSubWindow(SubWindow):
 
         program_info = cluster.programs.get(program_name)
 
-        Label(self.content, text=f"Program a {cluster.name} klaszterhez", fg="black",  font=large_font, bg=DGRAY).grid(row=0, column=0, pady=5)
-        Label(self.content, text="Azokat az adatokat adja meg, amiket meg szeretne változtatni", fg="black",  font=small_font, bg=DGRAY).grid(row=1, column=0, pady=5)
+        Label(self.content, text=f"Program ({program_name}) szerkesztése", fg="black",  font=large_font, bg=DGRAY).grid(row=0, column=0, pady=5)
+        Label(self.content, text="Azokat az adatokat adja meg, amelyeket meg szeretne változtatni.", fg="black",  font=small_font, bg=DGRAY).grid(row=1, column=0, pady=5)
 
         UI.Label(self.content, f"Program neve ({program_name})").grid(row=2, column=0)
         program_name_entry : UI.Entry = UI.Entry(self.content)

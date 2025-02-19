@@ -236,24 +236,27 @@ class ClusterBoard:
         UI.Label(self.info_frame, text=f"Szabad magok: {free_cores} millimag").grid(row=2, column=0, sticky="w", padx=10)
         UI.Label(self.info_frame, text=f"Szabad memória: {free_memory} MB").grid(row=3, column=0, sticky="w", padx=10)
         UI.Label(self.info_frame, text=f"Programok: {len(cluster.programs)}").grid(row=4, column=0, sticky="w", padx=10)
-        UI.Label(self.info_frame, text=f"Program példányok: {instance_count}").grid(row=5, column=0, sticky="w", padx=10)
+        UI.Label(self.info_frame, text=f"Program példányok: {cluster.active_inst_num} aktív, {cluster.inactive_inst_num} inaktív").grid(row=5, column=0, sticky="w", padx=10)
         UI.Label(self.info_frame, text=f"Számítógépek: {len(cluster.computers.keys())}").grid(row=6, column=0, sticky="w", padx=10)        
 
 
         self.computer_list_frame : CTkScrollableFrame = CTkScrollableFrame(self.frame, orientation="vertical", border_width=4, border_color="gray", corner_radius=0, width=230)
         self.computer_list_frame.grid(column=2, row=2, sticky="EWNS")
+        self.computer_list_frame.grid_columnconfigure(0, weight=1)
 
         for i, pc in enumerate(cluster.computers.values()):
             computer : Computer = cluster.computers.get(pc.name)
 
             cur_pc_frame : UI.Frame = UI.Frame(self.computer_list_frame)
+            cur_pc_frame.grid(row=i, column=0, pady=5, sticky="ew")
+            cur_pc_frame.grid_columnconfigure(0, weight=1)
 
             image : CTkImage = CTkImage(Image.open(Path.join("Assets", "Images", "computer.png")), size=(220, 80))
             computer_image : CTkLabel = CTkLabel(cur_pc_frame, text=computer.name, font=large_font, text_color="white", image=image)
-            computer_image.grid(row=0, column=0, pady=5, sticky="w")
+            computer_image.grid(row=0, column=0, pady=5, sticky="we")
 
             UI.Button(cur_pc_frame, text=f"{computer.name} megnyitása", command=lambda pc = computer: self.open_computer_tab(pc)).grid(row=1, column=0, pady=5)
-            cur_pc_frame.grid(row=i, column=0, pady=5)
+            
         
         def delete_cluster_and_reload() -> None:
             if root.delete_cluster(self.cluster.name, "f"):
@@ -354,7 +357,7 @@ class ComputerBoard:
         UI.Label(self.resources_frame, text=f"Memória: {self.computer.memory} MB").grid(row=1, column=0, sticky="w", padx=10)
         UI.Label(self.resources_frame, text=f"Szabad magok: {self.computer.free_cores} millimag").grid(row=2, column=0, sticky="w", padx=10)
         UI.Label(self.resources_frame, text=f"Szabad memória: {self.computer.free_memory} MB").grid(row=3, column=0, sticky="w", padx=10)
-        UI.Label(self.resources_frame, text=f"Futó példányok: {len(self.computer.get_prog_instances().keys())}").grid(row=4, column=0, sticky="w", padx=10)
+        UI.Label(self.resources_frame, text=f"Példányok: {self.computer.active_inst_num} aktív, {self.computer.inactive_inst_num} inaktív").grid(row=4, column=0, sticky="w", padx=10)
         
         UI.Button(self.resources_frame, text="Erőforrások átírása", command=lambda: ComputerEditResourcesSubWindow(self.cluster, self.computer, self)).grid(row=5, column=0, sticky="sew", padx=10, pady=5)
         UI.Button(self.resources_frame, text="Átnevezés", command=lambda: ComputerRenameSubWindow(self.cluster, self.computer, self)).grid(row=6, column=0, sticky="sew", padx=10, pady=5)
