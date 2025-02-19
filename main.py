@@ -2,7 +2,7 @@ from customtkinter import *
 from tkinter import *
 from PIL import Image
 from os import path as Path
-from modules.ui import UI, AppWindow, DGRAY, LGRAY, DBLUE, LBLUE, large_font, small_font, extra_large_font, bold_large_font, larger_font
+from modules.ui import UI, AppWindow, DGRAY, LGRAY, DBLUE, LBLUE, large_font, small_font, extra_large_font, bold_large_font, larger_font, audio
 from modules.root import Root
 from modules.cluster import Cluster
 from modules.computer import Computer
@@ -108,7 +108,6 @@ class ClusterView:
 
     def open_cluster_tab(self, cluster : Cluster) -> None:
         if self.cluster_tab:
-            self.cluster_tab.reload()
             self.cluster_tab.destroy()
             self.cluster_tab = ClusterBoard(cluster, self)
         else:
@@ -155,7 +154,7 @@ class ClusterBoard:
 
         UI.Button(self.button_frame, text=f"Gép hozzáadás", command=lambda: ComputerCreateSubWindow(self.cluster, self)).grid(row=0, column=0, pady=5, padx=10, sticky="we")
         UI.Button(self.button_frame, text=f"Program hozzáadás", command=lambda: StartProgramSubWindow(self.cluster, self)).grid(row=1, column=0, pady=5, padx=10, sticky="we")
-        UI.Button(self.button_frame, text=f"Algoritmus\nbeállítások", command=SubWindow).grid(row=2, column=0, pady=5, padx=10, sticky="we")
+        UI.Button(self.button_frame, text=f"Algoritmus\nbeállítások", command=lambda: ClusterAlgorithmSubWindow(self.cluster, self)).grid(row=2, column=0, pady=5, padx=10, sticky="we")
         UI.Button(self.button_frame, text=f"Program mozgatás", command=SubWindow).grid(row=3, column=0, pady=5, padx=10, sticky="we")
         UI.Button(self.button_frame, text=f"Klaszter\nátnevezése", command=lambda: ClusterRenameSubWindow(root, cluster, self)).grid(row=4, column=0, pady=5, padx=10, sticky="we")
         UI.Button(self.button_frame, text=f"Klaszter törlése", bg_color="red", command=lambda: delete_cluster_and_reload()).grid(row=5, column=0, pady=5, padx=10, sticky="we")
@@ -240,21 +239,30 @@ class ClusterBoard:
             cur_pc_frame.grid(row=i, column=0, pady=5)
         
         def delete_cluster_and_reload() -> None:
-            root.delete_cluster(self.cluster.name, "f")
-            parent_ui.reload()
-            self.destroy()
+            if root.delete_cluster(self.cluster.name, "f"):
+                audio.play_accept()
+                parent_ui.reload()
+                self.destroy()
+            else:
+                ErrorSubWindow("Klaszter törlése sikertelen.")
 
         def stop_program(program : str) -> None:
-            cluster.stop_program(program)
-            self.reload()
+            if cluster.stop_program(program):
+                self.reload()
+            else:
+                ErrorSubWindow("Program leállítása sikertelen")
 
         def start_program(program : str) -> None:
-            cluster.edit_instance_status(list(cluster.instances[program].keys())[0], "aktív")
-            self.reload()
+            if cluster.edit_instance_status(list(cluster.instances[program].keys())[0], "aktív"):
+                self.reload()
+            else:
+                ErrorSubWindow("Klaszter törlése sikertelen.")
 
         def delete_program(program : str) -> None:
-            cluster.kill_program(program)
-            self.reload()
+            if cluster.kill_program(program):
+                self.reload()
+            else:
+                ErrorSubWindow("Klaszter törlése sikertelen.")
 
     def open_computer_tab(self, computer : Computer) -> None:
         if self.computer_tab:
@@ -270,6 +278,10 @@ class ClusterBoard:
         self.frame.destroy()
 
     def reload(self) -> None:
+        self.destroy()
+        self.__init__(self.cluster, self.parent_ui)
+
+    def reload_with_child(self) -> None:
         prev_computer_tab = self.computer_tab
         self.destroy()
         self.__init__(self.cluster, self.parent_ui)
@@ -357,11 +369,11 @@ class ComputerBoard:
         UI.Plot(self.computer, self.memory_usage_frame, "Memória %", "memory_usage_percent")
 
 
-        def delete_self() -> None:
-            cluster.delete_computer(self.computer.name, "f")
-            cluster._load_computers()
-            self.parent_ui.parent_ui.reload()
-            self.parent_ui.reload()
+        def delete_self():
+            cluster.delete_computer(self.computer.name, "f"),
+            cluster._load_computers(),
+            self.parent_ui.parent_ui.reload(),
+            self.parent_ui.reload(),
             self.destroy()
         
 

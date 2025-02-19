@@ -136,7 +136,10 @@ class AppWindow(CTk):
             self.maximized = not self.maximized
         else:
             self.expand_button.config(text=" 🗖 ")
-            self.geometry(self.normal_size)
+            if self.normal_size == f"{self.winfo_screenwidth()}x{self.winfo_screenheight()}+0+0":
+                self.geometry("800x500+0+0")
+            else:
+                self.geometry(self.normal_size)
             self.maximized = not self.maximized
 
 
@@ -234,6 +237,23 @@ class UI:
         def __init__(self, master, bg_color : str=LGRAY, height: int = 200, **kwargs):
             super().__init__(master, bg=bg_color, height=height, borderwidth=4, relief="raised", **kwargs)
 
+    class OptionMenu(CTkComboBox):
+        def __init__(self, master, values : list, **kwargs):
+            super().__init__(master,
+                             values=values,
+                             font=large_font,
+                             bg_color=DGRAY,
+                             fg_color=LGRAY,
+                             text_color="black",
+                             button_color="gray",
+                             button_hover_color=LGRAY,
+                             dropdown_font=large_font,
+                             dropdown_fg_color=DGRAY,
+                             corner_radius=0,
+                             border_width=2,
+                             border_color="gray",
+                             state="readonly",
+                             **kwargs)
 
     class Entry(Entry):
         def __init__(self, master, font : tuple=large_font, bg : str=LGRAY, fg : str="black", borderwidth : int=4, **kwargs) -> None:
@@ -275,20 +295,23 @@ class UI:
         def add_point_to_plot(self) -> None:
             self.ax.clear()
             self.ax.set_ylim(0, 100)
+            self.ax.set_xlim(0, 30)
             self.ax.set_title(self.title)
 
 
             if len(self.time_count) == 30:
                 last_usage: float = self.usage_list[-1]
-                last_time: int = self.time_count[-1]
 
                 self.usage_list.clear()
                 self.time_count.clear()
 
                 self.usage_list.append(last_usage)
-                self.time_count.append(last_time)
+                self.time_count.append(1)
 
-            usage: float = self.computer.calculate_resource_usage()[self.property]
+
+            usage: int = self.computer.calculate_resource_usage()[self.property]
+            if usage == 100:
+                usage = 99
             self.usage_list.append(usage)
             self.time_count.append(int(self.time_count[-1]+1))
 

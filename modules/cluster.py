@@ -569,7 +569,7 @@ class Cluster:
             return self.computers.get(computer_name)
         except:
             self.print(f"{Fore.RED}Error while creating computer '{computer_name}'.")
-            return
+            return False
 
     def delete_computer(self, computer_name: str, mode: str = "try"):
         """Deletes computers either with soft mode('try') or force mode('f')"""
