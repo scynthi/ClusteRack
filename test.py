@@ -4,8 +4,13 @@ from modules.root import Root
 from modules.interpreter import CLI_Interpreter
 
 root : Root = Root(r".\Test folder", None)
+
+
 # cluster : Cluster = root.clusters["cluster0"]
-# cluster1 = root.create_cluster("cluster1")
+cluster1 = root.create_cluster("cluster0")
+root.move_computer("computer2", "cluster0", "cluster1")
+
+# cluster1.kill_program("testprog2")
 # cluster1.delete_computer("computer1", "f")
 # cluster1.create_computer("computer1", 1000, 1000)
 # cluster1.create_computer("computer2", 1000, 1000)
@@ -43,7 +48,7 @@ Cleanup cluster            D
      Rename program            D
 
      >>(Program instancek)
-         Add prog. instance           D
+         Add prog. instance           D BUG
          Edit prog. instance status   D
          Kill prog. instance          D
          Change prog. instance id     D
