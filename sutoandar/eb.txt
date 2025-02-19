@@ -1,0 +1,3 @@
+select cluster cli
+select cluster cl
+select cluster cluster1

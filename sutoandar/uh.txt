@@ -1,0 +1,4 @@
+select cluster cluster0
+select root
+select co cl s
+select co cluster1 s

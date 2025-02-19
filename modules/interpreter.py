@@ -14,30 +14,29 @@ class CLI_Interpreter:
     
     def __init__(self, root = ""):
         
-        # Setup modes
-        
-        if root == "":
+        # Ask the root path
+        while not Path.exists(root):
         
             root = self.add_root()
-        
-        if root == "":
             
-            root = r"./Thing"
-        
+            if not Path.exists(root):
+                
+                print("Invalid path")
+                
+        # Setup modes
         self.current_root : Root = Root(root, None)
         self.current_cluster : Cluster = None
         self.current_computer : Computer = None
         self.mode : str = "None"
         
+        # For the descriptions
         self.desc_folder = r"./Assets/Descriptions"
         
         # Setup runable txt files
-        
         self.folder : str = r"./sutoandar"
         self.run : bool = False
         
         # Setup CLI
-        
         self.previous_commands : list = []
         self.arguments : list = []
         self.added_commands : list = []
@@ -51,11 +50,9 @@ class CLI_Interpreter:
     def take_input(self, default_text):
         
         # Make a dict to store the current modes avaliable commands
-        
         current_commands : dict
         
-        # match the current mode to show the correct mode in CMD and select the correct commands
-        
+        # match the current mode to show the correct mode in CMD and select the correct commands 
         match self.mode.lower():
             
             case "computer":
@@ -77,21 +74,17 @@ class CLI_Interpreter:
                 prompt = f"{Fore.BLACK}{Back.LIGHTCYAN_EX}None{Back.RESET+Fore.RESET}"
                 current_commands = self.noMode_commands
                 
-        # If there is something in the default text print it into the input
-
+        # If there is something in the default text insert it into the input
         user_input = f"{default_text}"
         if len(user_input) > 0: cursor_pos = len(user_input) 
         else: cursor_pos = 0
         
         # Print out the prompt
-        
         sys.stdout.write(f"{prompt}>{user_input[:cursor_pos]}|{user_input[cursor_pos:]}")
         sys.stdout.flush()
         
         # Setup up/down arrow usage
-        
         prev_com_index = 0
-        
         can_add = True
         
         while True:
@@ -105,7 +98,6 @@ class CLI_Interpreter:
             sys.stdout.flush()
             
             # Get the input
-            
             key_event = msvcrt.getch()
                 
             if key_event == b"\t": # Tab
@@ -122,16 +114,17 @@ class CLI_Interpreter:
                 
                 # After autocomplete put the cursor at the end of the autocompleted
                 if type(arguments) == int:
+                    
                     cursor_pos += arguments
-                    if not can_add:
-                        can_add = True
-                        self.previous_commands = self.previous_commands[:len(self.added_commands)]
+                    
+                    # If there are suggestions delete them out of the choosable commands
+                    can_add = self._delete_choosable_commands(can_add)
                 prev_com_index = 0
                 continue
             
             elif key_event == b'\x00' or key_event == b'\xe0': # Special key, like the arrow keys
                 
-                # Get the second part of the bytes
+                # Get the second part of the byte
                 ch2 = msvcrt.getch()
                 
                 if ch2 == b'\x4b':  # Left arrow
@@ -146,50 +139,51 @@ class CLI_Interpreter:
                         
                 elif ch2 == b'\x48':  # Up arrow
                     
-                    if can_add:
-                        
+                    # Enable the usage of suggestions
+                    if can_add:  
                         self.previous_commands.insert(0, user_input)
-                        
                         can_add = False
                     
+                    # Choose an older command/suggestion
                     if prev_com_index < len(self.previous_commands) - 1:
-                        
                         prev_com_index += 1
 
                     if len(self.previous_commands) != 0:
-                        
                         user_input = self.previous_commands[prev_com_index]
-                        
+                    
+                    # Put the cursor at the correct position
                     cursor_pos = len(user_input)
 
                 elif ch2 == b'\x50':  # Down arrow
                     
+                    # Enable the usage of suggestions
                     if can_add:
-                        
                         self.previous_commands.insert(0, user_input)
-                        
                         can_add = False
                     
+                    # Choose an older command/suggestion
                     if prev_com_index > 0:
-                        
                         prev_com_index -= 1
     
                     if len(self.previous_commands) != 0:
-                        
                         user_input = self.previous_commands[prev_com_index]
-                        
+                    
+                    # Put the cursor at the correct position
                     cursor_pos = len(user_input)
                     
                 elif ch2 == b'S': # Delete:
+                    
+                    # Delete the character after the cursor
                     if cursor_pos < len(user_input):
                         user_input = user_input[:cursor_pos] + user_input[cursor_pos+1:]
-                    if not can_add:
-                        can_add = True
-                        self.previous_commands = self.previous_commands[:len(self.added_commands)]
+
+                    # If there are suggestions delete them out of the choosable commands
+                    can_add = self._delete_choosable_commands(can_add)
                     continue
             
-            elif key_event == b"?":
+            elif key_event == b"?": #question mark
                 
+                # Add the question mark and print out the command
                 user_input = user_input[:cursor_pos] + key_event.decode('utf-8') + user_input[cursor_pos:]
                 cursor_pos += 1
                 sys.stdout.write("\r")
@@ -198,330 +192,74 @@ class CLI_Interpreter:
                 for i in range(len(user_input)-cursor_pos):
                     sys.stdout.write("\033[1D")
                 sys.stdout.flush()
-                print() # New line
-                if not can_add:
-                    can_add = True
-                    self.previous_commands = self.previous_commands[:len(self.added_commands)]
-                    self.added_commands = []
+                print()
+                
+                # If there are suggestions delete them out of the choosable commands 
+                can_add = self._delete_choosable_commands(can_add)
+                
+                # Finish the input
                 self.previous_commands.insert(0, user_input)
                 prev_com_index = 0
-                break  # Stop input
+                break
             
             elif key_event == b"\r": # Enter
 
-                print() # New line
-                if not can_add:
-                    can_add = True
-                    self.previous_commands = self.previous_commands[:len(self.added_commands)]
-                    self.added_commands = []
+                print() # Print the new line
+                
+                # If there are suggestions delete them out of the choosable commands  
+                can_add = self._delete_choosable_commands(can_add)
+                
+                # Finish the input
                 self.previous_commands.insert(0, user_input)
                 prev_com_index = 0
-                break  # Stop input
+                break
             
             elif key_event == b"\x08": # Backspace
                 
+                # Delete the character before the cursor
                 if cursor_pos > 0:
                     user_input = user_input[:cursor_pos-1] + user_input[cursor_pos:]
                     cursor_pos -= 1
-                if not can_add:
-                    can_add = True
-                    self.previous_commands.pop(0)
+                    
+                # If there are suggestions delete them out of the choosable commands    
+                can_add = self._delete_choosable_commands(can_add)
                 continue
             
             elif key_event == b" ": # Space
                 
+                # Put a space in the command
                 user_input = user_input[:cursor_pos] + " " + user_input[cursor_pos:]
                 cursor_pos += 1
-                if not can_add:
-                    can_add = True
-                    self.previous_commands.pop(0)
+                
+                # If there are suggestions delete them out of the choosable commands    
+                can_add = self._delete_choosable_commands(can_add)
                 continue
             
             else: # Any other key
 
+                # Put the character into the command
                 user_input = user_input[:cursor_pos] + key_event.decode('utf-8') + user_input[cursor_pos:]
                 cursor_pos += 1
-                if not can_add:
-                    can_add = True
-                    self.previous_commands.pop(0)
+                
+                # If there are suggestions delete them out of the choosable commands    
+                can_add = self._delete_choosable_commands(can_add)
                 continue
-
+        
+        # Finish the input 
         self.convert_input(user_input, current_commands)
         
-    def cicle_through_commands(self, command_dict, shlashed_command : list, original_command : str, tab, cursor_pos):
-
-        current_step : dict = command_dict
-
-        arguments = []
+    def _delete_choosable_commands(self, can_add):
+        """If there are suggestions delete them out of the choosable commands"""
         
-        skips = 1
-        cants = ["?non_args", "?value", "?algo"]
-        index = 0
-        indexes = {}
+        if not can_add and len(self.added_commands) > 0:
+            self.previous_commands = self.previous_commands[len(self.added_commands)+1:]
+            self.added_commands = []
+            return True
+        amount = self.previous_commands.count("")
+        for i in range(amount):
+            self.previous_commands.remove("")
+        return False
         
-        if "/?" in original_command:
-            
-            original_command = f"{shlashed_command[0]} /?"
-            
-            shlashed_command = [shlashed_command[0], "?desc", "?algo"]
-        
-        for item in cants:
-            
-            if item in original_command:
-                
-                return f"Can't type that bruw: {item}\n", "", False, original_command
-            
-        current_index = 0
-            
-        for item in shlashed_command:
-            
-            indexes.update({index : item})
-            index += len(item) + 1
-
-        try:
-            for item in shlashed_command:
-                
-                is_int = False
-                
-                if isinstance(current_step, tuple):
-                    
-                    return "Too many arguments\n", "", False, original_command
-                
-                if "?non_args" in current_step.keys():
-                
-                    skips = current_step["?non_args"]
-                
-                temp = False
-                
-                temp_item = item
-                
-                bitem = item
-
-                if item == "?":
-   
-                    keys = current_step.keys()
-                            
-                    current_step = ""
-                         
-                    for coms in keys:
-                        
-                        if coms != "?non_args" and coms != "?value" and coms != "?desc":
-                        
-                            if "<" in coms:
-                                
-                                if "?" in coms:
-                                    
-                                    current_step += coms[1:-1] + "\n"
-                                    
-                                else:
-                                
-                                    current_step += coms[1:] + "\n"
-                                
-                            else:
-                                    
-                                current_step += coms + "\n"
-                        
-                        items = current_step.split("\n")[:-1]
-                                                 
-                        for itam in items:
-                            
-                            if f"{original_command[:current_index] + itam + original_command[current_index+len(item):]}" not in self.added_commands:
-                            
-                                self.previous_commands.insert(0, f"{original_command[:current_index] + itam + original_command[current_index+len(item):]}")
-                                self.added_commands.append(f"{original_command[:current_index] + itam + original_command[current_index+len(item):]}")
-
-                    return current_step, "", True, f"{original_command[:-2]}"
-
-                if isinstance(current_step, dict) and item not in current_step.keys():
-                    
-                    for fitem in current_step.keys():
-                    
-                        if fitem.startswith("<"):
-                            
-                            if fitem.endswith("?"):
-                                
-                                temp = True
-                                
-                                temp_item = fitem
-                                
-                                is_int = True
-                                
-                            else:
-                            
-                                temp = True
-                                
-                                temp_item = fitem
-                            
-                    unfinished_item = item
-                        
-                    for key in indexes.keys():
-                            
-                        if key < cursor_pos <= key+len(indexes[key]):
-                                
-                            index = key
-                            unfinished_item = indexes[key]
-                            break
-                        
-                    finished = []
-                            
-                    if not temp:
-                    
-                        for keys in current_step.keys():
-                                
-                            if keys[:len(unfinished_item)] == unfinished_item:
-                                
-                                finished.append(keys)
-                                
-                        if tab and current_index == index:
-
-                            if len(finished) == 1:
-                                
-                                finished = finished[0][len(unfinished_item):]
-      
-                                cursor_pos_diff = index+len(unfinished_item) - cursor_pos
-                                
-                                if index < cursor_pos <= index+len(unfinished_item):
-
-                                    original_command = original_command[:cursor_pos + cursor_pos_diff] + finished + original_command[cursor_pos + cursor_pos_diff:]
-                                
-                                return f"Did you mean {keys}?\n", len(finished) + cursor_pos_diff, True, original_command
-                            
-                            elif len(finished) > 0:
-                                
-                                keys = finished
-                                
-                                current_step = ""
-                                    
-                                for coms in keys:
-                                    
-                                    if coms != "?non_args" and coms != "?value" and coms != "?desc":
-                                    
-                                        if "<" in coms:
-                                            
-                                            if "?" in coms:
-                                                
-                                                current_step += coms[1:-1] + "\n"
-                                                
-                                            else:
-                                            
-                                                current_step += coms[1:] + "\n"
-                                            
-                                        else:
-                                                
-                                            current_step += coms + "\n"
-                                            
-                                    items = current_step.split("\n")[:-1]
-                                                 
-                                    for itam in items:
-                                        
-                                        if f"{original_command[:current_index] + itam + original_command[current_index+len(item):]}" not in self.added_commands:
-                                        
-                                            self.previous_commands.insert(0, f"{original_command[:current_index] + itam + original_command[current_index+len(item):]}")
-                                            self.added_commands.append(f"{original_command[:current_index] + itam + original_command[current_index+len(item):]}")
-                                            
-                                return current_step, "", False, f"{original_command}"
-                            
-                            else:
-                                
-                                return f"No command beggining with {unfinished_item}\n", "", False, f"{original_command}"
-                            
-                        else:
-                            
-                            finished = []
-                        
-                            for keys in current_step.keys():
-                                    
-                                if keys[:len(item)] == item:
-                                    
-                                    finished.append(keys)
-
-                            if len(finished) == 1:
-
-                                bitem = finished[0]
-                                temp_item = finished[0]
-                                
-                            elif len(finished) > 0:
-                                
-                                keys = finished
-                                
-                                current_step = ""
-                                    
-                                for coms in keys:
-                                    
-                                    if coms != "?non_args" and coms != "?value" and coms != "?desc":
-                                    
-                                        if "<" in coms:
-                                            
-                                            if "?" in coms:
-                                                
-                                                current_step += coms[1:-1] + "\n"
-                                                
-                                            else:
-                                            
-                                                current_step += coms[1:] + "\n"
-                                            
-                                        else:
-                                                
-                                            current_step += coms + "\n"
-                                            
-                                    items = current_step.split("\n")[:-1]
-                                                 
-                                    for itam in items:
-                                        
-                                        if f"{original_command[:current_index] + itam + original_command[current_index+len(item):]}" not in self.added_commands:
-                                        
-                                            self.previous_commands.insert(0, f"{original_command[:current_index] + itam + original_command[current_index+len(item):]}")
-                                            self.added_commands.append(f"{original_command[:current_index] + itam + original_command[current_index+len(item):]}")
-                                            
-                                return current_step, "", False, f"{original_command}"
-
-                            else:
-                            
-                                if "?" not in item:
-
-                                    return f"No such commands starting with: {item}\n", "", False, original_command
-                                
-                                if item != "?algo":
-                                    
-                                    print("borog")
-                
-                                    return f"Keyerror: {item}\n", "", False, original_command
-                                
-                                else:
-                                    return "That is not a full command\n", "", False, original_command 
-                        
-                current_index += len(item) + 1   
-
-                if type(current_step[temp_item]) != tuple:
-                    
-                    if "?value" in current_step[temp_item].keys():
-                        
-                        bitem = current_step[temp_item]["?value"]
-                
-                if bitem != "?algo":
-                    
-                    if is_int:
-                        
-                        bitem = int(bitem)
-                
-                    arguments.append(bitem)
-                    
-                current_step = current_step[temp_item]
-                
-            arguments = arguments[skips:]
-            
-            if type(current_step) == tuple:
-
-                return current_step, arguments, True, ""
-            
-            else:
-                
-                return "That is not a full command\n", "", False, original_command
-        
-        except Exception as e:
-            
-            print("Something failed", e)
-            
     def convert_input(self, command, current_commands):
         
         # Cut up the command (this library allow the usage of spaces by putting it between quotation marks)
@@ -540,21 +278,22 @@ class CLI_Interpreter:
         
         # If the output is a tuple (meaning we reached the end of the dict), unpack the tuple and run the function         
         if isinstance(output, tuple):
-            
             func, *default_args = output
             del_args = []
+            
             for i in range(len(default_args)):
                 if default_args[i] == "?replace":
                     default_args[i] = arguments[i]
                     del_args.append(arguments[i])
+                    
             for i in del_args:
                 arguments.remove(i)
+                
             all_args = (*default_args, *arguments)
             func(*all_args)
         
-        # If we didn't reach the end, or it was just a simple string at the end print it out       
+        # If output is a string, print it out      
         elif output:
-
             sys.stdout.write(f"{output}")
             sys.stdout.write("\033[K")
             sys.stdout.flush()
@@ -563,38 +302,227 @@ class CLI_Interpreter:
         
         # If we gave a runnable text file don't ask for input
         if not self.run:
-            
             self.take_input(f"{default_text}")
-    
+            
+    def cicle_through_commands(self, command_dict, shlashed_command : list, original_command : str, tab, cursor_pos):
+
+        # Setup the returns
+        current_step = command_dict
+        arguments = []
+        
+        # Setup the helper variables
+        skips = 1
+        restricted_words = ["?non_args", "?value", "?algo", "?desc"]
+        index = 0
+        indexes = {}
+        current_index = 0
+        
+        # If "/?" is in the command, print out the command description
+        if "/?" in original_command:
+            original_command = f"{shlashed_command[0]} /?"
+            shlashed_command = [shlashed_command[0], "?desc", "?algo"]
+        
+        # If the command includes a restriced word, return an error message
+        for item in restricted_words:
+            if item in original_command:
+                return f"\n{Fore.BLACK}{Back.RED}The command includes a restriced word: {item}\n\n{Fore.RESET+Back.RESET}", "", False, original_command
+        
+        # Give each word an index in the command, used for autocorrect
+        for item in shlashed_command:
+            indexes.update({index : item})
+            index += len(item) + 1
+
+        # Cicle the shlashed_command through the dictionary
+        try:
+
+            for current_word in shlashed_command:
+                
+                
+                is_current_item_int = False
+                can_autocomplete = True
+                changable_item = current_word
+                argument_item = current_word
+                
+                if isinstance(current_step, tuple):
+                    return "Too many arguments\n", "", False, original_command
+                
+                if "?non_args" in current_step.keys():
+                    skips = current_step["?non_args"]
+
+                # Print out what the input can be
+                if current_word == "?":
+                    current_step = self._return_avaliable_commands(current_step, original_command, current_index, current_word, current_step.keys(), restricted_words)
+                    return current_step, "", True, f"{original_command[:-2]}"
+                
+                # If the current current_word isn't in the current_step, check if it can be extended, or is just an current_word that is supposed to be whatever the user wants
+                if isinstance(current_step, dict) and current_word not in current_step.keys():
+                    
+                    # If a key starts with "<" go that direction, the autocomplete should come first just in case, but in this context this is perfictly OK
+                    for key in current_step.keys():
+                        if key.startswith("<"):
+                
+                            if key.endswith("?"):
+                                can_autocomplete = False
+                                changable_item = key
+                                is_current_item_int = True
+                                
+                            else:
+                                can_autocomplete = False       
+                                changable_item = key
+                    
+                    # Save the current_word in a temporary variable       
+                    unfinished_item = current_word
+                    finished = []
+                    
+                    # Check what word we are autocompleting
+                    for key in indexes.keys():
+                        if key < cursor_pos <= key+len(indexes[key]): 
+                            index = key
+                            unfinished_item = indexes[key]
+                            break
+
+                    if can_autocomplete:
+                        
+                        # Check what words begin with the unfinished_word
+                        for keys in current_step.keys():
+                            if keys[:len(unfinished_item)] == unfinished_item:
+                                finished.append(keys)
+                        
+                        # If we pressed Tab, and the cursor is in an ok position    
+                        if tab and current_index == index:
+                            
+                            # If there is only one word
+                            if len(finished) == 1:
+                                finished = finished[0][len(unfinished_item):]
+                                cursor_pos_diff = index+len(unfinished_item) - cursor_pos
+                                
+                                if index < cursor_pos <= index+len(unfinished_item):
+                                    original_command = original_command[:cursor_pos + cursor_pos_diff] + finished + original_command[cursor_pos + cursor_pos_diff:]
+                                
+                                return "", len(finished) + cursor_pos_diff, True, original_command
+                            
+                            # If there are more than one words
+                            elif len(finished) > 0:
+                                current_step = self._return_avaliable_commands(current_step, original_command, current_index, current_word, finished, restricted_words)         
+                                return current_step, "", False, f"{original_command}"
+                            
+                            else:
+                                return f"No command beggining with {unfinished_item}\n", "", False, f"{original_command}"
+                            
+                        else:
+                            
+                            # Check what words begin with the current_word
+                            finished = []
+                            for keys in current_step.keys():   
+                                if keys[:len(current_word)] == current_word:
+                                    finished.append(keys)
+                                    
+                            # If there is only one word
+                            if len(finished) == 1:
+                                argument_item = finished[0]
+                                changable_item = finished[0]
+                            
+                            # More than one words
+                            elif len(finished) > 0:
+                                current_step = self._return_avaliable_commands(current_step, original_command, current_index, current_word, finished, restricted_words)           
+                                return current_step, "", False, f"{original_command}"
+                            
+                            # No words begining with the current_word
+                            else:
+                                # Return the Keyerror, else the command in not finished
+                                if "?" not in current_word:
+                                    return f"Keyerror: {current_word}\n", "", False, original_command
+                                else:
+                                    return "That is not a full command\n", "", False, original_command
+                
+                # Add to the current index (+1 for the spaces) 
+                current_index += len(current_word) + 1   
+
+                # If the next step isn't the end point, if it has "?value" in it's keys, add the value as an argument
+                if type(current_step[changable_item]) != tuple:
+                    if "?value" in current_step[changable_item].keys():
+                        argument_item = current_step[changable_item]["?value"]
+
+                if is_current_item_int:
+                    
+                    try:
+                        
+                        argument_item = int(argument_item)
+                        
+                    except:
+                        
+                        return "Command wrongly entered\n", "", False, original_command
+                
+                # Go further in the dictionary
+                arguments.append(argument_item)
+                current_step = current_step[changable_item]
+
+            # Exclude the skips, -1 for the ?algo we added at the end
+            arguments = arguments[skips:-1]
+            
+            # If we reached the end return
+            if type(current_step) == tuple:
+                return current_step, arguments, True, ""
+            else:
+                return "That is not a full command\n", "", False, original_command
+        
+        except Exception as e:
+            
+            print("Something failed", e)
+            
+    def _return_avaliable_commands(self, current_step, original_command, current_index, current_word, keys, restricted_words):
+                            
+        current_step = ""
+                
+        for command in keys:
+            if command not in restricted_words:
+
+                # Put the command into the current_step
+                if "<" in command: 
+                    if "?" in command:  
+                        current_step += command[1:-1] + "\n"  
+                    else:
+                        current_step += command[1:] + "\n"  
+                else:          
+                    current_step += command + "\n"
+
+            # Put suggestions into previous_commands
+            command_items = current_step.split("\n")[:-1]                          
+            for item in command_items:
+                if f"{original_command[:current_index] + item + original_command[current_index+len(current_word):]}":
+                    self.previous_commands.insert(0, f"{original_command[:current_index] + item + original_command[current_index+len(current_word):]}")
+                    self.added_commands.append(f"{original_command[:current_index] + item + original_command[current_index+len(current_word):]}")
+                    
+        return current_step
+            
 # File reading
     
     def select_run_folder(self, folder_name):
         
         self.folder = fr"./{folder_name}"
-        
         self.update_dicts()
         
     
     def read_file(self, file_name):
         
+        # Get the content of the file
         file = Path.join(self.folder, file_name)
-        
         with open(file, "r") as f:
-            
-            temp_commands = f.readlines()
+            content = f.readlines()
             f.close()
         
-        commands = []
-            
-        for coms in temp_commands:
-            
+        # Split the content, and put it into commands
+        commands = [] 
+        for coms in content:  
             commands.append(coms.replace("\n", ""))
             
         print(commands)
         
+        # Setup running the file
         self.run = True
         current_commands : dict = {}
-            
+        
+        # Run the file 
         for item in commands:
             
             match self.mode.lower():
@@ -626,38 +554,30 @@ class CLI_Interpreter:
     def select_root(self, mode):
         
         self.mode = mode
-        
         self.update_dicts()
-   
         print(f"selected the {mode}")
         
             
     def select_cluster(self, mode, cluster):
         
         self.mode = mode
-        
         self.current_cluster = cluster
-        
         self.update_dicts()
-   
         print(f"selected the {mode}")
 
         
     def select_computer(self, mode, cluster, computer):
         
         self.mode = mode
-        
         self.current_computer = computer
-        
         self.current_cluster = cluster
-        
         self.update_dicts()
-   
         print(f"selected the {mode}")
         
 # Miscellaneous ===============================================================================
 
     def update_dicts(self):
+        """Can't really comment anything here, just updating the dictionaries"""
         
         self.root_commands : dict = {
             "select" : {
@@ -668,6 +588,8 @@ class CLI_Interpreter:
                 "?desc" : {"?algo" : (self.run_desc, "select.txt"), "?non_args" : 2}
             },
             "exit" : {"?algo" : (self.exit, )},
+            "save_amount" : {"<Name" : {"<How far back?": {"?algo" : (self.save_prev, )}}},
+            "save_all" : {"<Name" : {"?algo" : (self.save_prev, "?replace", "all")}},
             "reload" : {"?algo" : (self.reload, )},
             "update_commands" : {"?algo" : (self.update_dicts, )},
             "create_cluster" : {"<Cluster name" : {"?algo" : (self.current_root.create_cluster, )}},
@@ -689,6 +611,8 @@ class CLI_Interpreter:
                 "?desc" : {"?algo" : (self.run_desc, "select.txt"), "?non_args" : 2}
             },
             "exit" : {"?algo" : (self.exit, )},
+            "save_amount" : {"<Name" : {"<How far back?": {"?algo" : (self.save_prev, )}}},
+            "save_all" : {"<Name" : {"?algo" : (self.save_prev, "?replace", "all")}},
             "reload" : {"?algo" : (self.reload, )},
             "update_commands" : {"?algo" : (self.update_dicts, )},
             "run" : {},
@@ -726,6 +650,8 @@ class CLI_Interpreter:
                 "?desc" : {"?algo" : (self.run_desc, "select.txt"), "?non_args" : 2}
             },
             "exit" : {"?algo" : (self.exit, )},
+            "save_amount" : {"<Name" : {"<How far back?": {"?algo" : (self.save_prev, )}}},
+            "save_all" : {"<Name" : {"?algo" : (self.save_prev, "?replace", "all")}},
             "reload" : {"?algo" : (self.reload, )},
             "update_commands" : {"?algo" : (self.update_dicts, )},
             "run" : {},
@@ -741,6 +667,8 @@ class CLI_Interpreter:
                 "?desc" : {"?algo" : (self.run_desc, "select.txt"), "?non_args" : 2}
             },
             "exit" : {"?algo" : (self.exit, )},
+            "save_amount" : {"<Name" : {"<How far back?": {"?algo" : (self.save_prev, )}}},
+            "save_all" : {"<Name" : {"?algo" : (self.save_prev, "?replace", "all")}},
             "reload" : {"?algo" : (self.reload, )},
             "update_commands" : {"?algo" : (self.update_dicts, )},
             "run" : {}
@@ -873,7 +801,30 @@ class CLI_Interpreter:
     def add_root(self):
 
         return input("Give the path to the root folder: ")
+    
+    def save_prev(self, name, amount):
         
+        save_prev_coms = []
+        
+        if amount == "all":
+            for item in self.previous_commands:
+                save_prev_coms.append(item + "\n")
+        else:
+            if len(self.previous_commands) > amount + 1:
+                for item in self.previous_commands[:amount + 1]:
+                    save_prev_coms.append(item + "\n")
+        
+        save_prev_coms = save_prev_coms[1:]
+        if len(save_prev_coms) > 0:
+            save_prev_coms.reverse()
+            
+            with open(Path.join(self.folder, name + ".txt"), "w") as f:
+                
+                f.writelines(save_prev_coms)
+                f.close()
+        else:
+            
+            print("Something went wrong")
                 
     def get_cluster_programs(self):
         
@@ -889,11 +840,9 @@ class CLI_Interpreter:
     def get_cluster_instances(self):
         
         programs = [item for item in self.current_cluster.instances.keys()]
-        
         instances = []
         
         for program in programs:
-            
             instances.append([program, *self.current_cluster.instances[program].keys()])
         
         if len(instances) > 0:
@@ -906,13 +855,14 @@ class CLI_Interpreter:
             
     
     def reload(self):
+        """Can't run in Vscode terminal, breaks"""
         
         os.execv(sys.executable, ['python'] + sys.argv)
         
     def run_desc(self, file_name):
+        """Print out the description of the commands"""
         
         with open(Path.join(self.desc_folder, file_name), "r", encoding="utf-8") as f:
-            
             content = f.read()
             f.close()
             
