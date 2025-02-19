@@ -102,7 +102,7 @@ CLI Commands
 - cleanup_cluster                                                          (calls cluster.cleanup)
 
 - Computer comms:
-- cleanup_computer                                             (calls computer.cleanup)
+- cleanup_computer                                                         (calls computer.cleanup)
 
 bnf
 https://en.wikipedia.org/wiki/Backus%E2%80%93Naur_form
