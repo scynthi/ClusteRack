@@ -40,7 +40,7 @@ DGRAY : str = "#adadad"
 
 
 class AppWindow(CTk):
-    def __init__(self, size="800x600", name="ClusteRack") -> None:
+    def __init__(self, size="800x600", name="ClusteRack"):
         super().__init__()
         self.iconbitmap(Path.join("Assets", "Images", "logo.ico"))
         self.overrideredirect(True)
@@ -73,9 +73,9 @@ class AppWindow(CTk):
         self.expand_button : UI.Button= UI.Button(self.title_bar, text=' 🗖 ', command=self.maximize_me, padx=2, pady=2)
         self.minimize_button : UI.Button = UI.Button(self.title_bar, text=' 🗕 ', command=self.minimize_me, padx=2, pady=2)
         self.reload_button : UI.Button = UI.Button(self.title_bar, text=' ⟳ ', padx=2, pady=2)
-        self.info_button : UI.Button = UI.Button(self.title_bar, text=' 🛈 ', padx=2, pady=2)
+        self.cli_button : UI.Button = UI.Button(self.title_bar, text=' >_ ', padx=2, pady=2)
 
-        self.info_button.grid(row=0, column=2, sticky="ne", padx=7, pady=1)
+        self.cli_button.grid(row=0, column=2, sticky="ne", padx=7, pady=1)
         self.reload_button.grid(row=0, column=3, sticky="ne", padx=7, pady=1)
         self.minimize_button.grid(row=0, column=4, sticky="ne", padx=7, pady=1)
         self.expand_button.grid(row=0, column=5, sticky="ne", padx=7, pady=1)
@@ -212,7 +212,7 @@ class UI:
         self.DGRAY = DGRAY
 
     class Button(Button):
-        def __init__(self, master : AppWindow, text : str, fg_color : str = "black", bg_color : str = "white", font : tuple = small_font, **kwargs) -> None:
+        def __init__(self, master : AppWindow, text : str, fg_color : str = "black", bg_color : str = "white", font : tuple = small_font, **kwargs):
             super().__init__(master, 
                              text=text,
                              background=bg_color,
@@ -223,7 +223,7 @@ class UI:
             self.bind("<ButtonPress-1>", lambda event: audio.play_rnd_click())
 
     class Label(CTkLabel):
-        def __init__(self, master, text : str, text_color : str="black", font : tuple = large_font, **kwargs) -> None:
+        def __init__(self, master, text : str, text_color : str="black", font : tuple = large_font, **kwargs):
             super().__init__(master, 
                              text=text, 
                              text_color=text_color, 
@@ -231,8 +231,8 @@ class UI:
                              **kwargs)
             
     class Frame(Frame):
-        def __init__(self, master, bg_color : str=LGRAY, height: int = 200, **kwargs):
-            super().__init__(master, bg=bg_color, height=height, borderwidth=4, relief="raised", **kwargs)
+        def __init__(self, master, bg_color : str=LGRAY, height: int = 200,  borderwidth : int = 4, **kwargs):
+            super().__init__(master, bg=bg_color, height=height, borderwidth=borderwidth, relief="raised", **kwargs)
 
     class OptionMenu(CTkComboBox):
         def __init__(self, master, values : list, **kwargs):
@@ -253,7 +253,7 @@ class UI:
                              **kwargs)
 
     class Entry(Entry):
-        def __init__(self, master, font : tuple=large_font, bg : str=LGRAY, fg : str="black", borderwidth : int=4, **kwargs) -> None:
+        def __init__(self, master, font : tuple=large_font, bg : str=LGRAY, fg : str="black", borderwidth : int=4, **kwargs):
             super().__init__(master,
                              font=font,
                              bg=bg,
@@ -269,7 +269,7 @@ class UI:
             self.zoom_amount : int = zoom_amount
             self.root = root
 
-        def get_renderer(self):
+        def get_renderer(self) -> SoftwareRender:
             return SoftwareRender(self.model_name, self.zoom_amount, self.frame, self.root)
     
 
@@ -290,30 +290,32 @@ class UI:
             self.add_point_to_plot()
 
         def add_point_to_plot(self) -> None:
-            self.ax.clear()
-            self.ax.set_ylim(0, 100)
-            self.ax.set_xlim(0, 30)
-            self.ax.set_title(self.title)
+            try:
+                self.ax.clear()
+                self.ax.set_ylim(0, 100)
+                self.ax.set_xlim(0, 30)
+                self.ax.set_title(self.title)
 
 
-            if len(self.time_count) == 30:
-                last_usage: float = self.usage_list[-1]
+                if len(self.time_count) == 30:
+                    last_usage: float = self.usage_list[-1]
 
-                self.usage_list.clear()
-                self.time_count.clear()
+                    self.usage_list.clear()
+                    self.time_count.clear()
 
-                self.usage_list.append(last_usage)
-                self.time_count.append(1)
+                    self.usage_list.append(last_usage)
+                    self.time_count.append(1)
 
 
-            usage: int = self.computer.calculate_resource_usage()[self.property]
-            if usage == 100:
-                usage = 99
-            self.usage_list.append(usage)
-            self.time_count.append(int(self.time_count[-1]+1))
+                usage: int = self.computer.calculate_resource_usage()[self.property]
+                if usage == 100:
+                    usage = 99
+                self.usage_list.append(usage)
+                self.time_count.append(int(self.time_count[-1]+1))
 
-            self.ax.plot(self.time_count, self.usage_list, color=LBLUE)
-            self.canvas.draw()
-            
-            self.frame.after(400, self.add_point_to_plot)
+                self.ax.plot(self.time_count, self.usage_list, color=LBLUE)
+                self.canvas.draw()
+                
+                self.frame.after(400, self.add_point_to_plot)
+            except: pass
 

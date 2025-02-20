@@ -44,11 +44,11 @@ class SubWindow(CTkToplevel):
         content : Frame = Frame(self, bg=DGRAY)
         content.grid(row=1, column=0, sticky="nsew")
 
-        resizey_widget : Frame = Frame(self, cursor='sb_v_double_arrow', width=10)
+        resizey_widget : Frame = Frame(self, cursor='sb_v_double_arrow', width=15)
         resizey_widget.grid(row=1, column=0, sticky="SEW")
         resizey_widget.bind("<B1-Motion>", self.resizey)
 
-        resizex_widget : Frame = Frame(self, cursor='sb_h_double_arrow', height=10)
+        resizex_widget : Frame = Frame(self, cursor='sb_h_double_arrow', height=15)
         resizex_widget.grid(row=1, column=1, sticky="NSE")
         resizex_widget.bind("<B1-Motion>", self.resizex)
 
@@ -428,6 +428,7 @@ class InstanceInfoSubWindow(SubWindow):
         def stop() -> None:
             self.destroy()
             cluster.edit_instance_status(id, False)
+            audio.play_close_program()
             ui.parent_ui.reload()
 
         def change_id() -> None:
@@ -520,7 +521,7 @@ class MoveProgramSubWindow(SubWindow):
 
         Button(self.content, text="Program áthelyezése", font=large_font, bg=DBLUE, fg="white", command=lambda: relocate(self)).grid(row=5, column=0, sticky="N", pady=15)
 
-        def relocate(self):
+        def relocate(self) -> None:
             if not program_dropdown.get() or not cluster_dropdown.get():
                 ErrorSubWindow("Kérem minden szükséges adatt adjon meg!")
                 return
@@ -553,7 +554,7 @@ class MoveComputerSubWindow(SubWindow):
 
         Button(self.content, text="Számítógép áthelyezése", font=large_font, bg=DBLUE, fg="white", command=lambda: relocate(self)).grid(row=5, column=0, sticky="N", pady=15)
 
-        def relocate(self):
+        def relocate(self) -> None:
             if not cluster_dropdown.get():
                 ErrorSubWindow("Kérem válassza ki a cél klasztert!")
                 return
@@ -566,5 +567,48 @@ class MoveComputerSubWindow(SubWindow):
                 ErrorSubWindow("Hiba áthelyezés közben!")
                 return
 
+class ProgramInstancesSubWindow(SubWindow):
+    def __init__(self, cluster : Cluster, program_name : str, ui):
+        super().__init__()
+        self.parent_ui = ui
+        self.geometry("650x500")
+        self.content.grid_columnconfigure(0, weight=1)
+        self.content.grid_rowconfigure(2, weight=1)
+        UI.Button(self.title_bar, text=" ⟳ ", font=small_font, command=lambda: (self.destroy(), self.__init__(cluster, program_name, ui))).grid(row=0, column=2, sticky="ne", padx=7, pady=1)
+        self.close_button.grid(row=0, column=3, sticky="ne", padx=7, pady=1)
+
+        UI.Label(self.content, text=f"{program_name} példányai:", font=extra_large_font).grid(column=0, row=0, sticky="new", pady=15)
+
+        self.instances_scrollbar_frame = CTkScrollableFrame(self.content)
+        self.instances_scrollbar_frame.grid(row=2, column=0, sticky="nsew")
+        self.instances_scrollbar_frame.grid_columnconfigure(0, weight=1)
+
+        for i, instance in enumerate(cluster._get_all_program_instances(program_name)):
+            id = instance["id"]
+
+            instance_help_frame : UI.Frame = UI.Frame(self.instances_scrollbar_frame)
+            instance_help_frame.grid(row=i+1, column=0, pady=5, sticky="EW")
+            instance_help_frame.grid_columnconfigure(0, weight=1)
+
+            instance_status_help_frame : UI.Frame = UI.Frame(instance_help_frame, borderwidth=0)
+            instance_status_help_frame.grid(row=0, column=0, pady=10, sticky="w")
+
+            UI.Button(instance_status_help_frame, f"{program_name}-{id}", command=lambda instance_id = id: InstanceInfoSubWindow(cluster, instance_id, self)).grid(row=0, column=0, pady=10, sticky="w")
+            
+            status_label =  UI.Label(instance_status_help_frame, text="")
+            status_label.grid(row=0, column=1, pady=10, padx=5, sticky="w")
+
+            if instance["status"]:
+                status_label.configure(True, text="⬤", text_color="green")
+            else:
+                status_label.configure(True, text="⬤", text_color="red")
+
+            instance_info_help_frame : UI.Frame = UI.Frame(instance_help_frame)
+            instance_info_help_frame.grid(row=1, column=0, sticky="ew")
+
+            UI.Label(instance_info_help_frame, f"Magok: {instance["cores"]}").grid(row=0, column=0, padx=10)
+            UI.Label(instance_info_help_frame, f"Memória: {instance["memory"]}").grid(row=0, column=1, padx=10)
+            UI.Label(instance_info_help_frame, f"Státusz: {'Aktív' if instance["status"] else 'Inaktív'}").grid(row=0, column=2, padx=10)
+            UI.Label(instance_info_help_frame, f"Számítógép: {instance["computer"]}").grid(row=0, column=3, padx=10)
     
         
