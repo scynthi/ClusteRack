@@ -40,15 +40,40 @@ class CLI_Interpreter:
         self.current_computer : Computer = None
         self.mode : str = "None"
         
-        self.gHandle = ctypes.windll.kernel32.GetStdHandle(c_long(-11))
+        # Basic things
+        
+        STD_OUTPUT_HANDLE = -11
+        self.console_handle = ctypes.windll.kernel32.GetStdHandle(STD_OUTPUT_HANDLE)
         self.kernel32 = ctypes.windll.kernel32
-        self.hStdOut = self.kernel32.GetStdHandle(-11)
+        self.hStdOut = self.kernel32.GetStdHandle(STD_OUTPUT_HANDLE)
+        
+        # Make window unresizeable, because it just breaks for no apparent reason
+        
+        # Get the handle to the console window
+        hwnd = ctypes.windll.kernel32.GetConsoleWindow()
+
+        # Define constants for window styles
+        GWL_STYLE = -16
+        WS_OVERLAPPEDWINDOW = 0x00CF0000
+        WS_CAPTION = 0x00C00000
+        WS_MINIMIZEBOX = 0x00020000
+        WS_SYSMENU = 0x00080000
+
+        # Get current window style
+        style = ctypes.windll.user32.GetWindowLongW(hwnd, GWL_STYLE)
+
+        # Remove the maximize button and resizing border
+        new_style = (style & ~WS_OVERLAPPEDWINDOW) | WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU
+        ctypes.windll.user32.SetWindowLongW(hwnd, GWL_STYLE, new_style)
+
+        # Apply the style changes
+        ctypes.windll.user32.SetWindowPos(hwnd, None, 0, 0, 0, 0, 0x0001 | 0x0002 | 0x0020)
         
         # For the descriptions
         self.desc_folder = r"./Assets/Descriptions"
         
         # Setup runable txt files
-        self.folder : str = r"./sutoandar"
+        self.folder : str = ""
         self.run : bool = False
         
         # Setup CLI
@@ -108,11 +133,11 @@ class CLI_Interpreter:
         
         while True:
             
-            value = cursor_x + (cursor_y << 16)
-            ctypes.windll.kernel32.SetConsoleCursorPosition(self.gHandle, c_ulong(value))
+            position = (cursor_y << 16) | cursor_x  # Combine x and y into a single value
+            ctypes.windll.kernel32.SetConsoleCursorPosition(self.console_handle, position)
             sys.stdout.write("\033[K")
             sys.stdout.write("\033[J")
-            sys.stdout.write(f"{prompt}>{user_input}{self.previous_commands}")
+            sys.stdout.write(f"{prompt}>{user_input}")
             sys.stdout.write("\033[K")
             for i in range(len(user_input)-cursor_pos):
                 sys.stdout.write("\033[1D")
@@ -122,6 +147,11 @@ class CLI_Interpreter:
             key_event = msvcrt.getch()
                 
             if key_event == b"\t": # Tab
+                
+                can_add = self._delete_choosable_commands(can_add)
+                # Finish the input
+                self.previous_commands.insert(0, user_input)
+                prev_com_index = 0
                 
                 current_step, arguments, success, user_input = self.cicle_through_commands(current_commands, shlex.split(user_input), user_input, True, cursor_pos)
                 if not success:
@@ -229,9 +259,7 @@ class CLI_Interpreter:
 
                 print() # Print the new line
                 
-                # If there are suggestions delete them out of the choosable commands  
                 can_add = self._delete_choosable_commands(can_add)
-                
                 # Finish the input
                 self.previous_commands.insert(0, user_input)
                 prev_com_index = 0
@@ -510,11 +538,11 @@ class CLI_Interpreter:
                     current_step += command + "\n"
 
             # Put suggestions into previous_commands
-            command_items = current_step.split("\n")[:-1]                          
+            command_items = current_step.split("\n")[:-1]                    
             for item in command_items:
-                if f"{original_command[:current_index] + item + original_command[current_index+len(current_word):]}":
+                if f"{original_command[:current_index] + item + original_command[current_index+len(current_word):]}" and item not in self.added_commands:
                     self.previous_commands.insert(0, f"{original_command[:current_index] + item + original_command[current_index+len(current_word):]}")
-                    self.added_commands.append(f"{original_command[:current_index] + item + original_command[current_index+len(current_word):]}")
+                    self.added_commands.append(item)
                     
         return current_step
             
@@ -522,55 +550,63 @@ class CLI_Interpreter:
     
     def select_run_folder(self, folder_name):
         
-        self.folder = fr"./{folder_name}"
-        self.update_dicts()
+        if Path.exists(fr"./{folder_name}"):
+            self.folder = fr"./{folder_name}"
+            self.update_dicts()
+        else:
+            print("Folder doesn't exist")
         
     
     def read_file(self, file_name):
         
-        # Get the content of the file
-        file = Path.join(self.folder, file_name)
-        with open(file, "r") as f:
-            content = f.readlines()
-            f.close()
+        if Path.exists(self.folder):
         
-        # Split the content, and put it into commands
-        commands = [] 
-        for coms in content:  
-            commands.append(coms.replace("\n", ""))
+            # Get the content of the file
+            file = Path.join(self.folder, file_name)
+            with open(file, "r") as f:
+                content = f.readlines()
+                f.close()
             
-        print(commands)
-        
-        # Setup running the file
-        self.run = True
-        current_commands : dict = {}
-        
-        # Run the file 
-        for item in commands:
+            # Split the content, and put it into commands
+            commands = [] 
+            for coms in content:  
+                commands.append(coms.replace("\n", ""))
+                
+            print(commands)
             
-            match self.mode.lower():
+            # Setup running the file
+            self.run = True
+            current_commands : dict = {}
             
-                case "computer":
-                    
-                    prompt = f"{self.current_root.name.capitalize()}>{self.current_cluster.name.capitalize()}>{self.current_computer.name.capitalize()}>"
-                    current_commands = self.computer_commands
-                case "cluster":
-                    
-                    prompt = f"{self.current_root.name.capitalize()}>{self.current_cluster.name.capitalize()}>"
-                    current_commands = self.cluster_commands
-                case "root":
-                    
-                    prompt = f"{self.current_root.name.capitalize()}>"
-                    current_commands = self.root_commands
-                case _:
-                    
-                    prompt = "None>"
-                    current_commands = self.noMode_commands
+            # Run the file 
+            for item in commands:
+                
+                match self.mode.lower():
+                
+                    case "computer":
+                        
+                        prompt = f"{self.current_root.name.capitalize()}>{self.current_cluster.name.capitalize()}>{self.current_computer.name.capitalize()}>"
+                        current_commands = self.computer_commands
+                    case "cluster":
+                        
+                        prompt = f"{self.current_root.name.capitalize()}>{self.current_cluster.name.capitalize()}>"
+                        current_commands = self.cluster_commands
+                    case "root":
+                        
+                        prompt = f"{self.current_root.name.capitalize()}>"
+                        current_commands = self.root_commands
+                    case _:
+                        
+                        prompt = "None>"
+                        current_commands = self.noMode_commands
 
-            print(f"{prompt}{item}")
-            self.convert_input(item, current_commands)
+                print(f"{prompt}{item}")
+                self.convert_input(item, current_commands)
+                
+            self.run = False
+        else:
             
-        self.run = False
+            print("Doesn't have a valid run folder")
     
 # Mode selection
 
@@ -811,14 +847,16 @@ class CLI_Interpreter:
       
         if self.folder:
             
-            files = os.listdir(self.folder)
+            if Path.exists(self.folder):
             
-            for text_file in files:
+                files = os.listdir(self.folder)
                 
-                self.noMode_commands["run"].update({f"{text_file.split(".")[0]}" : {"?algo" : (self.read_file, ), "?value": f"{text_file}"}})
-                self.computer_commands["run"].update({f"{text_file.split(".")[0]}" : {"?algo" : (self.read_file, ), "?value": f"{text_file}"}})
-                self.root_commands["run"].update({f"{text_file.split(".")[0]}" : {"?algo" : (self.read_file, ), "?value": f"{text_file}"}})
-                self.cluster_commands["run"].update({f"{text_file.split(".")[0]}" : {"?algo" : (self.read_file, ), "?value": f"{text_file}"}})
+                for text_file in files:
+                    
+                    self.noMode_commands["run"].update({f"{text_file.split(".")[0]}" : {"?algo" : (self.read_file, ), "?value": f"{text_file}"}})
+                    self.computer_commands["run"].update({f"{text_file.split(".")[0]}" : {"?algo" : (self.read_file, ), "?value": f"{text_file}"}})
+                    self.root_commands["run"].update({f"{text_file.split(".")[0]}" : {"?algo" : (self.read_file, ), "?value": f"{text_file}"}})
+                    self.cluster_commands["run"].update({f"{text_file.split(".")[0]}" : {"?algo" : (self.read_file, ), "?value": f"{text_file}"}})
 
 
     def add_root(self):

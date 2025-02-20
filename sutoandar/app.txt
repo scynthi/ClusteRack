@@ -1,0 +1,6 @@
+save_all app
+run ?
+sele root
+run ?
+run app
+save_amout ?
