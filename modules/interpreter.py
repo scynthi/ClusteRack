@@ -7,8 +7,19 @@ from modules.computer import Computer
 from modules.root import Root
 import msvcrt
 import sys
+import ctypes
+from ctypes import c_long, c_wchar_p, c_ulong, c_void_p, Structure, byref
 from colorama import init
+
 init(autoreset=True)
+
+class COORD(ctypes.Structure):
+    _fields_ = [("X", ctypes.c_short), ("Y", ctypes.c_short)]
+
+class CONSOLE_SCREEN_BUFFER_INFO(ctypes.Structure):
+    _fields_ = [("dwSize", COORD), ("dwCursorPosition", COORD),
+                ("wAttributes", ctypes.c_uint16), ("srWindow", ctypes.c_uint16),
+                ("dwMaximumWindowSize", COORD)]
 
 class CLI_Interpreter:
     
@@ -29,6 +40,10 @@ class CLI_Interpreter:
         self.current_computer : Computer = None
         self.mode : str = "None"
         
+        self.gHandle = ctypes.windll.kernel32.GetStdHandle(c_long(-11))
+        self.kernel32 = ctypes.windll.kernel32
+        self.hStdOut = self.kernel32.GetStdHandle(-11)
+        
         # For the descriptions
         self.desc_folder = r"./Assets/Descriptions"
         
@@ -45,7 +60,14 @@ class CLI_Interpreter:
         self.update_dicts()
         self.take_input("")
 
-# Input handling and converting             
+# Input handling and converting      
+
+    def get_cursor_position(self):
+        csbi = CONSOLE_SCREEN_BUFFER_INFO()
+        if self.kernel32.GetConsoleScreenBufferInfo(self.hStdOut, ctypes.byref(csbi)):
+            return csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y
+        else:
+            return None     
                 
     def take_input(self, default_text):
         
@@ -79,19 +101,18 @@ class CLI_Interpreter:
         if len(user_input) > 0: cursor_pos = len(user_input) 
         else: cursor_pos = 0
         
-        # Print out the prompt
-        sys.stdout.write(f"{prompt}>{user_input[:cursor_pos]}|{user_input[cursor_pos:]}")
-        sys.stdout.flush()
-        
         # Setup up/down arrow usage
         prev_com_index = 0
         can_add = True
+        cursor_x, cursor_y = self.get_cursor_position()
         
         while True:
             
-            #Print out the user input
-            sys.stdout.write("\r")
-            sys.stdout.write(f"{prompt}>{user_input}")
+            value = cursor_x + (cursor_y << 16)
+            ctypes.windll.kernel32.SetConsoleCursorPosition(self.gHandle, c_ulong(value))
+            sys.stdout.write("\033[K")
+            sys.stdout.write("\033[J")
+            sys.stdout.write(f"{prompt}>{user_input}{self.previous_commands}")
             sys.stdout.write("\033[K")
             for i in range(len(user_input)-cursor_pos):
                 sys.stdout.write("\033[1D")
@@ -111,6 +132,7 @@ class CLI_Interpreter:
                     sys.stdout.write(f"{current_step}")
                     sys.stdout.write("\033[K")
                     sys.stdout.flush()
+                    cursor_x, cursor_y = self.get_cursor_position()
                 
                 # After autocomplete put the cursor at the end of the autocompleted
                 if type(arguments) == int:
@@ -193,6 +215,7 @@ class CLI_Interpreter:
                     sys.stdout.write("\033[1D")
                 sys.stdout.flush()
                 print()
+                cursor_x, cursor_y = self.get_cursor_position()
                 
                 # If there are suggestions delete them out of the choosable commands 
                 can_add = self._delete_choosable_commands(can_add)
