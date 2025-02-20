@@ -1,4 +1,0 @@
-select cluster cluster0
-select co c s
-select co cluster1 s
-save_amount 3

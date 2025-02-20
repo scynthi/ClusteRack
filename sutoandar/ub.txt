@@ -1,7 +1,0 @@
-s c c s
-select c c s
-select computer c s
-select computer cluster1 s
-select root
-
-save_all ub

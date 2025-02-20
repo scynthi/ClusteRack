@@ -1,2 +1,0 @@
-select co cluster1 s
-save_all uh
