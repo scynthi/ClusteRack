@@ -169,7 +169,7 @@ class ClusterBoard:
         UI.Button(self.button_frame, text=f"Gép hozzáadás", command=lambda: ComputerCreateSubWindow(self.cluster, self)).grid(row=0, column=0, pady=5, padx=10, sticky="we")
         UI.Button(self.button_frame, text=f"Program hozzáadás", command=lambda: StartProgramSubWindow(self.cluster, self)).grid(row=1, column=0, pady=5, padx=10, sticky="we")
         UI.Button(self.button_frame, text=f"Algoritmus\nbeállítások", command=lambda: ClusterAlgorithmSubWindow(self.cluster, self)).grid(row=2, column=0, pady=5, padx=10, sticky="we")
-        UI.Button(self.button_frame, text=f"Program mozgatás", command=SubWindow).grid(row=3, column=0, pady=5, padx=10, sticky="we")
+        UI.Button(self.button_frame, text=f"Program mozgatás", command=lambda: MoveProgramSubWindow(root, self.cluster, self)).grid(row=3, column=0, pady=5, padx=10, sticky="we")
         UI.Button(self.button_frame, text=f"Klaszter\nátnevezése", command=lambda: ClusterRenameSubWindow(root, cluster, self)).grid(row=4, column=0, pady=5, padx=10, sticky="we")
         UI.Button(self.button_frame, text=f"Klaszter\nújratöltése", bg_color="orange", command=lambda:(cluster.reload_cluster(), self.reload_with_child())).grid(row=5, column=0, pady=5, padx=10, sticky="we")
         UI.Button(self.button_frame, text=f"Klaszter törlése", bg_color="red", command=lambda: delete_cluster_and_reload()).grid(row=6, column=0, pady=5, padx=10, sticky="we")
@@ -345,7 +345,7 @@ class ComputerBoard:
 
         self.computer_model = UI.EmbedRenderer(self.computer_frame, "computer", 10, app).get_renderer()
         UI.Button(self.computer_frame, text="Számítógép törlése", fg_color="red", command=lambda: delete_self()).grid(row=2, column=0, sticky="sew", padx=10, pady=5)
-        UI.Button(self.computer_frame, text="Számítógép mozgatása").grid(row=3, column=0, sticky="sew", padx=10, pady=5)
+        UI.Button(self.computer_frame, text="Számítógép mozgatása", command=lambda: MoveComputerSubWindow(root, self.cluster, self.computer, self)).grid(row=3, column=0, sticky="sew", padx=10, pady=5)
 
 
         self.resources_frame : UI.Frame = UI.Frame(self.frame)

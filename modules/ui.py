@@ -73,11 +73,13 @@ class AppWindow(CTk):
         self.expand_button : UI.Button= UI.Button(self.title_bar, text=' 🗖 ', command=self.maximize_me, padx=2, pady=2)
         self.minimize_button : UI.Button = UI.Button(self.title_bar, text=' 🗕 ', command=self.minimize_me, padx=2, pady=2)
         self.reload_button : UI.Button = UI.Button(self.title_bar, text=' ⟳ ', padx=2, pady=2)
+        self.info_button : UI.Button = UI.Button(self.title_bar, text=' 🛈 ', padx=2, pady=2)
 
-        self.reload_button.grid(row=0, column=2, sticky="ne", padx=7, pady=1)
-        self.minimize_button.grid(row=0, column=3, sticky="ne", padx=7, pady=1)
-        self.expand_button.grid(row=0, column=4, sticky="ne", padx=7, pady=1)
-        self.close_button.grid(row=0, column=5, sticky="ne", padx=7, pady=1)
+        self.info_button.grid(row=0, column=2, sticky="ne", padx=7, pady=1)
+        self.reload_button.grid(row=0, column=3, sticky="ne", padx=7, pady=1)
+        self.minimize_button.grid(row=0, column=4, sticky="ne", padx=7, pady=1)
+        self.expand_button.grid(row=0, column=5, sticky="ne", padx=7, pady=1)
+        self.close_button.grid(row=0, column=6, sticky="ne", padx=7, pady=1)
 
 
         self.content : Frame = Frame(self, bg=DGRAY)

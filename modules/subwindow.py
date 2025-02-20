@@ -495,4 +495,76 @@ class EditProgramSubWindow(SubWindow):
 
             except:
                 ErrorSubWindow("Rossz típusú adatok. Próbálja újra.")
+
+
+class MoveProgramSubWindow(SubWindow):
+    def __init__(self, root : Root, cluster : Cluster, ui):
+        super().__init__()
+        self.content.grid_columnconfigure(0, weight=1)
+
+        program_list : list = [program for program in list(cluster.programs.keys())]
+        cluster_list : list = [cluster for cluster in list(root.clusters.keys())]
+        cluster_list.remove(cluster.name)
+
+        UI.Label(self.content, text="Program mozgatás", font=larger_font).grid(column=0, row=0, sticky="new")
+        UI.Label(self.content, text="Program:", font=large_font).grid(column=0, row=1, pady=5, padx=10)
+
+        program_dropdown : UI.OptionMenu = UI.OptionMenu(self.content, program_list)
+        program_dropdown.grid(column=0, row=2, sticky="n", pady=5, padx=50)
+
+        UI.Label(self.content, text="Cél klaszter:", font=large_font).grid(column=0, row=3, pady=5, padx=10)
+
+        cluster_dropdown : UI.OptionMenu = UI.OptionMenu(self.content, cluster_list)
+        cluster_dropdown.grid(column=0, row=4, sticky="n", pady=5, padx=50)
+
+
+        Button(self.content, text="Program áthelyezése", font=large_font, bg=DBLUE, fg="white", command=lambda: relocate(self)).grid(row=5, column=0, sticky="N", pady=15)
+
+        def relocate(self):
+            if not program_dropdown.get() or not cluster_dropdown.get():
+                ErrorSubWindow("Kérem minden szükséges adatt adjon meg!")
+                return
+            
+            if root.relocate_program(program_dropdown.get(), cluster.name, cluster_dropdown.get()):
+                ui.reload()
+                audio.play_accept()
+                self.destroy()
+            else:
+                ErrorSubWindow("Hiba mozgatás közben!")
+                return
+
+
+        
+
+class MoveComputerSubWindow(SubWindow):
+    def __init__(self, root : Root, cluster : Cluster, computer : Computer, ui):
+        super().__init__()
+        self.content.grid_columnconfigure(0, weight=1)
+
+        cluster_list : list = [cluster for cluster in list(root.clusters.keys())]
+        cluster_list.remove(cluster.name)
+
+        UI.Label(self.content, text=f"{computer.name} áthelyezése", font=larger_font).grid(column=0, row=0, sticky="new")
+
+        UI.Label(self.content, text="Cél klaszter:", font=large_font).grid(column=0, row=3, pady=5, padx=10)
+
+        cluster_dropdown : UI.OptionMenu = UI.OptionMenu(self.content, cluster_list)
+        cluster_dropdown.grid(column=0, row=4, sticky="n", pady=5, padx=50)
+
+        Button(self.content, text="Számítógép áthelyezése", font=large_font, bg=DBLUE, fg="white", command=lambda: relocate(self)).grid(row=5, column=0, sticky="N", pady=15)
+
+        def relocate(self):
+            if not cluster_dropdown.get():
+                ErrorSubWindow("Kérem válassza ki a cél klasztert!")
+                return
+            
+            if root.move_computer(computer.name, cluster.name, cluster_dropdown.get()):
+                ui.parent_ui.parent_ui.destroy_and_reload()
+                audio.play_accept()
+                self.destroy()
+            else:
+                ErrorSubWindow("Hiba áthelyezés közben!")
+                return
+
+    
         
