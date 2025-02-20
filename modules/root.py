@@ -66,67 +66,6 @@ class Root:
             self.print(f"{Fore.YELLOW}Program {program_name} already exists in {destination_cluster_name}.")
             return False
 
-            while True:
-                print(
-                    f"\n{Fore.CYAN}Choose an option:\n"
-                    f"1: Stop (Cancel move)\n"
-                    f"2: Overwrite (Replace existing program)\n"
-                    f"3: Merge instance counts\n"
-                    f"Enter your choice (1/2/3): {Fore.RESET}",
-                    end=""
-                )
-                user_choice = input().strip()
-
-                if user_choice in ["1", "2", "3"]:
-                    break
-                else:
-                    print(f"{Fore.RED}Invalid choice! Please enter 1, 2, or 3.{Fore.RESET}")
-
-            if user_choice == "1":
-                self.print(f"{Fore.RED}Move cancelled. {program_name} was not relocated.")
-                return False
-
-            elif user_choice == "2":
-                self.print(f"{Fore.YELLOW}Overwriting program {program_name} in {destination_cluster_name}.")
-                
-                overwrite_success = destination_cluster.edit_program_resources(
-                    program_name, "required_count", program_data["required_count"]
-                ) and destination_cluster.edit_program_resources(
-                    program_name, "cores", program_data["cores"]
-                ) and destination_cluster.edit_program_resources(
-                    program_name, "memory", program_data["memory"]
-                )
-
-                if not overwrite_success:
-                    self.print(f"{Fore.RED}Failed to overwrite program {program_name} in {destination_cluster_name}.")
-                    return False
-
-                self.print(f"{Fore.GREEN}Successfully overwrote program {program_name} in {destination_cluster_name}.")
-
-            elif user_choice == "3":
-                self.print(f"{Fore.GREEN}Merging process {program_name} into {destination_cluster_name}.")
-
-                new_instance_count = int(destination_cluster.processes[program_name]["instance_count"]) + int(
-                    program_data["instance_count"]
-                )
-
-                merge_success = destination_cluster.edit_process_resources(
-                    program_name, "instance_count", new_instance_count
-                )
-
-                if not merge_success:
-                    self.print(f"{Fore.RED}Failed to merge process {program_name} in {destination_cluster_name}.")
-                    return False
-
-                self.print(f"{Fore.GREEN}Successfully merged {program_name} into {destination_cluster_name}.")
-
-            # Regardless of case, remove the process from the origin cluster
-            if not origin_cluster.kill_process(program_name):
-                self.print(f"{Fore.RED}Failed to remove process {program_name} from {origin_cluster_name}.")
-                return False
-
-            return True
-
         # If process does NOT exist in destination, perform a normal move
         self.print(f"{Fore.GREEN}Moving {program_name} from {origin_cluster_name} to {destination_cluster_name}. . .")
 
@@ -327,10 +266,9 @@ class Root:
                         self.print(f"Skipping file ({file}).")
                         break  # Exit the while loop after action
 
-                    else:
-                        self.print("Invalid input. Please enter 1 or 2.")
+                    
+                    self.print("Invalid input. Please enter 1 or 2.")
 
-                self.print(f"{Fore.YELLOW}Removed {file} from filesystem.")
                 
         except:
             self.print(f"{Fore.BLACK}{Back.RED}CRITICAL ERROR DETECTED: can't delete file or folder ({file}). Root might be unstable.")

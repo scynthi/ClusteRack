@@ -23,6 +23,13 @@ class Cluster:
         self.active_inst_num : int = 0
         self.inactive_inst_num : int = 0
         
+        if not hasattr(self, "initialized"):
+            self.initialized = False
+            self.programs = {}  # Stores program details (name, instance count, cores, memory)
+            self.instances = {}  # Stores instance details (id, running, date_started)
+            self.distributable_instances = []
+
+
         # Ignore if `.klaszter` file is missing
         self.config_path = Path.join(path, ".klaszter")
         if not Path.exists(self.config_path):
@@ -45,18 +52,9 @@ class Cluster:
 
                 elif user_input == "2":
                     self.print(f"{Fore.WHITE}Skipping folder")
+                    return
 
                 self.print(f"{Fore.RED}Choose a valid option.")
-
-
-
-        if not hasattr(self, "initialized"):
-            self.initialized = False
-            self.programs = {}  # Stores program details (name, instance count, cores, memory)
-            self.instances = {}  # Stores instance details (id, running, date_started)
-            self.distributable_instances = []
-
-            
 
         self.computers = {}
         self._load_computers()
