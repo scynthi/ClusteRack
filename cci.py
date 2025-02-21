@@ -4,7 +4,6 @@ from modules.root import Root
 from modules.interpreter import CLI_Interpreter
 import sys
 
-root = r".\Thing"
 if not len(sys.argv) == 1:
     root = sys.argv[1]
 

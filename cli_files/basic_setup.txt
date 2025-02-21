@@ -1,0 +1,5 @@
+select root
+create_cluster cli_teszt_klaszter
+select cluster cli_teszt_klaszter
+create_computer computer1 2300 2300
+select computer cli_teszt_klaszter computer1

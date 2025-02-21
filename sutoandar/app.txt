@@ -1,5 +1,0 @@
-select run
-select run_folder sutoandar
-select run_folder sutoanda
-select run_folder sutoandar
-run ?
