@@ -7,6 +7,7 @@
 </p>
 
 ## Telepítés
+A dokumentációt megtalálja a fájlok között </br>
 A program futtatásához szükséges a [python 3.13.2](https://www.python.org/ftp/python/3.13.2/python-3.13.2-amd64.exe)-es verziója. </br>
 A könyvtárak automatikus feltelepítéséhez futtassa le ezt a parancsot a program mappájában: 
 ```
