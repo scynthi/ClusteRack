@@ -545,8 +545,11 @@ class CLI_Interpreter:
                         current_step += command[1:-1] + "\n"  
                     else:
                         current_step += command[1:] + "\n"  
-                else:          
-                    current_step += command + "\n"
+                else:
+                    if " " in command:
+                        current_step += f'"{command}"' + "\n"
+                    else: 
+                        current_step += command + "\n"
 
             # Put suggestions into previous_commands
             command_items = current_step.split("\n")[:-1]                    
