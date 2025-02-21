@@ -14,3 +14,8 @@ A könyvtárak automatikus feltelepítéséhez futtassa le ezt a parancsot a pro
 pip install -r ./requirements.txt
 ```
 
+A program futtatásához a main.py-t nyissa meg
+```
+py main.py
+```
+
