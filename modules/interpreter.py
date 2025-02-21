@@ -49,28 +49,6 @@ class CLI_Interpreter:
         
         self.set_fixed_console_size(160, 25)
         
-        # Make window unresizeable, because it just breaks for no apparent reason
-        
-        # # Get the handle to the console window
-        # hwnd = ctypes.windll.kernel32.GetConsoleWindow()
-
-        # # Define constants for window styles
-        # GWL_STYLE = -16
-        # WS_OVERLAPPEDWINDOW = 0x00CF0000
-        # WS_CAPTION = 0x00C00000
-        # WS_MINIMIZEBOX = 0x00020000
-        # WS_SYSMENU = 0x00080000
-
-        # # Get current window style
-        # style = ctypes.windll.user32.GetWindowLongW(hwnd, GWL_STYLE)
-
-        # # Remove the maximize button and resizing border
-        # new_style = (style & ~WS_OVERLAPPEDWINDOW) | WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU
-        # ctypes.windll.user32.SetWindowLongW(hwnd, GWL_STYLE, new_style)
-
-        # # Apply the style changes
-        # ctypes.windll.user32.SetWindowPos(hwnd, None, 0, 0, 0, 0, 0x0001 | 0x0002 | 0x0020)
-        
         # For the descriptions
         self.desc_folder = r"./Assets/Descriptions"
         
@@ -109,6 +87,7 @@ class CLI_Interpreter:
         
         # Make a dict to store the current modes avaliable commands
         current_commands : dict
+        add_start_cursor = 0
         
         # match the current mode to show the correct mode in CMD and select the correct commands 
         match self.mode.lower():
@@ -116,21 +95,25 @@ class CLI_Interpreter:
             case "computer":
                 
                 prompt = f"{Fore.BLACK}{Back.CYAN}{self.current_root.name}{Back.RESET+Fore.RESET}>{Fore.BLACK}{Back.WHITE}{self.current_cluster.name}{Back.RESET+Fore.RESET}>{Fore.WHITE + Style.BRIGHT}{self.current_computer.name}{Back.RESET+Fore.RESET+Style.RESET_ALL}"
+                add_start_cursor = len(f"{self.current_root.name}{self.current_cluster.name}{self.current_computer.name}")+3
                 current_commands = self.computer_commands
                 
             case "cluster":
                 
                 prompt = f"{Fore.BLACK}{Back.CYAN}{self.current_root.name}{Back.RESET+Fore.RESET}>{Fore.BLACK}{Back.WHITE}{self.current_cluster.name}{Back.RESET+Fore.RESET}"
+                add_start_cursor = len(f"{self.current_root.name}{self.current_cluster.name}")+2
                 current_commands = self.cluster_commands
                 
             case "root":
                 
                 prompt = f"{Fore.BLACK}{Back.CYAN}{self.current_root.name}{Back.RESET+Fore.RESET}"
+                add_start_cursor = len(f"{self.current_root.name}")+1
                 current_commands = self.root_commands
                 
             case _:
-                prompt = f"{Fore.BLACK}{Back.LIGHTCYAN_EX}None{Back.RESET+Fore.RESET}"
+                prompt = f"{Fore.BLACK}{Back.LIGHTCYAN_EX}User{Back.RESET+Fore.RESET}"
                 current_commands = self.noMode_commands
+                add_start_cursor = 5
                 
         # If there is something in the default text insert it into the input
         user_input = f"{default_text}"
@@ -144,14 +127,23 @@ class CLI_Interpreter:
         
         while True:
             
+            cols = os.get_terminal_size().columns
             position = (cursor_y << 16) | cursor_x  # Combine x and y into a single value
             ctypes.windll.kernel32.SetConsoleCursorPosition(self.console_handle, position)
             sys.stdout.write("\033[K")
             sys.stdout.write("\033[J")
             sys.stdout.write(f"{prompt}>{user_input}")
             sys.stdout.write("\033[K")
-            for i in range(len(user_input)-cursor_pos):
-                sys.stdout.write("\033[1D")
+            add_pos_x = cursor_x + cursor_pos + add_start_cursor
+            lines = add_pos_x // cols
+            add_pos_y = cursor_y
+            if lines > 0:
+                add_pos_x -= lines*cols
+                add_pos_y += lines
+            position = (add_pos_y << 16) | add_pos_x
+            ctypes.windll.kernel32.SetConsoleCursorPosition(self.console_handle, position)
+            # for i in range(len(user_input)-cursor_pos):
+            #     sys.stdout.write("\033[1D")
             sys.stdout.flush()
             
             # Get the input
@@ -193,12 +185,11 @@ class CLI_Interpreter:
                 if ch2 == b'\x4b':  # Left arrow
                     if cursor_pos > 0:
                         cursor_pos -= 1
-                        sys.stdout.write("\033[1D")
                         
                 elif ch2 == b'\x4d':  # Right arrow
                     if cursor_pos < len(user_input):
                         cursor_pos += 1
-                        sys.stdout.write("\033[1C")
+                        
                         
                 elif ch2 == b'\x48':  # Up arrow
                     
@@ -243,6 +234,14 @@ class CLI_Interpreter:
                     # If there are suggestions delete them out of the choosable commands
                     can_add = self._delete_choosable_commands(can_add)
                     continue
+
+                elif ch2 == b'G': # Home
+
+                    cursor_pos = 0
+
+                elif ch2 == b'O': # End
+
+                    cursor_pos = len(user_input)
             
             elif key_event == b"?": #question mark
                 
@@ -300,12 +299,17 @@ class CLI_Interpreter:
             else: # Any other key
 
                 # Put the character into the command
-                user_input = user_input[:cursor_pos] + key_event.decode('utf-8') + user_input[cursor_pos:]
-                cursor_pos += 1
-                
-                # If there are suggestions delete them out of the choosable commands    
-                can_add = self._delete_choosable_commands(can_add)
-                continue
+                try:
+                    user_input = user_input[:cursor_pos] + key_event.decode('utf-8') + user_input[cursor_pos:]
+                    cursor_pos += 1
+                    
+                    # If there are suggestions delete them out of the choosable commands    
+                    can_add = self._delete_choosable_commands(can_add)
+                    continue
+                except:
+                    print("\nThat character can't be decoded")
+                    cursor_x, cursor_y = self.get_cursor_position()
+                    continue
         
         # Finish the input 
         self.convert_input(user_input, current_commands)
@@ -661,9 +665,9 @@ class CLI_Interpreter:
                 "?desc" : {"?algo" : (self.run_desc, "select.txt"), "?non_args" : 2}
             },
             "exit" : {"?algo" : (self.exit, )},
-            "save_amount" : {"<Name" : {"<How far back?": {"?algo" : (self.save_prev, )}}},
-            "save_all" : {"<Name" : {"?algo" : (self.save_prev, "?replace", "all")}},
-            "reload" : {"?algo" : (self.reload, )},
+            "save_amount" : {"<Name" : {"<How far back?": {"?algo" : (self.save_prev, )}}, "?desc" : {"?algo" : (self.run_desc, "save_amount.txt"), "?non_args" : 2}},
+            "save_all" : {"<Name" : {"?algo" : (self.save_prev, "?replace", "all")}, "?desc" : {"?algo" : (self.run_desc, "save_all.txt"), "?non_args" : 2}},
+            "reload" : {"?algo" : (self.reload, ), "?desc" : {"?algo" : (self.run_desc, "reload.txt"), "?non_args" : 2}},
             "update_commands" : {"?algo" : (self.update_dicts, )},
             "create_cluster" : {"<Cluster name" : {"?algo" : (self.current_root.create_cluster, )}, "?desc" : {"?algo" : (self.run_desc, "create_cluster.txt"), "?non_args" : 2}},
             "try_del_cluster" : {"?desc" : {"?algo" : (self.run_desc, "try_del_cluster.txt"), "?non_args" : 2}},

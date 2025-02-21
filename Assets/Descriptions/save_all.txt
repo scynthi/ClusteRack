@@ -1,0 +1,8 @@
+USAGE:
+save_all <new_file_name> 
+
+Options:
+new_file_name → The name of the file that will hold the commands
+
+What it does:
+Saves everything from the command history into a file, to later run

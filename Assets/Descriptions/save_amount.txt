@@ -1,0 +1,9 @@
+USAGE:
+save_amount <new_file_name> <how_far_back>
+ 
+Options:
+new_file_name → The name of the file that will hold the commands
+how_far_back → The amount of commands that will be saved
+
+What is does:
+Saves given amount of items from the command history into a file, to later run
