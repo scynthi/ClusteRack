@@ -231,8 +231,6 @@ class CLI_Interpreter:
                     if cursor_pos < len(user_input):
                         user_input = user_input[:cursor_pos] + user_input[cursor_pos+1:]
 
-                    # If there are suggestions delete them out of the choosable commands
-                    can_add = self._delete_choosable_commands(can_add)
                     continue
 
                 elif ch2 == b'G': # Home
@@ -257,9 +255,6 @@ class CLI_Interpreter:
                 print()
                 cursor_x, cursor_y = self.get_cursor_position()
                 
-                # If there are suggestions delete them out of the choosable commands 
-                can_add = self._delete_choosable_commands(can_add)
-                
                 # Finish the input
                 self.previous_commands.insert(0, user_input)
                 prev_com_index = 0
@@ -282,8 +277,6 @@ class CLI_Interpreter:
                     user_input = user_input[:cursor_pos-1] + user_input[cursor_pos:]
                     cursor_pos -= 1
                     
-                # If there are suggestions delete them out of the choosable commands    
-                can_add = self._delete_choosable_commands(can_add)
                 continue
             
             elif key_event == b" ": # Space
@@ -292,8 +285,6 @@ class CLI_Interpreter:
                 user_input = user_input[:cursor_pos] + " " + user_input[cursor_pos:]
                 cursor_pos += 1
                 
-                # If there are suggestions delete them out of the choosable commands    
-                can_add = self._delete_choosable_commands(can_add)
                 continue
             
             else: # Any other key
@@ -303,8 +294,6 @@ class CLI_Interpreter:
                     user_input = user_input[:cursor_pos] + key_event.decode('utf-8') + user_input[cursor_pos:]
                     cursor_pos += 1
                     
-                    # If there are suggestions delete them out of the choosable commands    
-                    can_add = self._delete_choosable_commands(can_add)
                     continue
                 except:
                     print("\nThat character can't be decoded")
