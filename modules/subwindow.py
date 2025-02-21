@@ -138,6 +138,10 @@ class SubWindow(CTkToplevel):
 class ErrorSubWindow(SubWindow):
     def __init__(self, text: str):
         super().__init__()
+        width : int = len(text)*20
+        if width > 1000:
+            width = 1000
+        self.geometry(f"{width}x300")
         self.content.grid_columnconfigure(0, weight=1)
         self.content.grid_rowconfigure(0, weight=1)
 
@@ -165,9 +169,9 @@ class ClusterCreateSubWindow(SubWindow):
                     audio.play_accept()
                     self.destroy()
                 else:
-                    ErrorSubWindow("Hibás klaszter név!")
+                    ErrorSubWindow("Hibás klaszter név! Van ilyen klaszter?")
             except:
-                ErrorSubWindow("Folyamat végrehajtása sikertelen!")
+                ErrorSubWindow("Klaszter létrehozása sikertelen!")
 
 class ComputerCreateSubWindow(SubWindow):
     def __init__(self, cluster : Cluster, ui):
@@ -203,9 +207,9 @@ class ComputerCreateSubWindow(SubWindow):
                     audio.play_accept()
                     self.destroy()
                 else:
-                    ErrorSubWindow("Rossz típusú adatok lettek megadva.")
+                    ErrorSubWindow("Rossz típusú adatok lettek megadva vagy nem töltött ki minden mezőt.")
             except:
-                    ErrorSubWindow("Belső hiba. Minden adatot megadott?")
+                    ErrorSubWindow("Létrehozás sikertelen. Jól adta meg az adatokat?")
 
 
 class StartProgramSubWindow(SubWindow):
@@ -240,9 +244,9 @@ class StartProgramSubWindow(SubWindow):
                     audio.play_accept()
                     self.destroy()
                 else:
-                    ErrorSubWindow("Belső hiba. Próbálja újra.")
+                    ErrorSubWindow("A létrehozás sikertelen erőforrás hiány miatt vagy már van ilyen program.")
             except:
-                    ErrorSubWindow("Rossz típusú adatok. Próbálja újra.")
+                    ErrorSubWindow("Rossz típusú adatok vagy üresen hagyott egy mezőt. Próbálja újra.")
 
 
 
@@ -267,9 +271,9 @@ class ClusterRenameSubWindow(SubWindow):
                     ui.parent_ui.destroy_and_reload()
                     self.destroy()
                 else:
-                    ErrorSubWindow("Hibás klaszter név!")
+                    ErrorSubWindow("Hibás klaszter név. Van már ilyen klaszter?")
             except:
-                ErrorSubWindow("Adjon meg egy nevet!")
+                ErrorSubWindow("Létrehozás sikertelen.")
 
 
 class ClusterAlgorithmSubWindow(SubWindow):
@@ -317,9 +321,9 @@ class ComputerRenameSubWindow(SubWindow):
                     ui.parent_ui.reload()
                     self.destroy()
                 else:
-                    ErrorSubWindow("Hibás számítógép név!")
+                    ErrorSubWindow("Már van ilyen gép vagy nem töltött ki minden mezőt!")
             except:
-                ErrorSubWindow("Adjon meg egy nevet!")
+                ErrorSubWindow("Létrehozás sikertelen!")
 
 
 
@@ -354,9 +358,9 @@ class ComputerEditResourcesSubWindow(SubWindow):
                     audio.play_accept()
                     self.destroy()
                 else:
-                    ErrorSubWindow("Belső hiba. Próbálja újra.")
+                    ErrorSubWindow("Átírás sikertelen. Tartsa figyelemben a minimum erőforrás igényeket.")
             except:
-                    ErrorSubWindow("Rossz típusú adatok lettek megadva.")
+                    ErrorSubWindow("Átírás sikertelen.")
 
 
 
@@ -487,7 +491,7 @@ class EditProgramSubWindow(SubWindow):
                     if not cluster.edit_program_resources(program_name, "memory", int(memory_entry.get())): return ErrorSubWindow("Szükséges memória átírása sikertelen.")
 
                 if program_name_entry.get():
-                    if not cluster.rename_program(program_name, program_name_entry.get()): return ErrorSubWindow("Átnevezés sikertelen.")
+                    if not cluster.rename_program(program_name, program_name_entry.get()): return ErrorSubWindow("Átnevezés sikertelen. Van már ilyen program?")
                 
                 
                 ui.reload_with_child()
@@ -495,7 +499,7 @@ class EditProgramSubWindow(SubWindow):
                 self.destroy()
 
             except:
-                ErrorSubWindow("Rossz típusú adatok. Próbálja újra.")
+                ErrorSubWindow("Átírás sikertelen")
 
 
 class MoveProgramSubWindow(SubWindow):
@@ -531,7 +535,7 @@ class MoveProgramSubWindow(SubWindow):
                 audio.play_accept()
                 self.destroy()
             else:
-                ErrorSubWindow("Hiba mozgatás közben!")
+                ErrorSubWindow("Hiba mozgatás közben! Van még egy ilyen nevű gép?")
                 return
 
 

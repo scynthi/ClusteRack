@@ -35,7 +35,7 @@ class Cluster:
         if not Path.exists(self.config_path):
             while True:
                 user_input = self.user_input(
-                    f"Nincs konfigurációs file a {self.path} -ban\n"
+                    f"Nincs konfigurációs fájl a {self.path}-ban\n"
                     f"{Fore.WHITE + Style.BRIGHT}Szeretne generálni egyet?\n"
                     f"1 - Igen\n"
                     f"2 - Nem >> ").strip()
@@ -231,7 +231,7 @@ class Cluster:
                     while True:
                         user_input = self.user_input(
                                             f"{Fore.YELLOW + Style.BRIGHT}Nem fut elég {Fore.RESET + Style.RESET_ALL} '{program_name}' példány, minimum {required_count} kell! \n"
-                                            f"{Fore.WHITE + Style.BRIGHT} Szeretene {Fore.GREEN}újakat indítani?{Fore.RESET + Style.RESET_ALL}\n"
+                                            f"{Fore.WHITE + Style.BRIGHT} Szeretne {Fore.GREEN}újakat indítani?{Fore.RESET + Style.RESET_ALL}\n"
                                             f"1 - Igen\n"
                                             f"2 - Mégse >> ").strip()
                         if user_input == '1':
@@ -509,7 +509,7 @@ class Cluster:
 
                     while True:
                         user_choice = self.user_input(
-                            f"{Style.BRIGHT} Szeretné {program_name}-{instance_id} program példánnyal csinálni:\n"
+                            f"{Style.BRIGHT} Mit szeretne a {program_name}-{instance_id} program példánnyal csináln?:\n"
                             f"1) Manuálisan átnevezni (\n"
                             f"2) Automatikusan új azonosítóval ellátni\n"
                             f"Válasz (1/2) >> "

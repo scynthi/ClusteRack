@@ -23,24 +23,27 @@ class ImportUI:
         self.path_label: UI.Label = UI.Label(self.center_frame, text="Nincsen mappa")
         self.path_label.grid(column=0, row=0, padx=5)
 
+        self.path = None
+
         UI.Button(self.center_frame, text="Mappa kiválasztása", command=lambda: set_folder_path()).grid(column=0, row=1, pady=10, padx=5)
         UI.Button(self.center_frame, text="Tovább", command=lambda: init_dashboard()).grid(column=0, row=2)
 
             
         def set_folder_path() -> None:
-            path : str = filedialog.askdirectory(initialdir="./", title="Klaszter mappa kiválasztás")
+            self.path = filedialog.askdirectory(initialdir="./", title="Klaszter mappa kiválasztás")
 
-            if path:
-                self.path_label.configure(text=path)
+            if self.path:
+                self.path_label.configure(text=self.path)
                 return
 
             self.path_label._text = "Nincsen mappa"
 
         def init_dashboard() -> None:
-            global root
-            root = Root(Path.join(self.path_label._text), app)
-            self.delete()
-            DashboardUI()
+            if self.path:
+                global root
+                root = Root(Path.join(self.path), app)
+                self.delete()
+                DashboardUI()
             
            
             
@@ -77,6 +80,7 @@ class DashboardUI:
 
 class ClusterView:
     def __init__(self):
+        root._load_clusters()
         frame = app.top_frame
         self.clusters_frame : CTkScrollableFrame = CTkScrollableFrame(frame, orientation="horizontal", height=310, border_width=4, border_color="gray", corner_radius=0)
         self.clusters_frame.grid(row=0, column=0, sticky="nwes")

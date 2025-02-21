@@ -49,8 +49,17 @@ class Computer:
             self.cores: int = cores
             self.memory: int = memory
             if not self.validate_computer(): 
-                self.print(f"{Fore.RED}Couldn`t validate computer. Too much resource usage on startup.")
-                return False
+                self.print(f"{Fore.RED}Couldn`t validate computer. Too much resource usage on startup, deleting instances...")
+                
+                files : list = os.listdir(self.path)
+                if ".szamitogep_config" in files:
+                    files.remove(".szamitogep_config")
+
+                for file in files:
+                    os.remove(Path.join(self.path, file))
+                
+                self.validate_computer()
+
             return True
             
         else:
@@ -58,7 +67,7 @@ class Computer:
             try:
                 while True:
                     user_input = self.user_input(
-                        f"Nincs konfigurációs file a {self.path} -ban\n"
+                        f"Nincs konfigurációs fájl a {self.path} számítógépnek!\n"
                         f"{Fore.WHITE + Style.BRIGHT}Szeretne generálni egyet?\n"
                         f"1 - Igen\n"
                         f"2 - Nem >> ").strip()
@@ -67,11 +76,11 @@ class Computer:
                         new_cores = 0
                         new_memory = 0
                         while True:
-                            new_cores = self.user_input("Adja meg a magok számát(Millimag) >> ")
+                            new_cores = self.user_input("Adja meg a magok számát (millimag) >> ")
                             if new_cores.isdigit() and int(new_cores) > 0: break
                             self.print(f"{Fore.RED}Please enter a valid positive number.")
                         while True:
-                            new_memory = self.user_input("Adja meg a memóriát(Megabyte) >> ")
+                            new_memory = self.user_input("Adja meg a memóriát (megabájt) >> ")
                             if new_memory.isdigit() and int(new_memory) > 0: break
                             
                             self.print(f"{Fore.RED}Please enter a valid positive number.")
@@ -201,7 +210,7 @@ class Computer:
             while True:
                 try:
                     user_input = self.user_input(
-                        f"Ismeretlen fájl a {self.name}: {file} - ban\n"
+                        f"Ismeretlen fájl a {self.name} számítógépen: {file}\n"
                         "1: Törlés\n"
                         "2: Megtartás (Figyelmeztetés: Lehetséges hogy destabilizálja a számítógépet)\n"
                         "Irja be választását(1/2): "

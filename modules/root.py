@@ -134,6 +134,10 @@ class Root:
         """Creates a new cluster under the root with no computers."""
         path: str = Path.join(self.path, cluster_name)
 
+        if not cluster_name:
+            self.print(f"{Fore.RED}C Can NOT create cluster with no name!.")
+            return self.clusters.get(cluster_name)
+
         if Path.exists(path):
             self.print(f"{Fore.RED}Cluster ({cluster_name}) already exists and will NOT be created.")
             return self.clusters.get(cluster_name)
@@ -244,7 +248,7 @@ class Root:
                     user_input = self.user_input(
                         f"Ismeretetlen fájl {self.name}: {file}\n"
                         "1: Törlés\n"
-                        "2: Megtartás Figyelmeztetés: destabilizálhatja a rendszert)\n"
+                        "2: Megtartás (Figyelmeztetés: destabilizálhatja a rendszert)\n"
                         "Választása (1/2): "
                     ).strip()
 
