@@ -87,28 +87,29 @@ class ClusterView:
         self.clusters_frame.grid_columnconfigure(0, weight=1)
         self.clusters_frame.grid_rowconfigure(0, weight=1)
 
-        for i, cluster in enumerate(root.clusters.values()):
-            cluster_frame : UI.Frame = UI.Frame(self.clusters_frame)
-            cluster_frame.grid_rowconfigure(1, weight=1)
-            cluster_frame.grid(row=0, column=i, padx=20, pady=10, sticky="NEWS")
+        if root.clusters:
+            for i, cluster in enumerate(root.clusters.values()):
+                cluster_frame : UI.Frame = UI.Frame(self.clusters_frame)
+                cluster_frame.grid_rowconfigure(1, weight=1)
+                cluster_frame.grid(row=0, column=i, padx=20, pady=10, sticky="NEWS")
 
-            image_frame : UI.Frame= UI.Frame(cluster_frame)
-            image_frame.grid(row=1, column=0, sticky="NSEW")
+                image_frame : UI.Frame= UI.Frame(cluster_frame)
+                image_frame.grid(row=1, column=0, sticky="NSEW")
 
-            UI.Label(cluster_frame, text=cluster.name, font=large_font).grid(row=0, column=0)
-            UI.Button(cluster_frame, text=f"{cluster.name} megnyitása", command=lambda selected_cluster = cluster: self.open_cluster_tab(selected_cluster)).grid(row=2, column=0, sticky="EW")
-            
+                UI.Label(cluster_frame, text=cluster.name, font=large_font).grid(row=0, column=0)
+                UI.Button(cluster_frame, text=f"{cluster.name} megnyitása", command=lambda selected_cluster = cluster: self.open_cluster_tab(selected_cluster)).grid(row=2, column=0, sticky="EW")
+                
 
-            pc_amount : int = len(cluster.computers.keys())
-            if pc_amount != 0:
-                for x in range(pc_amount):
-                    image : CTkImage = CTkImage(Image.open(Path.join("Assets", "Images", "rack.png")), size=(80, 200))
-                    label : CTkLabel = CTkLabel(image_frame, text="", image=image)
-                    label.grid(row=0, column=x, padx=5)
-            else:
-                image_frame.grid_columnconfigure(0, weight=1)
-                image_frame.grid_rowconfigure(0, weight=1)
-                UI.Label(image_frame, text="Nem található számítógépek").grid(row=0, column=0, padx=5)
+                pc_amount : int = len(cluster.computers.keys())
+                if pc_amount != 0:
+                    for x in range(pc_amount):
+                        image : CTkImage = CTkImage(Image.open(Path.join("Assets", "Images", "rack.png")), size=(80, 200))
+                        label : CTkLabel = CTkLabel(image_frame, text="", image=image)
+                        label.grid(row=0, column=x, padx=5)
+                else:
+                    image_frame.grid_columnconfigure(0, weight=1)
+                    image_frame.grid_rowconfigure(0, weight=1)
+                    UI.Label(image_frame, text="Nem található számítógépek").grid(row=0, column=0, padx=5)
 
         add_cluster_frame : UI.Frame = UI.Frame(self.clusters_frame)
         add_cluster_frame.grid_rowconfigure(1, weight=1)
@@ -279,14 +280,16 @@ class ClusterBoard:
 
         def stop_program(program : str) -> None:
             if cluster.stop_program(program):
-                self.reload_with_child()
+                cluster._load_computers()
+                self.reload()
                 audio.play_close_program()
             else:
                 ErrorSubWindow("Program leállítása sikertelen.")
 
         def delete_program(program : str) -> None:
-            if cluster.kill_program(program):
-                self.reload_with_child()
+            if cluster.stop_program(program) and cluster.kill_program(program):
+                cluster.reload_cluster()
+                self.reload()
             else:
                 ErrorSubWindow("Program törlése sikertelen.")
 

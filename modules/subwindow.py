@@ -361,6 +361,7 @@ class ComputerEditResourcesSubWindow(SubWindow):
                     ErrorSubWindow("Átírás sikertelen. Tartsa figyelemben a minimum erőforrás igényeket.")
             except:
                     ErrorSubWindow("Átírás sikertelen.")
+                    
 
 
 
