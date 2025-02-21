@@ -1,0 +1,5 @@
+USAGE:
+update_commands
+
+What it does:
+Reloads all suggestions, commandtrees, should be done after using the GUI to make changes.

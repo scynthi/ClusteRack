@@ -1,0 +1,7 @@
+USAGE:
+run <file_name>
+
+Options:
+file_name → Runs every command in the given text file
+
+!!! If there are no suggestions, there is, either no run folder selected (refer to select), or the run folder is empty

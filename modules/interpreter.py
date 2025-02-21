@@ -668,7 +668,7 @@ class CLI_Interpreter:
             "save_amount" : {"<Name" : {"<How far back?": {"?algo" : (self.save_prev, )}}, "?desc" : {"?algo" : (self.run_desc, "save_amount.txt"), "?non_args" : 2}},
             "save_all" : {"<Name" : {"?algo" : (self.save_prev, "?replace", "all")}, "?desc" : {"?algo" : (self.run_desc, "save_all.txt"), "?non_args" : 2}},
             "reload" : {"?algo" : (self.reload, ), "?desc" : {"?algo" : (self.run_desc, "reload.txt"), "?non_args" : 2}},
-            "update_commands" : {"?algo" : (self.update_dicts, )},
+            "update_commands" : {"?algo" : (self.update_dicts, ), "?desc" : {"?algo" : (self.run_desc, "update_commands.txt"), "?non_args" : 2}},
             "create_cluster" : {"<Cluster name" : {"?algo" : (self.current_root.create_cluster, )}, "?desc" : {"?algo" : (self.run_desc, "create_cluster.txt"), "?non_args" : 2}},
             "try_del_cluster" : {"?desc" : {"?algo" : (self.run_desc, "try_del_cluster.txt"), "?non_args" : 2}},
             "force_del_cluster" : {"?desc" : {"?algo" : (self.run_desc, "force_del_cluster.txt"), "?non_args" : 2}},
@@ -676,7 +676,7 @@ class CLI_Interpreter:
             "move_computer" : {"?desc" : {"?algo" : (self.run_desc, "move_computer.txt"), "?non_args" : 2}},
             "rename_cluster" : {"?desc" : {"?algo" : (self.run_desc, "rename_cluster.txt"), "?non_args" : 2}},
             "cleanup_root" : {"?algo" : (self.current_root.cleanup, ), "?desc" : {"?algo" : (self.run_desc, "cleanup_root.txt"), "?non_args" : 2}},
-            "run" : {}
+            "run" : {"?desc" : {"?algo" : (self.run_desc, "run.txt"), "?non_args" : 2}}
         }
 
         self.cluster_commands : dict = {
@@ -688,11 +688,11 @@ class CLI_Interpreter:
                 "?desc" : {"?algo" : (self.run_desc, "select.txt"), "?non_args" : 2}
             },
             "exit" : {"?algo" : (self.exit, )},
-            "save_amount" : {"<Name" : {"<How far back?": {"?algo" : (self.save_prev, )}}},
-            "save_all" : {"<Name" : {"?algo" : (self.save_prev, "?replace", "all")}},
-            "reload" : {"?algo" : (self.reload, )},
-            "update_commands" : {"?algo" : (self.update_dicts, )},
-            "run" : {},
+            "save_amount" : {"<Name" : {"<How far back?": {"?algo" : (self.save_prev, )}}, "?desc" : {"?algo" : (self.run_desc, "save_amount.txt"), "?non_args" : 2}},
+            "save_all" : {"<Name" : {"?algo" : (self.save_prev, "?replace", "all")}, "?desc" : {"?algo" : (self.run_desc, "save_all.txt"), "?non_args" : 2}},
+            "reload" : {"?algo" : (self.reload, ), "?desc" : {"?algo" : (self.run_desc, "reload.txt"), "?non_args" : 2}},
+            "update_commands" : {"?algo" : (self.update_dicts, ), "?desc" : {"?algo" : (self.run_desc, "update_commands.txt"), "?non_args" : 2}},
+            "run" : {"?desc" : {"?algo" : (self.run_desc, "run.txt"), "?non_args" : 2}},
             "set_rebalance_algo" : {"?desc" : {"?algo" : (self.run_desc, "set_rebalance_algo.txt"), "?non_args" : 2}},
             "run_rebalance" : {"?desc" : {"?algo" : (self.run_desc, "run_rebalance.txt"), "?non_args" : 2}},
             "create_computer" : {"<computer name" : {"<cores?" : {"<memory?" : {}}}, "?desc" : {"?algo" : (self.run_desc, "create_computer.txt"), "?non_args" : 2}},
@@ -727,11 +727,11 @@ class CLI_Interpreter:
                 "?desc" : {"?algo" : (self.run_desc, "select.txt"), "?non_args" : 2}
             },
             "exit" : {"?algo" : (self.exit, )},
-            "save_amount" : {"<Name" : {"<How far back?": {"?algo" : (self.save_prev, )}}},
-            "save_all" : {"<Name" : {"?algo" : (self.save_prev, "?replace", "all")}},
-            "reload" : {"?algo" : (self.reload, )},
-            "update_commands" : {"?algo" : (self.update_dicts, )},
-            "run" : {},
+            "save_amount" : {"<Name" : {"<How far back?": {"?algo" : (self.save_prev, )}}, "?desc" : {"?algo" : (self.run_desc, "save_amount.txt"), "?non_args" : 2}},
+            "save_all" : {"<Name" : {"?algo" : (self.save_prev, "?replace", "all")}, "?desc" : {"?algo" : (self.run_desc, "save_all.txt"), "?non_args" : 2}},
+            "reload" : {"?algo" : (self.reload, ), "?desc" : {"?algo" : (self.run_desc, "reload.txt"), "?non_args" : 2}},
+            "update_commands" : {"?algo" : (self.update_dicts, ), "?desc" : {"?algo" : (self.run_desc, "update_commands.txt"), "?non_args" : 2}},
+            "run" : {"?desc" : {"?algo" : (self.run_desc, "run.txt"), "?non_args" : 2}},
             "cleanup_computer" : {"?desc" : {"?algo" : (self.run_desc, "cleanup_computer.txt"), "?non_args" : 2}}
         }
         
@@ -744,11 +744,11 @@ class CLI_Interpreter:
                 "?desc" : {"?algo" : (self.run_desc, "select.txt"), "?non_args" : 2}
             },
             "exit" : {"?algo" : (self.exit, )},
-            "save_amount" : {"<Name" : {"<How far back?": {"?algo" : (self.save_prev, )}}},
-            "save_all" : {"<Name" : {"?algo" : (self.save_prev, "?replace", "all")}},
-            "reload" : {"?algo" : (self.reload, )},
-            "update_commands" : {"?algo" : (self.update_dicts, )},
-            "run" : {}
+            "save_amount" : {"<Name" : {"<How far back?": {"?algo" : (self.save_prev, )}}, "?desc" : {"?algo" : (self.run_desc, "save_amount.txt"), "?non_args" : 2}},
+            "save_all" : {"<Name" : {"?algo" : (self.save_prev, "?replace", "all")}, "?desc" : {"?algo" : (self.run_desc, "save_all.txt"), "?non_args" : 2}},
+            "reload" : {"?algo" : (self.reload, ), "?desc" : {"?algo" : (self.run_desc, "reload.txt"), "?non_args" : 2}},
+            "update_commands" : {"?algo" : (self.update_dicts, ), "?desc" : {"?algo" : (self.run_desc, "update_commands.txt"), "?non_args" : 2}},
+            "run" : {"?desc" : {"?algo" : (self.run_desc, "run.txt"), "?non_args" : 2}}
         }
 
         clusters = self.current_root.clusters

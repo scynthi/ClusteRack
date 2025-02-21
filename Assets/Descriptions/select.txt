@@ -2,8 +2,10 @@ USAGE:
 select <root>
 select <cluster> <cluster_name>
 select <computer> <cluster_name> <computer_name>
+select <run_folder>
 
 Options:
 root Switches to root mode in the CLI.
 cluster <cluster_name> → Switches to cluster mode for the specified cluster.
 computer <cluster_name> <computer_name> → Switches to computer mode for the specified computer.
+run_folder <folder_name> → Sets the run folder to the given folder (where the runnable files can be found)
