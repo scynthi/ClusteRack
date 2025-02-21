@@ -1,0 +1,5 @@
+USAGE:
+reload
+
+What it does:
+Reloads the entire terminal

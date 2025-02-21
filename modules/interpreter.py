@@ -662,9 +662,9 @@ class CLI_Interpreter:
                 "?desc" : {"?algo" : (self.run_desc, "select.txt"), "?non_args" : 2}
             },
             "exit" : {"?algo" : (self.exit, )},
-            "save_amount" : {"<Name" : {"<How far back?": {"?algo" : (self.save_prev, )}}, "?desc" : {"?algo" : (self.run_desc, "select.txt"), "?non_args" : 2}},
-            "save_all" : {"<Name" : {"?algo" : (self.save_prev, "?replace", "all")}, "?desc" : {"?algo" : (self.run_desc, "select.txt"), "?non_args" : 2}},
-            "reload" : {"?algo" : (self.reload, )},
+            "save_amount" : {"<Name" : {"<How far back?": {"?algo" : (self.save_prev, )}}, "?desc" : {"?algo" : (self.run_desc, "save_amount.txt"), "?non_args" : 2}},
+            "save_all" : {"<Name" : {"?algo" : (self.save_prev, "?replace", "all")}, "?desc" : {"?algo" : (self.run_desc, "save_all.txt"), "?non_args" : 2}},
+            "reload" : {"?algo" : (self.reload, ), "?desc" : {"?algo" : (self.run_desc, "reload.txt"), "?non_args" : 2}},
             "update_commands" : {"?algo" : (self.update_dicts, )},
             "create_cluster" : {"<Cluster name" : {"?algo" : (self.current_root.create_cluster, )}, "?desc" : {"?algo" : (self.run_desc, "create_cluster.txt"), "?non_args" : 2}},
             "try_del_cluster" : {"?desc" : {"?algo" : (self.run_desc, "try_del_cluster.txt"), "?non_args" : 2}},
