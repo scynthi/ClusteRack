@@ -68,7 +68,7 @@ class DashboardUI:
         app.bottom_frame.grid_rowconfigure(0, weight=1)
 
         self.cluster_view : ClusterView = ClusterView()
-        app.cli_button.configure(command=lambda: os.system(f'start cmd /c py interp_test.py "{Path.abspath(Path.join(root.path))}"'))
+        app.cli_button.configure(command=lambda: os.system(f'start cmd /c py cci.py "{Path.abspath(Path.join(root.path))}"'))
         app.reload_button.configure(command=lambda: full_reload())
 
         def full_reload() -> None:
