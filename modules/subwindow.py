@@ -335,20 +335,16 @@ class ComputerEditResourcesSubWindow(SubWindow):
 
         Label(self.content, text=f"Számítógép ({computer.name}) szerkesztése", fg="black",  font=large_font, bg=DGRAY).grid(row=0, column=0, pady=5)
 
-        UI.Label(self.content, f"Számítógép neve: ({computer.name})").grid(row=1, column=0)
-        computer_name : UI.Entry = UI.Entry(self.content)
-        computer_name.grid(row=2, column=0, pady=5, padx=50, stick="ew")
-
-        UI.Label(self.content, f"Magok száma millimagokban: ({computer.cores})").grid(row=3, column=0)
+        UI.Label(self.content, f"Magok száma millimagokban: ({computer.cores})").grid(row=1, column=0)
         core_entry : UI.Entry = UI.Entry(self.content)
-        core_entry.grid(row=4, column=0, pady=5, padx=50, stick="ew")
+        core_entry.grid(row=2, column=0, pady=5, padx=50, stick="ew")
 
-        UI.Label(self.content, f"Memória megabájtban: ({computer.memory})").grid(row=5, column=0)
+        UI.Label(self.content, f"Memória megabájtban: ({computer.memory})").grid(row=3, column=0)
         memory_entry : UI.Entry = UI.Entry(self.content)
-        memory_entry.grid(row=6, column=0, pady=5, padx=50, stick="ew")
+        memory_entry.grid(row=4, column=0, pady=5, padx=50, stick="ew")
 
 
-        Button(self.content, text="Átírás", font=large_font, bg=DBLUE, fg="white", command=lambda: edit(self)).grid(row=7, column=0, sticky="N")
+        Button(self.content, text="Átírás", font=large_font, bg=DBLUE, fg="white", command=lambda: edit(self)).grid(row=5, column=0, sticky="N")
 
         def edit(self) -> None:
             try:
@@ -423,22 +419,26 @@ class InstanceInfoSubWindow(SubWindow):
         def kill() -> None:
             self.destroy()
             cluster.kill_instance(id)
+            cluster.reload_cluster()
             ui.parent_ui.reload()
 
         def start() -> None:
             self.destroy()
             cluster.edit_instance_status(id, True)
+            cluster.reload_cluster()
             ui.parent_ui.reload()
 
         def stop() -> None:
             self.destroy()
             cluster.edit_instance_status(id, False)
             audio.play_close_program()
+            cluster.reload_cluster()
             ui.parent_ui.reload()
 
         def change_id() -> None:
             if len(id_entry.get()) == 0:
                 cluster.change_instance_id(self.id, "", self.program_name)
+                cluster.reload_cluster()
                 ui.parent_ui.reload()
                 self.destroy()
             else:
