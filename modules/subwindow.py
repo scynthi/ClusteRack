@@ -354,7 +354,7 @@ class ComputerEditResourcesSubWindow(SubWindow):
                     audio.play_accept()
                     self.destroy()
                 else:
-                    ErrorSubWindow("Átírás sikertelen. Tartsa figyelemben a minimum erőforrás igényeket.")
+                    ErrorSubWindow("Átírás sikertelen. Tartsa figyelemben a minimum erőforrásigényeket.")
             except:
                     ErrorSubWindow("Átírás sikertelen.")
                     
