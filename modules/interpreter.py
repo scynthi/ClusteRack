@@ -8,7 +8,7 @@ from modules.root import Root
 import msvcrt
 import sys
 import ctypes
-from ctypes import c_long, c_wchar_p, c_ulong, c_void_p, Structure, byref
+from ctypes import c_long, c_wchar_p, c_ulong, c_void_p, Structure, byref, wintypes
 from colorama import init
 
 init(autoreset=True)
@@ -47,27 +47,29 @@ class CLI_Interpreter:
         self.kernel32 = ctypes.windll.kernel32
         self.hStdOut = self.kernel32.GetStdHandle(STD_OUTPUT_HANDLE)
         
+        self.set_fixed_console_size(160, 25)
+        
         # Make window unresizeable, because it just breaks for no apparent reason
         
-        # Get the handle to the console window
-        hwnd = ctypes.windll.kernel32.GetConsoleWindow()
+        # # Get the handle to the console window
+        # hwnd = ctypes.windll.kernel32.GetConsoleWindow()
 
-        # Define constants for window styles
-        GWL_STYLE = -16
-        WS_OVERLAPPEDWINDOW = 0x00CF0000
-        WS_CAPTION = 0x00C00000
-        WS_MINIMIZEBOX = 0x00020000
-        WS_SYSMENU = 0x00080000
+        # # Define constants for window styles
+        # GWL_STYLE = -16
+        # WS_OVERLAPPEDWINDOW = 0x00CF0000
+        # WS_CAPTION = 0x00C00000
+        # WS_MINIMIZEBOX = 0x00020000
+        # WS_SYSMENU = 0x00080000
 
-        # Get current window style
-        style = ctypes.windll.user32.GetWindowLongW(hwnd, GWL_STYLE)
+        # # Get current window style
+        # style = ctypes.windll.user32.GetWindowLongW(hwnd, GWL_STYLE)
 
-        # Remove the maximize button and resizing border
-        new_style = (style & ~WS_OVERLAPPEDWINDOW) | WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU
-        ctypes.windll.user32.SetWindowLongW(hwnd, GWL_STYLE, new_style)
+        # # Remove the maximize button and resizing border
+        # new_style = (style & ~WS_OVERLAPPEDWINDOW) | WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU
+        # ctypes.windll.user32.SetWindowLongW(hwnd, GWL_STYLE, new_style)
 
-        # Apply the style changes
-        ctypes.windll.user32.SetWindowPos(hwnd, None, 0, 0, 0, 0, 0x0001 | 0x0002 | 0x0020)
+        # # Apply the style changes
+        # ctypes.windll.user32.SetWindowPos(hwnd, None, 0, 0, 0, 0, 0x0001 | 0x0002 | 0x0020)
         
         # For the descriptions
         self.desc_folder = r"./Assets/Descriptions"
@@ -84,6 +86,15 @@ class CLI_Interpreter:
         # End setup and go to the input phase
         self.update_dicts()
         self.take_input("")
+        
+    def set_fixed_console_size(self, width, height):
+        # Set buffer size
+        buffer_size = wintypes._COORD(width, height)
+        ctypes.windll.kernel32.SetConsoleScreenBufferSize(self.hStdOut, buffer_size)
+        
+        # Set window size
+        rect = wintypes.SMALL_RECT(0, 0, width - 1, height - 1)
+        ctypes.windll.kernel32.SetConsoleWindowInfo(self.hStdOut, ctypes.c_bool(True), ctypes.byref(rect))
 
 # Input handling and converting      
 
