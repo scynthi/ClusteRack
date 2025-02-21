@@ -2,4 +2,4 @@ USAGE:
 reload
 
 What it does:
-Reloads the entire terminal
+Reloads the entire terminal, and resets the command history

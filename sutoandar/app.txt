@@ -1,6 +1,5 @@
-save_all app
+select run
+select run_folder sutoandar
+select run_folder sutoanda
+select run_folder sutoandar
 run ?
-sele root
-run ?
-run app
-save_amout ?

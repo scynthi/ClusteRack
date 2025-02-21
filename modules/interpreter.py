@@ -156,25 +156,28 @@ class CLI_Interpreter:
                 self.previous_commands.insert(0, user_input)
                 prev_com_index = 0
                 
-                current_step, arguments, success, user_input = self.cicle_through_commands(current_commands, shlex.split(user_input), user_input, True, cursor_pos)
-                if not success:
+                try:
+                    current_step, arguments, success, user_input = self.cicle_through_commands(current_commands, shlex.split(user_input), user_input, True, cursor_pos)
+                    if not success:
+                        
+                        # Special case
+                        # If the autocomplete was unsuccsessful print out the current_step
+                        sys.stdout.write("\n")
+                        sys.stdout.write(f"{current_step}")
+                        sys.stdout.write("\033[K")
+                        sys.stdout.flush()
+                        cursor_x, cursor_y = self.get_cursor_position()
                     
-                    # Special case
-                    # If the autocomplete was unsuccsessful print out the current_step
-                    sys.stdout.write("\n")
-                    sys.stdout.write(f"{current_step}")
-                    sys.stdout.write("\033[K")
-                    sys.stdout.flush()
-                    cursor_x, cursor_y = self.get_cursor_position()
-                
-                # After autocomplete put the cursor at the end of the autocompleted
-                if type(arguments) == int:
-                    
-                    cursor_pos += arguments
-                    
-                    # If there are suggestions delete them out of the choosable commands
-                    can_add = self._delete_choosable_commands(can_add)
-                prev_com_index = 0
+                    # After autocomplete put the cursor at the end of the autocompleted
+                    if type(arguments) == int:
+                        
+                        cursor_pos += arguments
+                        
+                        # If there are suggestions delete them out of the choosable commands
+                        can_add = self._delete_choosable_commands(can_add)
+                    prev_com_index = 0
+                except:
+                    print("A mappa név előtt nem lehet idézőjel beküldés előtt")
                 continue
             
             elif key_event == b'\x00' or key_event == b'\xe0': # Special key, like the arrow keys
@@ -319,7 +322,11 @@ class CLI_Interpreter:
         
         # Cut up the command (this library allow the usage of spaces by putting it between quotation marks)
         # Put ?algo at the end to get the algorythm at the end
-        shlashed_command = shlex.split(command)
+        try:
+            shlashed_command = shlex.split(command)
+        except:
+            print("A mappa név előtt nem lehet idézőjel beküldés előtt")
+            return self.take_input(command)
         shlashed_command.append("?algo")
         
         try:
@@ -384,8 +391,13 @@ class CLI_Interpreter:
         
         # Give each word an index in the command, used for autocorrect
         for item in shlashed_command:
-            indexes.update({index : item})
-            index += len(item) + 1
+            if " " not in item:
+                indexes.update({index : item})
+                index += len(item) + 1
+            else:
+                index += 1
+                indexes.update({index : item})
+                index += len(item) + 2
 
         # Cicle the shlashed_command through the dictionary
         try:
@@ -448,13 +460,23 @@ class CLI_Interpreter:
                             
                             # If there is only one word
                             if len(finished) == 1:
-                                finished = finished[0][len(unfinished_item):]
-                                cursor_pos_diff = index+len(unfinished_item) - cursor_pos
-                                
-                                if index < cursor_pos <= index+len(unfinished_item):
-                                    original_command = original_command[:cursor_pos + cursor_pos_diff] + finished + original_command[cursor_pos + cursor_pos_diff:]
-                                
-                                return "", len(finished) + cursor_pos_diff, True, original_command
+                                finished = finished[0]
+                                if " " not in finished:
+                                    finished = finished[len(unfinished_item):]
+                                    cursor_pos_diff = index+len(unfinished_item) - cursor_pos
+                                    
+                                    if index < cursor_pos <= index+len(unfinished_item):
+                                        original_command = original_command[:cursor_pos + cursor_pos_diff] + finished + original_command[cursor_pos + cursor_pos_diff:]
+                                    
+                                    return "", len(finished) + cursor_pos_diff, True, original_command
+                                else:
+                                    finished = f'"{finished}"'
+                                    cursor_pos_diff = index+len(unfinished_item) - cursor_pos
+                                    
+                                    if index < cursor_pos <= index+len(unfinished_item):
+                                        original_command = original_command[:cursor_pos + cursor_pos_diff-len(unfinished_item)] + finished + original_command[cursor_pos + cursor_pos_diff:]
+                                    
+                                    return "", len(finished) - 1 + cursor_pos_diff, True, original_command
                             
                             # If there are more than one words
                             elif len(finished) > 0:
@@ -491,7 +513,10 @@ class CLI_Interpreter:
                                     return "That is not a full command\n", "", False, original_command
                 
                 # Add to the current index (+1 for the spaces) 
-                current_index += len(current_word) + 1   
+                if " " not in current_word:
+                    current_index += len(current_word) + 1
+                else:
+                    current_index += len(current_word) + 3
 
                 # If the next step isn't the end point, if it has "?value" in it's keys, add the value as an argument
                 if type(current_step[changable_item]) != tuple:
